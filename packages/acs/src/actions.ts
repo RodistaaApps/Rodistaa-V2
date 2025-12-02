@@ -31,6 +31,14 @@ export function getDbAdapter(): DbAdapter | undefined {
 }
 
 /**
+ * Get database adapter from context or fall back to global
+ * Prefers context-specific adapter if provided
+ */
+export function getDbAdapterFromContext(evalCtx: any): DbAdapter | undefined {
+  return evalCtx?.db || dbAdapter;
+}
+
+/**
  * Freeze a shipment (prevent further actions)
  */
 export async function freezeShipmentAction(payload: any, evalCtx: any) {
@@ -53,8 +61,8 @@ export async function freezeShipmentAction(payload: any, evalCtx: any) {
       }
     );
 
-    // Write audit entry
-    await writeAuditEntry(auditEntry, dbAdapter);
+    // Write audit entry (use context dbAdapter if available)
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, update shipment status in database
     // await dbAdapter.updateShipmentStatus(shipmentId, 'FROZEN');
@@ -82,9 +90,10 @@ export async function blockEntityAction(payload: any, evalCtx: any) {
   try {
     const blockId = generateBlockId();
 
-    // Insert block into database
-    if (dbAdapter && 'insertBlock' in dbAdapter) {
-      await (dbAdapter as any).insertBlock({
+    // Insert block into database (use context dbAdapter if available)
+    const adapter = evalCtx?.db || dbAdapter;
+    if (adapter && 'insertBlock' in adapter) {
+      await (adapter as any).insertBlock({
         id: blockId,
         entityType,
         entityId,
@@ -117,7 +126,7 @@ export async function blockEntityAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     return {
       ok: true,
@@ -162,7 +171,7 @@ export async function createTicketAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, create ticket in ticketing system (Jira, etc.)
     // await ticketService.create({ team, summary, refs, priority });
@@ -204,7 +213,7 @@ export async function emitEventAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, emit to Kafka/EventBridge/etc.
     // await eventBus.emit(name, eventPayload);
@@ -246,7 +255,7 @@ export async function rejectRequestAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     return {
       ok: false,
@@ -284,7 +293,7 @@ export async function flagWatchlistAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, insert into watchlist table
     // await dbAdapter.insertWatchlist({ entityType, entityId, reason, addedBy: evalCtx.ctx?.userId });
@@ -328,7 +337,7 @@ export async function requireManualReviewAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, create review queue entry
     // await reviewQueue.create({ entityType, entityId, reason, reviewId });
@@ -370,7 +379,7 @@ export async function redactFieldAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // Note: Field redaction is typically handled in the response middleware
     // This action logs the intent to redact
@@ -412,7 +421,7 @@ export async function throttleAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, apply rate limit in Redis
     // await rateLimiter.throttle(entityId, duration);
@@ -455,7 +464,7 @@ export async function notifyRoleAction(payload: any, evalCtx: any) {
       }
     );
 
-    await writeAuditEntry(auditEntry, dbAdapter);
+    await writeAuditEntry(auditEntry, evalCtx?.db || dbAdapter);
 
     // TODO: In full implementation, send notifications via push/FCM/email
     // await notificationService.sendToRole(role, { title, message });

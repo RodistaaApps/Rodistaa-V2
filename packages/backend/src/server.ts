@@ -4,6 +4,8 @@
 
 import Fastify, { FastifyInstance } from 'fastify';
 import { registerRoutes } from './routes';
+import { registerAcsMiddleware } from './middleware/acsMiddleware';
+import { registerAuthMiddleware } from './middleware/authMiddleware';
 
 export async function createServer(): Promise<FastifyInstance> {
   const server = Fastify({
@@ -21,6 +23,10 @@ export async function createServer(): Promise<FastifyInstance> {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   }));
+
+  // Register middleware
+  await registerAuthMiddleware(server);
+  await registerAcsMiddleware(server);
 
   // Register routes
   await registerRoutes(server);

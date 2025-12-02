@@ -74,6 +74,8 @@ export async function defaultActionHandler(actionDef: any, context: EvalContext)
           event: context.event,
           ctx: context.ctx,
           ruleId: context.ruleId,
+          db: context.db, // Include db adapter from context
+          system: context.system, // Include system config for completeness
         };
         const result = await handler(resolvedPayload, evalCtx);
         results.push(result);
