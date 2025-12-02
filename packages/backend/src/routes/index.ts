@@ -10,6 +10,13 @@ import { BidsController } from '../modules/bids/bids.controller';
 import { ShipmentsController } from '../modules/shipments/shipments.controller';
 import { TrucksController } from '../modules/trucks/trucks.controller';
 import { LedgerController } from '../modules/ledger/ledger.controller';
+import { UsersController } from '../modules/users/users.controller';
+import { KycController } from '../modules/kyc/kyc.controller';
+import { DriversController } from '../modules/drivers/drivers.controller';
+import { AdminController } from '../modules/admin/admin.controller';
+import { FranchiseController } from '../modules/franchise/franchise.controller';
+import { AcsController } from '../modules/acs/acs.controller';
+import { WebhooksController } from '../modules/webhooks/webhooks.controller';
 import * as shipmentsService from '../modules/shipments/shipments.service';
 import * as bidsService from '../modules/bids/bids.service';
 
@@ -20,8 +27,19 @@ export async function registerRoutes(server: FastifyInstance) {
   const shipmentsController = new ShipmentsController();
   const trucksController = new TrucksController();
   const ledgerController = new LedgerController();
+  const usersController = new UsersController();
+  const kycController = new KycController();
+  const driversController = new DriversController();
+  const adminController = new AdminController();
+  const franchiseController = new FranchiseController();
+  const acsController = new AcsController();
+  const webhooksController = new WebhooksController();
 
   // ==================== Auth Routes ====================
+  server.post('/auth/otp', async (req, reply) => {
+    return authController.requestOTP(req, reply);
+  });
+
   server.post('/auth/login', async (req, reply) => {
     return authController.login(req, reply);
   });
@@ -162,11 +180,102 @@ export async function registerRoutes(server: FastifyInstance) {
     return ledgerController.getLedgerEntries(req, reply);
   });
 
-  // TODO: Additional routes to implement:
-  // - Users/KYC routes
-  // - Drivers routes
-  // - Admin routes
-  // - Franchise routes
-  // - ACS routes
-  // - Webhook routes
+  // ==================== Users Routes ====================
+  server.get('/users/me', async (req, reply) => {
+    return usersController.getCurrentUser(req, reply);
+  });
+
+  server.post('/users/register', async (req, reply) => {
+    return usersController.register(req, reply);
+  });
+
+  server.get('/users/:userId', async (req, reply) => {
+    return usersController.getUser(req, reply);
+  });
+
+  // ==================== KYC Routes ====================
+  server.post('/kyc/upload', async (req, reply) => {
+    return kycController.upload(req, reply);
+  });
+
+  server.get('/kyc/status', async (req, reply) => {
+    return kycController.getStatus(req, reply);
+  });
+
+  server.get('/kyc/:kycId', async (req, reply) => {
+    return kycController.getKyc(req, reply);
+  });
+
+  // ==================== Drivers Routes ====================
+  server.post('/drivers', async (req, reply) => {
+    return driversController.register(req, reply);
+  });
+
+  server.post('/drivers/:driverId/link-truck', async (req, reply) => {
+    return driversController.linkTruck(req, reply);
+  });
+
+  server.get('/drivers/:driverId/profile', async (req, reply) => {
+    return driversController.getProfile(req, reply);
+  });
+
+  // ==================== Admin Routes ====================
+  server.get('/admin/dashboard', async (req, reply) => {
+    return adminController.getDashboard(req, reply);
+  });
+
+  server.get('/admin/overrides', async (req, reply) => {
+    return adminController.getOverrides(req, reply);
+  });
+
+  server.post('/admin/overrides/:overrideId/approve', async (req, reply) => {
+    return adminController.approveOverride(req, reply);
+  });
+
+  server.post('/admin/overrides/:overrideId/reject', async (req, reply) => {
+    return adminController.rejectOverride(req, reply);
+  });
+
+  server.get('/admin/audit', async (req, reply) => {
+    return adminController.getAudit(req, reply);
+  });
+
+  server.post('/admin/kyc/:kycId/decrypt', async (req, reply) => {
+    return adminController.decryptKyc(req, reply);
+  });
+
+  // ==================== Franchise Routes ====================
+  server.get('/franchise/dashboard', async (req, reply) => {
+    return franchiseController.getDashboard(req, reply);
+  });
+
+  server.get('/franchise/targets', async (req, reply) => {
+    return franchiseController.getTargets(req, reply);
+  });
+
+  server.post('/franchise/targets', async (req, reply) => {
+    return franchiseController.setTargets(req, reply);
+  });
+
+  server.get('/franchise/reports', async (req, reply) => {
+    return franchiseController.getReports(req, reply);
+  });
+
+  // ==================== ACS Routes ====================
+  server.post('/acs/evaluate', async (req, reply) => {
+    return acsController.evaluate(req, reply);
+  });
+
+  server.get('/acs/audit/:entityType/:entityId', async (req, reply) => {
+    return acsController.getAudit(req, reply);
+  });
+
+  server.get('/acs/blocks/:entityType/:entityId', async (req, reply) => {
+    return acsController.getBlocks(req, reply);
+  });
+
+  // ==================== Webhook Routes ====================
+  server.post('/webhooks/razorpay', async (req, reply) => {
+    return webhooksController.razorpay(req, reply);
+  });
 }
