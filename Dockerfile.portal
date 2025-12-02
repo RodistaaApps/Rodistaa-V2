@@ -1,0 +1,77 @@
+# Rodistaa Portal - Production Dockerfile
+# Multi-stage build for Next.js application
+
+# ============================================
+# Stage 1: Dependencies
+# ============================================
+FROM node:18-alpine AS dependencies
+
+RUN npm install -g pnpm@8
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/portal/package.json ./packages/portal/
+COPY packages/app-shared/package.json ./packages/app-shared/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# ============================================
+# Stage 2: Builder
+# ============================================
+FROM node:18-alpine AS builder
+
+RUN npm install -g pnpm@8
+
+WORKDIR /app
+
+# Copy dependencies
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copy source
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/portal ./packages/portal
+COPY packages/app-shared ./packages/app-shared
+
+# Build packages
+RUN pnpm --filter @rodistaa/app-shared build
+RUN cd packages/portal && pnpm build
+
+# ============================================
+# Stage 3: Production
+# ============================================
+FROM node:18-alpine AS production
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy Next.js build
+COPY --from=builder --chown=nodejs:nodejs /app/packages/portal/.next/standalone ./
+COPY --from=builder --chown=nodejs:nodejs /app/packages/portal/.next/static ./packages/portal/.next/static
+COPY --from=builder --chown=nodejs:nodejs /app/packages/portal/public ./packages/portal/public
+
+# Copy package.json
+COPY --from=builder --chown=nodejs:nodejs /app/packages/portal/package.json ./packages/portal/
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001', (r) => {process.exit(r.statusCode === 200 || r.statusCode === 404 ? 0 : 1)})"
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Start Next.js
+CMD ["node", "packages/portal/server.js"]
+
