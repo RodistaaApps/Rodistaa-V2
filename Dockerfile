@@ -46,9 +46,6 @@ RUN pnpm --filter @rodistaa/backend build
 # ============================================
 FROM node:18-alpine AS production
 
-# Install pnpm
-RUN npm install -g pnpm@8
-
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
