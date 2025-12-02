@@ -21,8 +21,12 @@ export default function DriverLoginScreen() {
       return;
     }
 
-    setStep('otp');
-    Alert.alert('OTP Sent', 'Mock OTP: 123456');
+    try {
+      setStep('otp');
+      Alert.alert('OTP Sent', `Mock OTP: 123456`);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send OTP');
+    }
   };
 
   const handleLogin = async () => {

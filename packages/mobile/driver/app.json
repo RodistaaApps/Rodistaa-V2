@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Rodistaa Driver",
+    "slug": "rodistaa-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rodistaa.driver",
+      "infoPlist": {
+        "UIBackgroundModes": ["location", "fetch"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.rodistaa.driver",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Rodistaa Driver to use your location for shipment tracking.",
+          "locationWhenInUsePermission": "Allow Rodistaa Driver to use your location while delivering shipments.",
+          "locationAlwaysPermission": "Allow Rodistaa Driver to track your location in the background during active shipments."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Rodistaa Driver to access your photos to upload POD documents.",
+          "cameraPermission": "Allow Rodistaa Driver to access your camera to capture POD images."
+        }
+      ]
+    ],
+    "scheme": "rodistaa-driver"
+  }
+}
+
