@@ -49,7 +49,7 @@ jobs:
       - name: Run migrations
         run: |
           cd packages/backend
-          pnpm knex migrate:latest
+          pnpm run migrate:latest
         env:
           DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_e2e
 
@@ -72,7 +72,7 @@ jobs:
           JWT_SECRET: test-secret
           JWT_REFRESH_SECRET: test-refresh-secret
           LOCAL_KMS_KEY_ID: test-key
-          ACS_RULES_PATH: ../../acs_rules_top25.yaml
+          ACS_RULES_PATH: ./acs_rules_top25.yaml
 
       - name: Wait for backend to be ready
         run: |
@@ -98,7 +98,7 @@ jobs:
           cd packages/portal
           pnpm exec playwright test
         env:
-          BASE_URL: http://localhost:4000
+          BASE_URL: http://localhost:3001
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v3
@@ -151,7 +151,7 @@ jobs:
       - name: Run migrations
         run: |
           cd packages/backend
-          pnpm knex migrate:latest
+          pnpm run migrate:latest
         env:
           DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_smoke
 
