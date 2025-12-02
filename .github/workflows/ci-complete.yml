@@ -43,7 +43,7 @@ jobs:
       - name: Type check
         run: |
           cd packages/backend && pnpm run typecheck
-          cd $GITHUB_WORKSPACE/packages/acs && pnpm run build
+          cd $GITHUB_WORKSPACE/packages/acs && pnpm run typecheck
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
