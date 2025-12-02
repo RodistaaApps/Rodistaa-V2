@@ -39,7 +39,7 @@ async function main() {
     };
 
     const testCtx = {
-      userId: 'USR-DR-01ARZ3NDEKTSV4RRFFQ69G5FEV',
+      userId: 'USR-DR-01ARZ3NDEKTSV4RRFFQ69G5FAV',
       deviceId: 'dev-123',
       route: 'gps.ping',
     };
