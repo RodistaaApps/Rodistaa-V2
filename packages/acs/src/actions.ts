@@ -474,6 +474,67 @@ export async function notifyRoleAction(payload: any, evalCtx: any) {
 }
 
 /**
+ * Suspend user account (temporarily or permanently)
+ */
+export async function suspendAccountAction(payload: any, evalCtx: any) {
+  const { accountId, reason, severity, durationDays } = payload;
+  log.info({ accountId, reason, severity, durationDays }, 'suspendAccountAction called');
+
+  try {
+    const adapter = getDbAdapterFromContextOrGlobal(evalCtx);
+
+    if (adapter && 'query' in adapter) {
+      // Calculate suspension end date (if temporary)
+      const suspendedUntil = durationDays
+        ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+        : null; // null = permanent
+
+      // Update user status
+      await (adapter as any).query(
+        `UPDATE users 
+         SET is_active = false, 
+             suspended_until = $1,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [suspendedUntil, accountId]
+      );
+
+      log.info({ accountId, suspendedUntil }, 'Account suspended');
+    }
+
+    // Create audit entry
+    const auditEntry = createAuditEntry(
+      'user',
+      accountId || 'unknown',
+      'SUSPEND',
+      {
+        reason,
+        severity,
+        durationDays,
+        ruleId: evalCtx.ruleId,
+      },
+      {
+        eventType: evalCtx.event?.type,
+        performedBy: evalCtx.ctx?.userId,
+      }
+    );
+
+    await writeAuditEntry(auditEntry, adapter);
+
+    return { 
+      ok: true, 
+      accountId, 
+      suspended: true, 
+      until: durationDays ? `${durationDays} days` : 'permanent',
+      auditId: auditEntry.id,
+    };
+  } catch (error: any) {
+    log.error({ error, accountId }, 'Failed to suspend account');
+    return { ok: false, error: error.message };
+  }
+}
+
+/**
  * Action handler registry for rule evaluation
  */
 export const actionHandlers: Record<string, (payload: any, evalCtx: any) => Promise<any>> = {
@@ -487,4 +548,5 @@ export const actionHandlers: Record<string, (payload: any, evalCtx: any) => Prom
   redactField: redactFieldAction,
   throttle: throttleAction,
   notifyRole: notifyRoleAction,
+  suspendAccount: suspendAccountAction,
 };
