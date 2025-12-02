@@ -1,0 +1,131 @@
+{
+  "policies": [
+    {
+      "id": "BR-S04",
+      "category": "Booking",
+      "rule": "Shipper must complete KYC before publishing booking",
+      "type": "MANDATORY_PRE_REQUISITE"
+    },
+    {
+      "id": "BR-O07",
+      "category": "Bidding",
+      "rule": "One active bid per booking per operator",
+      "type": "BUSINESS_RULE"
+    },
+    {
+      "id": "BR-O10",
+      "category": "Bidding",
+      "rule": "Ledger cannot go negative",
+      "type": "FINANCIAL_CONSTRAINT"
+    },
+    {
+      "id": "BR-S09",
+      "category": "Shipment",
+      "rule": "Shipper must approve driver before shipment begins",
+      "type": "MANDATORY_APPROVAL"
+    },
+    {
+      "id": "BR-D14",
+      "category": "Shipment",
+      "rule": "Cannot bypass OTP for delivery completion",
+      "type": "ZERO_TOLERANCE"
+    },
+    {
+      "id": "BR-D10",
+      "category": "Tracking",
+      "rule": "GPS ping every 60 seconds mandatory",
+      "type": "CONTINUOUS_MONITORING"
+    },
+    {
+      "id": "BR-D12",
+      "category": "Tracking",
+      "rule": "Tracking >30 min missing = alert",
+      "type": "ALERT_TRIGGER"
+    },
+    {
+      "id": "BR-O04",
+      "category": "Compliance",
+      "rule": "Trucks must be: HGV, 2018+, BS4/BS6, NP valid",
+      "type": "ELIGIBILITY_CRITERIA"
+    },
+    {
+      "id": "BR-O06",
+      "category": "Compliance",
+      "rule": "Trucks with expired docs auto-block",
+      "type": "AUTO_ENFORCEMENT"
+    },
+    {
+      "id": "BR-C01",
+      "category": "Compliance",
+      "rule": "Mandatory inspection every 120 days",
+      "type": "PERIODIC_REQUIREMENT"
+    },
+    {
+      "id": "BR-O03",
+      "category": "Compliance",
+      "rule": "Operator may onboard up to 10 trucks only",
+      "type": "QUOTA_LIMIT"
+    },
+    {
+      "id": "BR-D16",
+      "category": "Shipment",
+      "rule": "Driver cannot have more than one active shipment",
+      "type": "CONCURRENCY_LIMIT"
+    },
+    {
+      "id": "BR-A03",
+      "category": "Admin",
+      "rule": "Admin must justify override",
+      "type": "AUDIT_REQUIREMENT"
+    },
+    {
+      "id": "BR-A05",
+      "category": "Admin",
+      "rule": "Admin cannot modify ledger",
+      "type": "ACCESS_RESTRICTION"
+    },
+    {
+      "id": "POL-2.3",
+      "category": "Shipment",
+      "rule": "OTP Delivery Rule - OTP is the only valid proof of delivery completion",
+      "type": "ZERO_COMPROMISE"
+    },
+    {
+      "id": "POL-2.4",
+      "category": "Bidding",
+      "rule": "Ledger Integrity - Operator ledger cannot go negative, no exceptions",
+      "type": "ZERO_COMPROMISE"
+    },
+    {
+      "id": "POL-2.1",
+      "category": "Compliance",
+      "rule": "Truck Eligibility - HGV only, Year ≥ 2018, BS4/BS6, National Permit mandatory",
+      "type": "ZERO_COMPROMISE"
+    },
+    {
+      "id": "FLOW-5",
+      "category": "Shipment",
+      "rule": "Driver Assignment & Approval Flow - Driver must be approved by shipper before shipment starts",
+      "type": "FLOW_REQUIREMENT"
+    },
+    {
+      "id": "FLOW-8",
+      "category": "Emergency",
+      "rule": "Accident/Breakdown Flow - Driver reports, operator assigns alternate truck, shipper re-approves",
+      "type": "EMERGENCY_PROTOCOL"
+    },
+    {
+      "id": "FRAUD-3",
+      "category": "Fraud",
+      "rule": "Fake Tracking Detection - System marks suspicious tracking, alerts admin, freezes shipment if mismatch",
+      "type": "FRAUD_PREVENTION"
+    },
+    {
+      "id": "FRAUD-5",
+      "category": "Fraud",
+      "rule": "Delivery Fraud - POD image reused or OTP misuse triggers shipment freeze and investigation",
+      "type": "FRAUD_PREVENTION"
+    }
+  ]
+}
+

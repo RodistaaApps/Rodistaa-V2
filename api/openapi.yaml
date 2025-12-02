@@ -1,0 +1,707 @@
+openapi: 3.0.3
+info:
+  title: Rodistaa Platform API
+  version: 1.0.0
+  description: |
+    Complete API specification for Rodistaa platform covering:
+    - Authentication & Authorization
+    - User Management & KYC
+    - Booking & Bidding
+    - Shipment Lifecycle
+    - GPS Tracking
+    - POD Management
+    - Truck & Inspection Management
+    - Admin & Franchise Operations
+    - ACS (Anti-Corruption Shield) Endpoints
+  contact:
+    name: Rodistaa Platform Team
+    email: tech@rodistaa.com
+
+servers:
+  - url: https://api.rodistaa.com/v1
+    description: Production
+  - url: https://staging-api.rodistaa.com/v1
+    description: Staging
+  - url: http://localhost:3000/v1
+    description: Local Development
+
+tags:
+  - name: auth
+    description: Authentication & Authorization
+  - name: users
+    description: User Management
+  - name: kyc
+    description: KYC Verification
+  - name: bookings
+    description: Booking Management
+  - name: bids
+    description: Bidding
+  - name: shipments
+    description: Shipment Lifecycle
+  - name: tracking
+    description: GPS Tracking
+  - name: pod
+    description: Proof of Delivery
+  - name: trucks
+    description: Truck Management
+  - name: inspections
+    description: Truck Inspections
+  - name: ledger
+    description: Operator Ledger
+  - name: admin
+    description: Admin Operations
+  - name: franchise
+    description: Franchise Operations
+  - name: acs
+    description: Anti-Corruption Shield
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      tags: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/login:
+    post:
+      summary: User Login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobile, otp]
+              properties:
+                mobile:
+                  type: string
+                  pattern: '^\+91[0-9]{10}$'
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                deviceId:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            X-Auth-Token:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /bookings:
+    post:
+      summary: Create Booking
+      tags: [bookings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreateRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: KYC verification required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List Bookings
+      tags: [bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookings'
+
+  /bookings/{bookingId}:
+    get:
+      summary: Get Booking Details
+      tags: [bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^RID-\d{8}-\d{4}$'
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/{bookingId}/bids:
+    get:
+      summary: Get Bids for Booking
+      tags: [bids]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bid'
+
+  /bids:
+    post:
+      summary: Create Bid
+      tags: [bids]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidCreateRequest'
+      responses:
+        '201':
+          description: Bid created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Already has active bid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Insufficient ledger balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /bids/{bidId}:
+    patch:
+      summary: Modify Bid
+      tags: [bids]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+                  minimum: 0
+      responses:
+        '200':
+          description: Bid modified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+
+  /shipments:
+    get:
+      summary: List Shipments
+      tags: [shipments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of shipments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Shipment'
+
+  /shipments/{shipmentId}:
+    get:
+      summary: Get Shipment Details
+      tags: [shipments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shipmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^SH-'
+      responses:
+        '200':
+          description: Shipment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shipment'
+
+  /shipments/{shipmentId}/assign:
+    post:
+      summary: Assign Driver and Truck
+      tags: [shipments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shipmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [driverId, truckId]
+              properties:
+                driverId:
+                  type: string
+                truckId:
+                  type: string
+      responses:
+        '200':
+          description: Driver assigned, awaiting approval
+
+  /shipments/{shipmentId}/approve-driver:
+    post:
+      summary: Approve Driver Assignment
+      tags: [shipments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shipmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Driver approved
+
+  /tracking/ping:
+    post:
+      summary: Send GPS Ping
+      tags: [tracking]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GpsPingRequest'
+      responses:
+        '200':
+          description: Ping received
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /pod/upload:
+    post:
+      summary: Upload POD
+      tags: [pod]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [shipmentId, file]
+              properties:
+                shipmentId:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: POD uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pod'
+
+  /acs/blocks/{entityType}/{entityId}:
+    get:
+      summary: Get ACS Blocks for Entity
+      tags: [acs]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [user, truck, driver, operator, shipment, device]
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BlockEntry'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Status:
+      name: status
+      in: query
+      schema:
+        type: string
+      description: Filter by status
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    Booking:
+      type: object
+      required: [id, shipperId, pickup, drop, status]
+      properties:
+        id:
+          type: string
+          pattern: '^RID-\d{8}-\d{4}$'
+        shipperId:
+          type: string
+        pickup:
+          $ref: '#/components/schemas/Location'
+        drop:
+          $ref: '#/components/schemas/Location'
+        goods:
+          $ref: '#/components/schemas/GoodsInfo'
+        tonnage:
+          type: number
+        expectedPrice:
+          type: number
+        priceRange:
+          $ref: '#/components/schemas/PriceRange'
+        status:
+          type: string
+          enum: [OPEN, NEGOTIATION, AUTO_FINALIZED, FINALIZED, CANCELLED]
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingCreateRequest:
+      type: object
+      required: [pickup, drop, goods, tonnage]
+      properties:
+        pickup:
+          $ref: '#/components/schemas/Location'
+        drop:
+          $ref: '#/components/schemas/Location'
+        goods:
+          $ref: '#/components/schemas/GoodsInfo'
+        tonnage:
+          type: number
+          minimum: 0.1
+        priceRange:
+          $ref: '#/components/schemas/PriceRange'
+
+    Location:
+      type: object
+      required: [address, city, state, pincode, coordinates]
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        coordinates:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    GoodsInfo:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        weight:
+          type: number
+        packaging:
+          type: string
+
+    PriceRange:
+      type: object
+      required: [min, max]
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+
+    Bid:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingId:
+          type: string
+        operatorId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [ACTIVE, ACCEPTED, REJECTED, EXPIRED]
+
+    BidCreateRequest:
+      type: object
+      required: [bookingId, amount]
+      properties:
+        bookingId:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingId:
+          type: string
+        status:
+          type: string
+          enum: [ASSIGNED, DRIVER_PENDING_APPROVAL, IN_TRANSIT, COMPLETED, FAILED]
+
+    Pod:
+      type: object
+      properties:
+        id:
+          type: string
+        shipmentId:
+          type: string
+        fileUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    BlockEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        reason:
+          type: string
+        severity:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    GpsPingRequest:
+      type: object
+      required: [shipmentId, coordinates]
+      properties:
+        shipmentId:
+          type: string
+        coordinates:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        speed:
+          type: number
+        heading:
+          type: number
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+        name:
+          type: string
+        mobileMasked:
+          type: string
+
+    PaginatedBookings:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+

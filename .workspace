@@ -1,0 +1,9 @@
+# Rodistaa Primary Workspace Configuration
+
+PRIMARY_PROJECT_LOCATION=C:\Users\devel\Desktop\Rodistaa
+LEGACY_PROJECT_LOCATION=C:\Users\devel\Documents\Rodistaa\New_UserUI_App
+
+STATUS=ACTIVE
+TYPE=PRIMARY_WORKSPACE
+ALL_FUTURE_WORK=YES
+

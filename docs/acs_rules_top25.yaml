@@ -1,0 +1,268 @@
+# acs_rules_top25.yaml
+# Top 25 ACS rules — declarative policy bundle for Rodistaa ACS (Anti-Corruption Shield)
+# Condition DSL is expressive but intentionally simple (event.* / ctx.* fields).
+# Actions supported: freezeShipment, blockEntity, flagWatchlist, emitEvent, requireManualReview, redactField, rejectRequest, throttle, createTicket, suspendAccount, notifyRole
+# Audit true => create immutable audit entry on execution.
+
+- id: RF01_KYC_MANDATORY
+  priority: 1000
+  severity: critical
+  description: "Block any transactional action if user KYC is not VERIFIED."
+  condition: "ctx.userRole in ['shipper','operator','driver'] && ctx.userKycStatus != 'VERIFIED' && event.type in ['booking.create','bid.create','shipment.start']"
+  action:
+    - rejectRequest: { code: "KYC_REQUIRED", message: "KYC verification required" }
+    - emitEvent: { name: "fraud.flagged", payload: { reason: "KYC_MISSING", userId: "{{ctx.userId}}"} }
+  audit: true
+
+- id: RF02_TRUCK_DOCS_EXPIRED
+  priority: 995
+  severity: critical
+  description: "Auto-block any truck with expired required documents when used in transactional flows."
+  condition: "event.type in ['shipment.assign','bid.create'] && truck.status == 'EXPIRED_DOCS'"
+  action:
+    - rejectRequest: { code: "TRUCK_DOCS_EXPIRED", message: "Truck documents expired" }
+    - blockEntity: { entityType: "truck", entityId: "{{truck.id}}", reason: "EXPIRED_DOCUMENTS", severity: "critical" }
+    - createTicket: { team: "franchise", summary: "Truck auto-block due to expired docs", refs: ["{{truck.id}}"] }
+  audit: true
+
+- id: RF03_OTP_MANDATORY_COMPLETION
+  priority: 990
+  severity: critical
+  description: "Require valid OTP for shipment completion; enforce retry limits and lockout."
+  condition: "event.type == 'shipment.complete' && shipment.otpValid != true"
+  action:
+    - rejectRequest: { code: "OTP_REQUIRED", message: "Valid OTP required" }
+    - emitEvent: { name: "security.otp_failed", payload: { shipmentId: "{{shipment.id}}", attempts: "{{shipment.otpAttempts}}" } }
+  audit: true
+
+- id: RF04_OTP_BRUTE_FORCE_PROTECTION
+  priority: 989
+  severity: critical
+  description: "Lock shipment and escalate when OTP retry threshold exceeded (brute-force)."
+  condition: "event.type == 'security.otp_attempt' && shipment.otpAttempts >= system.config.otpRetryLimit"
+  action:
+    - blockEntity: { entityType: "shipment", entityId: "{{shipment.id}}", reason: "OTP_BRUTE_FORCE", severity: "critical" }
+    - createTicket: { team: "security", summary: "OTP brute-force lock", refs: ["{{shipment.id}}"] }
+    - emitEvent: { name: "fraud.flagged", payload: { reason: "OTP_BRUTE_FORCE", shipmentId: "{{shipment.id}}"} }
+  audit: true
+
+- id: RF05_GPS_JUMP_ANOMALY
+  priority: 980
+  severity: high
+  description: "Detect improbable GPS jump (very large distance in short time)."
+  condition: "event.type == 'gps.ping' && gps.deltaDistanceKm >= 200 && gps.deltaTimeSec <= 300"
+  action:
+    - freezeShipment: { shipmentId: "{{shipment.id}}", reason: "GPS_JUMP" }
+    - emitEvent: { name: "gps.anomaly.detected", payload: { shipmentId: "{{shipment.id}}", details: "{{gps}}" } }
+    - notifyRole: { role: "operator", message: "GPS anomaly detected for shipment {{shipment.id}}" }
+  audit: true
+
+- id: RF06_GPS_SPOOF_SIGNATURE
+  priority: 975
+  severity: high
+  description: "Detect GPS spoofing signature (emulator patterns / regular interval jumps)."
+  condition: "event.type == 'gps.ping' && telemetry.spoofScore >= system.config.spoofThreshold"
+  action:
+    - freezeShipment: { shipmentId: "{{shipment.id}}", reason: "GPS_SPOOF" }
+    - blockEntity: { entityType: "device", entityId: "{{ctx.deviceId}}", reason: "DEVICE_SPOOF_DETECTED", severity: "high" }
+    - createTicket: { team: "fraud", summary: "Device spoofing suspected", refs: ["{{ctx.deviceId}}","{{shipment.id}}"] }
+  audit: true
+
+- id: RF07_POD_DUPLICATE_HASH
+  priority: 970
+  severity: high
+  description: "Reject POD reuse based on exact file-hash matches across shipments."
+  condition: "event.type == 'pod.uploaded' && pod.fileHash in db.indexes.pod_hashes"
+  action:
+    - freezeShipment: { shipmentId: "{{shipment.id}}", reason: "POD_REUSE_SUSPECT" }
+    - flagWatchlist: { entityType: "uploader", entityId: "{{ctx.uploaderId}}", reason: "POD_DUPLICATE" }
+    - emitEvent: { name: "fraud.flagged", payload: { reason: "POD_DUPLICATE", podHash: "{{pod.fileHash}}" } }
+  audit: true
+
+- id: RF08_POD_METADATA_MISMATCH
+  priority: 965
+  severity: high
+  description: "Reject POD where metadata timestamp is outside allowed delivery window."
+  condition: "event.type == 'pod.uploaded' && (pod.metadata.timestamp < shipment.pickupAt - system.config.podTimeWindowBefore || pod.metadata.timestamp > shipment.dropAt + system.config.podTimeWindowAfter)"
+  action:
+    - rejectRequest: { code: "POD_TIMESTAMP_MISMATCH", message: "POD timestamp outside allowed window" }
+    - createTicket: { team: "operations", summary: "POD timestamp mismatch", refs: ["{{shipment.id}}"] }
+  audit: true
+
+- id: RF09_INSPECTION_GEO_MISSING
+  priority: 960
+  severity: high
+  description: "Reject inspection uploads missing geotag or with invalid geolocation."
+  condition: "event.type == 'inspection.uploaded' && (inspection.geo == null || inspection.geo.accuracy > system.config.maxGeoAccuracyMeters)"
+  action:
+    - rejectRequest: { code: "INVALID_GEO", message: "Inspection requires valid geotag" }
+    - emitEvent: { name: "inspection.invalid_geo", payload: { inspectionId: "{{inspection.id}}"} }
+  audit: true
+
+- id: RF10_INSPECTION_DUPLICATE_PHOTO
+  priority: 955
+  severity: high
+  description: "Flag duplicate inspection photos reused across different trucks."
+  condition: "event.type == 'inspection.uploaded' && image.hash in db.indexes.inspection_image_hashes and db.indexes.inspection_image_hashes[image.hash].truckId != inspection.truckId"
+  action:
+    - rejectRequest: { code: "INSPECTION_DUPLICATE_PHOTO", message: "Duplicate inspection photo detected" }
+    - flagWatchlist: { entityType: "unit_franchise", entityId: "{{inspection.unitFranchiseId}}", reason: "POTENTIAL_FAKE_INSPECTION" }
+    - createTicket: { team: "district", summary: "Duplicate inspection photo detected", refs: ["{{inspection.id}}"] }
+  audit: true
+
+- id: RF11_TRUCK_OWNER_MISMATCH
+  priority: 950
+  severity: high
+  description: "Block truck auto-unblock if owner metadata mismatches authoritative identity sources."
+  condition: "event.type == 'doc.uploaded' && doc.type == 'rc' && doc.ocr.chassisNumber != truck.chassisNumberInRegistry"
+  action:
+    - blockEntity: { entityType: "truck", entityId: "{{truck.id}}", reason: "CHASSIS_MISMATCH", severity: "high" }
+    - createTicket: { team: "kyc", summary: "Chassis/OCR mismatch", refs: ["{{truck.id}}"] }
+  audit: true
+
+- id: RF12_OPERATOR_MAX_TRUCKS_LIMIT
+  priority: 945
+  severity: medium
+  description: "Reject truck creation when operator exceeds max allowed trucks."
+  condition: "event.type == 'truck.create' && db.count.trucksByOperator(ctx.operatorId) >= system.config.maxTrucksPerOperator"
+  action:
+    - rejectRequest: { code: "MAX_TRUCKS_EXCEEDED", message: "Operator truck limit exceeded" }
+    - notifyRole: { role: "operator", message: "Max trucks allowed: {{system.config.maxTrucksPerOperator}}" }
+  audit: true
+
+- id: RF13_LEDGER_NEGATIVE_PREVENTION
+  priority: 940
+  severity: high
+  description: "Reject bid placement which would cause negative ledger; enforce atomic ledger check."
+  condition: "event.type == 'bid.create' && operator.ledgerBalance < computedFees.bidFee"
+  action:
+    - rejectRequest: { code: "LEDGER_INSUFFICIENT", message: "Insufficient ledger balance" }
+    - emitEvent: { name: "account.insufficient_funds", payload: { operatorId: "{{ctx.userId}}", required: "{{computedFees.bidFee}}"} }
+  audit: true
+
+- id: RF14_AUTO_FINALIZATION_LEDGER_RACE
+  priority: 935
+  severity: high
+  description: "On auto-finalization re-check ledger atomically; if insufficient, skip to next valid bid."
+  condition: "event.type == 'bid.finalize' && winner.ledgerBalance < winner.bidFee"
+  action:
+    - emitEvent: { name: "bid.finalize.retry", payload: { bookingId: "{{booking.id}}", reason: "LEDGER_INVALID_AT_FINALIZE" } }
+    - createTicket: { team: "ops", summary: "Auto-finalize ledger race detected" }
+  audit: true
+
+- id: RF15_BID_TIE_BREAKER
+  priority: 930
+  severity: medium
+  description: "Deterministic tie-breaker: earliest timestamp; fallback lexical operator ID."
+  condition: "event.type == 'bid.evaluate' && bids.haveIdenticalAmount"
+  action:
+    - emitEvent: { name: "bid.tie_breaker.used", payload: { bookingId: "{{booking.id}}", method: "timestamp_then_operatorId" } }
+    - proceed: { outcome: "apply_tiebreaker" }
+  audit: true
+
+- id: RF16_PII_LEAK_REDACTION
+  priority: 925
+  severity: high
+  description: "Detect PII patterns in free-text and redact; block if deliberate leak attempt."
+  condition: "event.type in ['bid.create','message.send'] && textContainsPII(ctx.payload.text) == true"
+  action:
+    - redactField: { field: "payload.text", reason: "PII_REDACTION" }
+    - flagWatchlist: { entityType: "user", entityId: "{{ctx.userId}}", reason: "PII_LEAK_ATTEMPT" }
+    - rejectRequest: { code: "PII_REDACTED", message: "Contact details are not allowed in text fields" }
+  audit: true
+
+- id: RF17_DEVICE_ACCOUNT_COLLISION
+  priority: 920
+  severity: high
+  description: "Detect many driver accounts bound to single device and prevent overlapping acceptances."
+  condition: "event.type == 'shipment.accept' && db.count.driverAccountsByDevice(ctx.deviceId) > 1 && overlappingAcceptExists(ctx.deviceId, shipment.timeWindow)"
+  action:
+    - rejectRequest: { code: "DEVICE_ACCOUNT_COLLISION", message: "Device bound to multiple driver accounts; overlapping accept prevented" }
+    - flagWatchlist: { entityType: "device", entityId: "{{ctx.deviceId}}", reason: "MULTI_ACCOUNT_DEVICE" }
+    - createTicket: { team: "fraud", summary: "Device-account collision detected" }
+  audit: true
+
+- id: RF18_ADMIN_OVERRIDE_NO_JUSTIFICATION
+  priority: 915
+  severity: critical
+  description: "Prevent admin override without justification and 2FA for high-risk ops."
+  condition: "event.type == 'admin.override.request' && (override.justification == null || override.2faVerified != true) && override.target.ruleSeverity == 'critical'"
+  action:
+    - rejectRequest: { code: "OVERRIDE_REQUIRES_2FA_AND_JUSTIFICATION", message: "Critical overrides need justification and 2FA" }
+    - emitEvent: { name: "governance.override.attempt", payload: { adminId: "{{ctx.userId}}", targetRule: "{{override.target.ruleId}}"} }
+  audit: true
+
+- id: RF19_COLLUSION_TRIAD_FREQ
+  priority: 910
+  severity: critical
+  description: "Detect repeated triad patterns (shipper+operator+driver) and freeze triad on threshold."
+  condition: "event.type in ['shipment.completed'] && collusionGraph.triadFrequency(shipperId, operatorId, driverId, window=system.config.triadWindow) >= system.config.triadFrequencyThreshold"
+  action:
+    - freezeShipment: { shipmentId: "{{shipment.id}}", reason: "TRIAD_COLLUSION" }
+    - suspendAccount: { accountId: "{{operator.id}}", reason: "POSSIBLE_COLLUSION", severity: "critical" }
+    - createTicket: { team: "fraud", summary: "Triad collusion detected", refs: ["{{shipment.id}}"] }
+  audit: true
+
+- id: RF20_BID_FLOOD_RATE_LIMIT
+  priority: 905
+  severity: medium
+  description: "Throttle extremely high-frequency bid modifications to prevent automated gaming."
+  condition: "event.type == 'bid.modify' && rate.limitExceeded(ctx.userId, 'bid.modify', system.config.bidModifyRateLimit)"
+  action:
+    - throttle: { policy: "exponential_backoff", message: "Rate limit exceeded for bid modifications" }
+    - emitEvent: { name: "abuse.rate_limit", payload: { userId: "{{ctx.userId}}", action: "bid.modify" } }
+  audit: true
+
+- id: RF21_PREDATORY_BID_DETECT
+  priority: 900
+  severity: high
+  description: "Flag outlier predatory bids far below expected price distribution."
+  condition: "event.type == 'bid.create' && bid.amount < priceEstimator.lowerBound(booking) * system.config.predatoryBidFactor"
+  action:
+    - rejectRequest: { code: "PREDATORY_BID_HOLD", message: "Bid flagged as predatory and held for review" }
+    - flagWatchlist: { entityType: "operator", entityId: "{{ctx.userId}}", reason: "PREDATORY_BID" }
+    - createTicket: { team: "ops", summary: "Predatory bid held", refs: ["{{bid.id}}"] }
+  audit: true
+
+- id: RF22_MAINTENANCE_WINDOW_BLOCK
+  priority: 895
+  severity: medium
+  description: "Respect operator-configured maintenance windows; reject transactional API calls during window."
+  condition: "event.type in ['bid.create','truck.create'] && operator.maintenanceWindowActive(ctx.operatorId, now()) == true"
+  action:
+    - rejectRequest: { code: "MAINTENANCE_WINDOW", message: "Operation unavailable during maintenance window" }
+    - emitEvent: { name: "ops.maintenance_block", payload: { operatorId: "{{ctx.operatorId}}", action: "{{event.type}}" } }
+  audit: true
+
+- id: RF23_ROUTING_PROVIDER_FALLBACK
+  priority: 890
+  severity: medium
+  description: "When external routing provider fails, use local heuristics and flag fallback for monitoring."
+  condition: "event.type == 'route.request' && routing.provider.status != 'OK'"
+  action:
+    - proceed: { outcome: "use_local_heuristic" }
+    - emitEvent: { name: "routing.fallback", payload: { bookingId: "{{booking.id}}", provider: "{{routing.provider.id}}" } }
+  audit: true
+
+- id: RF24_INSPECTION_OUT_OF_ZONE
+  priority: 885
+  severity: high
+  description: "Reject inspections with photos taken outside allowed inspection geozone."
+  condition: "event.type == 'inspection.uploaded' && distance(inspection.geo, unitFranchise.allowedGeoCenter) > system.config.inspectionGeoRadiusMeters"
+  action:
+    - rejectRequest: { code: "OUT_OF_ZONE_INSPECTION", message: "Inspection photos must be taken within franchise zone" }
+    - flagWatchlist: { entityType: "unit_franchise", entityId: "{{inspection.unitFranchiseId}}", reason: "OUT_OF_ZONE_INSPECTION" }
+    - createTicket: { team: "district", summary: "Out-of-zone inspection attempt", refs: ["{{inspection.id}}"] }
+  audit: true
+
+- id: RF25_BATCH_KYC_INGEST_INCONSISTENT
+  priority: 880
+  severity: high
+  description: "On partial failure of bulk KYC ingestion, mark inconsistent records and pause dependent actions."
+  condition: "event.type == 'kyc.bulk_ingest' && ingest.partialFailure == true"
+  action:
+    - emitEvent: { name: "kyc.ingest.inconsistent", payload: { batchId: "{{ingest.batchId}}", affectedRecords: "{{ingest.affected}}" } }
+    - requireManualReview: { team: "kyc", summary: "Bulk KYC ingestion inconsistent; reconciliation required", refs: ["{{ingest.batchId}}"] }
+    - blockEntity: { entityType: "operator", entityId: "{{ingest.affectedOperatorIds}}", reason: "KYC_INGEST_INCONSISTENT", severity: "high", scope: "partial" }
+  audit: true
+

@@ -1,0 +1,26 @@
+{
+  "name": "@rodistaa/mobile",
+  "version": "1.0.0",
+  "description": "Rodistaa Mobile Apps - Shipper, Operator, Driver",
+  "private": true,
+  "workspaces": [
+    "shipper",
+    "operator",
+    "driver",
+    "shared"
+  ],
+  "scripts": {
+    "dev:shipper": "cd shipper && expo start",
+    "dev:operator": "cd operator && expo start",
+    "dev:driver": "cd driver && expo start",
+    "build:all": "pnpm --filter './shipper' build && pnpm --filter './operator' build && pnpm --filter './driver' build",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "eslint": "^8.48.0",
+    "typescript": "^5.5.0"
+  }
+}
+

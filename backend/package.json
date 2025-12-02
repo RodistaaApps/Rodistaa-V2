@@ -1,0 +1,26 @@
+{
+  "name": "rodistaa-backend",
+  "version": "1.0.0",
+  "description": "Rodistaa Platform Backend Services",
+  "author": "Rodistaa Team",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/core": "^10.3.0",
+    "@nestjs/config": "^3.1.1",
+    "@prisma/client": "^5.7.0",
+    "@rodistaa/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}
+

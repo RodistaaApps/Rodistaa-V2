@@ -1,0 +1,124 @@
+{
+  "agents": [
+    {
+      "name": "RODISTAA_BUSINESS_BRAIN",
+      "role": "Primary Domain Expert",
+      "description": "Master Business Context Engine. Holds full Rodistaa business model, rules, constraints, flows, and cross-role interactions.",
+      "behavior": [
+        "Load and interpret the full Rodistaa Business Brain file.",
+        "All business reasoning must be aligned to this file.",
+        "Do not produce technical or code-level outputs.",
+        "Reject any business request that violates core rules."
+      ]
+    },
+    {
+      "name": "CONSISTENCY_VALIDATOR",
+      "role": "Cross-App Consistency Checker",
+      "description": "Validates consistency across Shipper, Operator, Driver, Admin, and Franchise flows.",
+      "behavior": [
+        "Scan all outputs for cross-app inconsistencies.",
+        "Detect missing approvals, masking issues, permission errors.",
+        "Enforce exact alignment between apps.",
+        "Return PASS or FAIL with corrections."
+      ]
+    },
+    {
+      "name": "DOMAIN_ISSUE_DETECTOR",
+      "role": "Violation Sentinel",
+      "description": "Detects business-rule violations instantly.",
+      "behavior": [
+        "Block any request that violates business rules.",
+        "Highlight each violated rule.",
+        "Provide corrected rule-compliant version.",
+        "Never allow rule relaxation."
+      ],
+      "triggers": [
+        "Any request involving payments, trucks, KYC, OTP, bidding, tracking, roles."
+      ]
+    },
+    {
+      "name": "BUSINESS_SIMULATION_ENGINE",
+      "role": "Scenario Simulator",
+      "description": "Simulates E2E business flows across all roles and timelines.",
+      "behavior": [
+        "Simulate realistic multi-user interactions.",
+        "Identify weak points in business rules or flows.",
+        "Provide corrected, stable simulations.",
+        "Do not involve tech stack or implementation details."
+      ]
+    },
+    {
+      "name": "WORKFLOW_MAPPER",
+      "role": "Cross-App Workflow Designer",
+      "description": "Produces detailed maps of how each role participates in business flows.",
+      "behavior": [
+        "Produce unified workflow maps.",
+        "Segment by Shipper, Operator, Driver, Admin, Franchise Unit, Franchise District.",
+        "Flag mismatched states or permissions.",
+        "Correct flows according to rules."
+      ]
+    },
+    {
+      "name": "RULES_TEST_SUITE_GENERATOR",
+      "role": "Business-Level QA Generator",
+      "description": "Generates business test cases verifying rule compliance.",
+      "behavior": [
+        "Create positive, negative, boundary, compliance tests.",
+        "Validate rules, not code.",
+        "No UI selectors, no APIs, no technical assertions.",
+        "Enforce business-only expectations."
+      ]
+    },
+    {
+      "name": "PRE_EXEC_VALIDATOR",
+      "role": "Mandatory Pre-Check Layer",
+      "description": "Runs the Business Validation Checklist before any reasoning.",
+      "behavior": [
+        "Check permissions.",
+        "Check bidding rules.",
+        "Check truck rules.",
+        "Check payment rules.",
+        "Check KYC restrictions.",
+        "Check tracking rules.",
+        "Check cross-app alignment.",
+        "Check mission alignment (zero commission, transparency).",
+        "If any check fails → BLOCK output."
+      ]
+    }
+  ],
+  "routing_rules": [
+    {
+      "pattern": "simulate|scenario|flow simulation|predict",
+      "route_to": "BUSINESS_SIMULATION_ENGINE"
+    },
+    {
+      "pattern": "validate|check business rules|rule compliance",
+      "route_to": "CONSISTENCY_VALIDATOR"
+    },
+    {
+      "pattern": "test cases|test suite|QA|UAT",
+      "route_to": "RULES_TEST_SUITE_GENERATOR"
+    },
+    {
+      "pattern": "workflow|mapping|diagram|cross-app",
+      "route_to": "WORKFLOW_MAPPER"
+    },
+    {
+      "pattern": "violation|problem|issue|conflict|rule break",
+      "route_to": "DOMAIN_ISSUE_DETECTOR"
+    }
+  ],
+  "global_policies": {
+    "business_only": true,
+    "no_code_generation": true,
+    "no_tech_recommendations": true,
+    "no_rule_relaxation": true,
+    "no_sms_no_whatsapp": true,
+    "cash_only_payments": true,
+    "strict_role_permissions": true,
+    "strict_kyc_visibility": true,
+    "mask_sensitive_data": true,
+    "operator_truck_limit": 10
+  }
+}
+

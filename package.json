@@ -1,0 +1,41 @@
+{
+  "name": "rodistaa-monorepo",
+  "version": "1.0.0",
+  "description": "Rodistaa Platform - Complete Full-Stack Monorepo",
+  "private": true,
+  "scripts": {
+    "dev:all": "pnpm -w -r --parallel dev",
+    "build:all": "pnpm -w -r build",
+    "test:all": "pnpm -w -r test",
+    "lint:all": "pnpm -w -r lint",
+    "typecheck:all": "pnpm -w -r typecheck",
+    "clean:all": "pnpm -w -r clean",
+    "package:zip": "node scripts/package-zip.js",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.10.6",
+    "prettier": "^3.1.0",
+    "eslint": "^8.48.0",
+    "@typescript-eslint/parser": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
+  }
+}

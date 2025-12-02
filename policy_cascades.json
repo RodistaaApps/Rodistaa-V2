@@ -1,0 +1,614 @@
+[
+  {
+    "policy_id": "BR-S04",
+    "policy_text": "Shipper must complete KYC before publishing booking",
+    "business_flow": [
+      "Step 1: Shipper initiates booking creation by entering pickup, drop, goods, tonnage",
+      "Step 2: System checks shipper KYC status from user profile",
+      "Step 3: If KYC status is not APPROVED, system blocks booking creation and displays KYC completion requirement",
+      "Step 4: Shipper completes KYC submission with identity documents and waits for approval",
+      "Step 5: KYC-Admin reviews and approves/rejects KYC within SLA timeframe",
+      "Step 6: Upon KYC approval, system enables booking creation functionality for shipper",
+      "Step 7: Shipper retries booking creation, system validates KYC status is APPROVED",
+      "Step 8: Booking is successfully created and published to marketplace"
+    ],
+    "decision_rules": [
+      "IF shipper.kyc_status != APPROVED THEN block booking creation",
+      "IF shipper.kyc_status == APPROVED THEN allow booking creation",
+      "IF shipper.kyc_status == REJECTED THEN require KYC resubmission",
+      "IF shipper.kyc_status == PENDING THEN block booking creation until approval"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot create booking without approved KYC, must complete KYC verification process",
+      "operator": "No direct permission, operator cannot see bookings until published",
+      "driver": "No permission, driver not involved in booking creation",
+      "admin": "KYC-Admin can approve/reject KYC submissions, regular admin cannot override KYC requirement"
+    },
+    "system_action": "system.checkKYCStatus(shipper_id) == APPROVED ? allowBookingCreation() : blockBookingCreationWithMessage('KYC_REQUIRED')",
+    "audit_escalation": "Log entry: booking_creation_blocked_reason='KYC_NOT_APPROVED', shipper_id, timestamp, kyc_status. Escalation: None required - standard validation. Audit trail: All booking creation attempts logged with KYC status check results.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-O07",
+    "policy_text": "One active bid per booking per operator",
+    "business_flow": [
+      "Step 1: Operator views open booking and decides to place bid",
+      "Step 2: Operator enters bid amount within price range",
+      "Step 3: System checks if operator already has active bid on this booking",
+      "Step 4: If active bid exists, system rejects new bid and displays one-bid-per-booking message",
+      "Step 5: If no active bid exists, system calculates bidding fee and checks ledger balance",
+      "Step 6: System deducts bidding fee from ledger and places bid as ACTIVE",
+      "Step 7: Operator can modify existing active bid unlimited times (replaces old bid)",
+      "Step 8: Only one active bid per operator per booking is maintained in system"
+    ],
+    "decision_rules": [
+      "IF operator.active_bids[booking_id] EXISTS THEN reject new bid",
+      "IF operator.active_bids[booking_id] NOT EXISTS THEN allow bid placement",
+      "IF operator modifies bid THEN update existing bid, do not create duplicate",
+      "IF bid status changes to REJECTED/ACCEPTED THEN allow new bid on same booking"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot place bids, can view operator bids with masked details",
+      "operator": "Can place one active bid per booking, can modify bid unlimited times",
+      "driver": "No permission, driver not involved in bidding",
+      "admin": "Can view all bids, cannot override one-bid rule, can detect bid manipulation patterns"
+    },
+    "system_action": "system.checkActiveBid(operator_id, booking_id) == NULL ? createBid(operator_id, booking_id, amount) : rejectBidWithError('DUPLICATE_ACTIVE_BID')",
+    "audit_escalation": "Log entry: bid_placement_attempt, operator_id, booking_id, bid_amount, active_bid_check_result. Escalation: Multiple bid attempt patterns trigger admin review. Audit trail: All bid placement attempts logged with active bid validation results.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-O10",
+    "policy_text": "Ledger cannot go negative",
+    "business_flow": [
+      "Step 1: Operator attempts to place bid or modify bid",
+      "Step 2: System calculates required bidding fee: ₹5 × tonnage + ₹0.25 × distance",
+      "Step 3: System retrieves current operator ledger balance",
+      "Step 4: System checks if ledger_balance >= bidding_fee",
+      "Step 5: If ledger_balance < bidding_fee, system rejects bid and displays insufficient funds error",
+      "Step 6: If ledger_balance >= bidding_fee, system deducts fee and updates ledger to new_balance",
+      "Step 7: System validates new_balance >= 0 after deduction",
+      "Step 8: Bid is placed successfully only if ledger remains non-negative"
+    ],
+    "decision_rules": [
+      "IF ledger_balance >= bidding_fee THEN allow bid and deduct fee",
+      "IF ledger_balance < bidding_fee THEN reject bid with INSUFFICIENT_LEDGER_BALANCE",
+      "IF (ledger_balance - bidding_fee) < 0 THEN reject bid (hard limit at zero)",
+      "IF ledger_balance == 0 AND bidding_fee > 0 THEN reject bid"
+    ],
+    "role_permissions": {
+      "shipper": "No permission to view or modify operator ledger",
+      "operator": "Can add funds to ledger, can view own ledger balance, cannot force negative balance",
+      "driver": "No permission to access ledger",
+      "admin": "Cannot modify ledger (read-only access), can view ledger balances for dispute resolution"
+    },
+    "system_action": "system.validateLedgerBalance(operator_id, bidding_fee) == TRUE ? deductFeeAndPlaceBid() : rejectBidWithError('INSUFFICIENT_LEDGER_BALANCE') AND enforceLedgerBalance >= 0",
+    "audit_escalation": "Log entry: ledger_balance_check, operator_id, current_balance, required_fee, validation_result. Escalation: Repeated insufficient balance triggers operator notification. Audit trail: All ledger transactions logged with before/after balance values, negative balance attempts flagged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-S09",
+    "policy_text": "Shipper must approve driver before shipment begins",
+    "business_flow": [
+      "Step 1: Operator accepts bid and creates shipment assignment",
+      "Step 2: Operator selects truck and assigns driver to shipment",
+      "Step 3: System sends driver approval request notification to shipper",
+      "Step 4: Shipper views driver details (masked contact, rating, KYC status) in shipper app",
+      "Step 5: Shipper approves or rejects driver assignment",
+      "Step 6: If approved, system updates shipment status to DRIVER_APPROVED and enables tracking start",
+      "Step 7: If rejected, operator must assign different driver and re-submit for approval",
+      "Step 8: Shipment cannot progress to IN_TRANSIT until driver approval received"
+    ],
+    "decision_rules": [
+      "IF shipment.driver_approval_status == PENDING THEN block shipment start",
+      "IF shipment.driver_approval_status == APPROVED THEN allow shipment to proceed",
+      "IF shipment.driver_approval_status == REJECTED THEN require new driver assignment",
+      "IF shipper does not respond within 24 hours THEN admin can override with justification"
+    ],
+    "role_permissions": {
+      "shipper": "Must approve driver before shipment begins, can approve or reject driver assignment",
+      "operator": "Can assign driver but cannot start shipment without approval, can reassign if rejected",
+      "driver": "Can see approval status but cannot start shipment until approved",
+      "admin": "Can override driver approval with justification logged in audit trail if shipper unresponsive"
+    },
+    "system_action": "system.checkDriverApprovalStatus(shipment_id) == APPROVED ? allowShipmentStart() : blockShipmentStartWithStatus('DRIVER_PENDING_APPROVAL')",
+    "audit_escalation": "Log entry: driver_approval_request, shipment_id, driver_id, shipper_id, approval_status, timestamp. Escalation: 24-hour non-response triggers admin override review. Audit trail: All driver approval requests, approvals, rejections, and admin overrides logged with timestamps.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-D14",
+    "policy_text": "Cannot bypass OTP for delivery completion",
+    "business_flow": [
+      "Step 1: Driver reaches delivery location and uploads drop photo",
+      "Step 2: Driver requests OTP entry screen in driver app",
+      "Step 3: System generates 6-digit OTP and sends to shipper mobile number",
+      "Step 4: Shipper receives OTP and shares with driver (voice call or in-app message)",
+      "Step 5: Driver enters OTP in driver app at delivery location",
+      "Step 6: System validates OTP matches generated OTP for shipment",
+      "Step 7: If OTP correct, system automatically completes shipment and updates status to COMPLETED",
+      "Step 8: If OTP incorrect, system rejects completion and requires valid OTP entry"
+    ],
+    "decision_rules": [
+      "IF shipment.status == AT_DESTINATION AND otp_provided == TRUE AND otp_valid == TRUE THEN complete shipment",
+      "IF otp_provided == FALSE THEN block completion with error 'OTP_REQUIRED'",
+      "IF otp_valid == FALSE THEN block completion with error 'OTP_INVALID'",
+      "IF otp_attempts > 3 THEN flag as suspicious and trigger admin review"
+    ],
+    "role_permissions": {
+      "shipper": "Receives OTP on mobile, must share OTP with driver for completion, cannot complete shipment directly",
+      "operator": "Cannot bypass OTP, can view shipment status but cannot complete delivery",
+      "driver": "Must enter valid OTP to complete shipment, cannot bypass OTP requirement",
+      "admin": "Cannot override OTP requirement without HQ authorization, exceptional cases require full audit trail"
+    },
+    "system_action": "system.validateOTP(shipment_id, entered_otp) == TRUE AND shipment.status == AT_DESTINATION ? completeShipment() : blockCompletionWithError('OTP_REQUIRED_OR_INVALID')",
+    "audit_escalation": "Log entry: otp_generation, shipment_id, otp_sent_to, timestamp. OTP entry attempts logged. Escalation: Multiple invalid OTP attempts trigger fraud investigation. HQ authorization required for OTP bypass exceptions. Audit trail: All OTP generations, entries, validations, and bypass requests logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-D10",
+    "policy_text": "GPS ping every 60 seconds mandatory",
+    "business_flow": [
+      "Step 1: Driver accepts shipment and shipment status changes to IN_TRANSIT",
+      "Step 2: System activates GPS tracking for shipment and starts tracking timer",
+      "Step 3: Driver app automatically sends GPS location ping to server every 60 seconds",
+      "Step 4: System receives GPS ping and updates shipment location in database",
+      "Step 5: System calculates time since last ping received",
+      "Step 6: If ping received within 60 seconds, system continues normal tracking",
+      "Step 7: If no ping received for 60+ seconds, system flags as tracking gap",
+      "Step 8: System monitors ping frequency continuously throughout active shipment"
+    ],
+    "decision_rules": [
+      "IF shipment.status == IN_TRANSIT THEN enable GPS tracking with 60-second ping interval",
+      "IF time_since_last_ping <= 60 seconds THEN continue normal tracking",
+      "IF time_since_last_ping > 60 seconds THEN flag tracking gap and check for 30-minute threshold",
+      "IF time_since_last_ping > 30 minutes THEN trigger tracking alert"
+    ],
+    "role_permissions": {
+      "shipper": "Can view live tracking map with GPS pings, cannot control tracking",
+      "operator": "Can view tracking for assigned shipments, receives alerts if tracking fails",
+      "driver": "Driver app automatically sends GPS pings, driver cannot disable tracking",
+      "admin": "Can view all tracking data, receives alerts on tracking gaps, can investigate tracking anomalies"
+    },
+    "system_action": "system.enableGPSTracking(shipment_id) AND startPingTimer(60_seconds) AND IF time_since_last_ping > 60_seconds THEN flagTrackingGap() AND IF time_since_last_ping > 30_minutes THEN triggerTrackingAlert()",
+    "audit_escalation": "Log entry: gps_ping_received, shipment_id, latitude, longitude, timestamp, ping_interval. Escalation: 30-minute tracking gap triggers admin alert and operator notification. Audit trail: All GPS pings logged with location, timestamp, interval calculations, and gap detection events.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-D12",
+    "policy_text": "Tracking >30 min missing = alert",
+    "business_flow": [
+      "Step 1: System continuously monitors GPS ping interval for all active shipments",
+      "Step 2: System calculates time elapsed since last GPS ping received",
+      "Step 3: If time_since_last_ping <= 30 minutes, system continues monitoring",
+      "Step 4: If time_since_last_ping > 30 minutes, system triggers tracking alert",
+      "Step 5: System generates alert with shipment details and sends to admin dashboard",
+      "Step 6: System sends notification to operator about tracking gap",
+      "Step 7: Admin receives alert and contacts operator for explanation",
+      "Step 8: If tracking resumes, alert is cleared; if pattern detected, investigation initiated"
+    ],
+    "decision_rules": [
+      "IF time_since_last_ping > 30 minutes THEN trigger tracking alert",
+      "IF time_since_last_ping <= 30 minutes THEN continue monitoring without alert",
+      "IF tracking resumes within alert window THEN clear alert and log resolution",
+      "IF tracking gap pattern detected THEN escalate to fraud investigation"
+    ],
+    "role_permissions": {
+      "shipper": "No direct alert access, sees tracking status update, may notice tracking stopped",
+      "operator": "Receives tracking gap notification, must respond to admin inquiry",
+      "driver": "Should restore GPS tracking, may report legitimate interruption (network, device issue)",
+      "admin": "Receives tracking alert, must investigate gap reason, contacts operator, escalates if fraud suspected"
+    },
+    "system_action": "system.calculateTimeSinceLastPing(shipment_id) > 30_minutes ? triggerTrackingAlert(shipment_id) AND notifyAdmin() AND notifyOperator() AND flagShipmentAsTrackingAnomaly()",
+    "audit_escalation": "Log entry: tracking_alert_triggered, shipment_id, time_since_last_ping, timestamp, alert_severity. Escalation: Alert triggers admin notification, operator contact, and District Franchise escalation if fraud suspected. Audit trail: All tracking alerts, resolutions, and investigation outcomes logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-O04",
+    "policy_text": "Trucks must be: HGV, 2018+, BS4/BS6, NP valid",
+    "business_flow": [
+      "Step 1: Operator attempts to onboard new truck to fleet",
+      "Step 2: Operator enters truck details: vehicle type, year, emission standard, permit details",
+      "Step 3: System validates vehicle_type == HGV (Heavy Goods Vehicle)",
+      "Step 4: System validates manufacturing_year >= 2018",
+      "Step 5: System validates emission_standard IN [BS4, BS6]",
+      "Step 6: System validates national_permit_status == VALID and permit not expired",
+      "Step 7: If all validations pass, truck is eligible for onboarding",
+      "Step 8: If any validation fails, truck registration is rejected with specific failure reason"
+    ],
+    "decision_rules": [
+      "IF vehicle_type == HGV AND year >= 2018 AND emission_standard IN [BS4,BS6] AND permit_valid == TRUE THEN allow truck registration",
+      "IF vehicle_type != HGV THEN reject with error 'NON_HGV_NOT_ALLOWED'",
+      "IF year < 2018 THEN reject with error 'TRUCK_TOO_OLD'",
+      "IF emission_standard NOT IN [BS4,BS6] THEN reject with error 'INVALID_EMISSION_STANDARD'",
+      "IF permit_valid == FALSE OR permit_expired == TRUE THEN reject with error 'INVALID_PERMIT'"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot view truck eligibility details, sees only truck assignment in shipment",
+      "operator": "Can onboard trucks that meet all eligibility criteria, cannot bypass validation",
+      "driver": "No permission to onboard trucks, can be assigned to eligible trucks only",
+      "admin": "Can view all truck eligibility validations, cannot override eligibility rules without HQ authorization"
+    },
+    "system_action": "system.validateTruckEligibility(vehicle_type, year, emission_standard, permit_status) == TRUE ? allowTruckRegistration() : rejectTruckRegistrationWithError('TRUCK_ELIGIBILITY_FAILED', failed_criteria)",
+    "audit_escalation": "Log entry: truck_eligibility_check, operator_id, truck_details, validation_result, failed_criteria. Escalation: Repeated eligibility failures may indicate operator misunderstanding. Audit trail: All truck registration attempts and eligibility validations logged with detailed failure reasons.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-O06",
+    "policy_text": "Trucks with expired docs auto-block",
+    "business_flow": [
+      "Step 1: System runs daily scheduled job to check all truck document expiry dates",
+      "Step 2: System compares document expiry dates (RC, Fitness, Insurance, Permit, PUC) with current date",
+      "Step 3: If any document expiry_date < current_date, system flags truck for auto-block",
+      "Step 4: System immediately sets truck.status = BLOCKED and truck.assignment_allowed = FALSE",
+      "Step 5: System notifies operator about truck blocking and expired document details",
+      "Step 6: If truck is assigned to active shipment, system flags shipment with compliance warning",
+      "Step 7: Operator must renew expired documents and submit for franchise inspection",
+      "Step 8: Only after document renewal and inspection approval can truck be unblocked"
+    ],
+    "decision_rules": [
+      "IF any document.expiry_date < current_date THEN auto-block truck immediately",
+      "IF truck.status == BLOCKED THEN prevent truck assignment to new shipments",
+      "IF truck is in active shipment THEN flag shipment but allow completion if in transit",
+      "IF documents renewed AND inspection approved THEN unblock truck"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot see truck block details, shipment assignment handles blocked trucks automatically",
+      "operator": "Receives blocking notification, must renew documents, cannot assign blocked truck",
+      "driver": "Cannot use blocked truck, must wait for unblocking or alternate truck assignment",
+      "admin": "Can view all auto-block events, monitors compliance restoration, cannot bypass auto-block without HQ authorization"
+    },
+    "system_action": "system.checkDocumentExpiry(truck_id) AND IF any document.expiry_date < current_date THEN setTruckStatus(truck_id, 'BLOCKED') AND setAssignmentAllowed(truck_id, FALSE) AND notifyOperator() AND flagActiveShipments()",
+    "audit_escalation": "Log entry: truck_auto_blocked, truck_id, operator_id, expired_documents, blocking_timestamp. Escalation: Multiple trucks blocked indicates operator compliance issues. Audit trail: All auto-block events, document renewals, and unblocking actions logged with timestamps and approval status.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-C01",
+    "policy_text": "Mandatory inspection every 120 days",
+    "business_flow": [
+      "Step 1: System tracks inspection_date for each truck and calculates days since last inspection",
+      "Step 2: System sends auto-reminder to operator and Unit Franchise 5 days before 120-day limit",
+      "Step 3: When days_since_inspection == 120, system flags truck as inspection due",
+      "Step 4: Operator contacts Unit Franchise to schedule inspection",
+      "Step 5: Unit Franchise conducts physical inspection, uploads geo-tagged photos, fills checklist",
+      "Step 6: Unit Franchise marks truck as PASS or FAIL based on inspection results",
+      "Step 7: If PASS, system updates inspection_date and truck remains active",
+      "Step 8: If FAIL or inspection delayed beyond 120 days, truck is auto-blocked until inspection completed"
+    ],
+    "decision_rules": [
+      "IF days_since_inspection < 120 THEN truck remains active",
+      "IF days_since_inspection == 115 THEN send reminder notification",
+      "IF days_since_inspection >= 120 AND inspection_status != PASS THEN auto-block truck",
+      "IF inspection_status == PASS THEN update inspection_date and reset 120-day counter"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot see inspection schedules, sees only active eligible trucks",
+      "operator": "Receives inspection reminders, must coordinate with Unit Franchise, cannot bypass inspection",
+      "driver": "No direct permission, must ensure truck is inspection-compliant before shipment",
+      "admin": "Can view all inspection schedules and compliance status, monitors franchise inspection quality"
+    },
+    "system_action": "system.calculateDaysSinceInspection(truck_id) AND IF days >= 120 AND inspection_status != PASS THEN autoBlockTruck(truck_id) AND sendReminder(days == 115) AND updateInspectionDate(inspection_date) IF inspection_status == PASS",
+    "audit_escalation": "Log entry: inspection_due_check, truck_id, days_since_inspection, inspection_status, reminder_sent. Escalation: Delayed inspections beyond 120 days trigger compliance review. Audit trail: All inspection reminders, inspections, pass/fail results, and auto-blocks logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-O03",
+    "policy_text": "Operator may onboard up to 10 trucks only",
+    "business_flow": [
+      "Step 1: Operator attempts to register new truck in fleet",
+      "Step 2: System retrieves operator's current truck count from database",
+      "Step 3: System checks if current_truck_count < 10",
+      "Step 4: If current_truck_count < 10, system allows truck registration to proceed",
+      "Step 5: If current_truck_count == 10, system rejects truck registration",
+      "Step 6: System displays error message indicating 10-truck maximum limit reached",
+      "Step 7: Operator must remove existing truck from fleet or contact admin for exception",
+      "Step 8: Admin override requires MD approval and is fully documented in audit trail"
+    ],
+    "decision_rules": [
+      "IF operator.truck_count < 10 THEN allow truck registration",
+      "IF operator.truck_count == 10 THEN reject truck registration with error 'TRUCK_QUOTA_EXCEEDED'",
+      "IF operator removes truck THEN decrement truck_count and allow new registration",
+      "IF admin override requested THEN require MD approval before allowing 11th truck"
+    ],
+    "role_permissions": {
+      "shipper": "No permission to view operator truck count",
+      "operator": "Can onboard up to 10 trucks, cannot exceed limit, can remove trucks to add new ones",
+      "driver": "No permission to manage truck fleet",
+      "admin": "Can view operator truck counts, can override with MD approval for exceptional cases only"
+    },
+    "system_action": "system.checkTruckCount(operator_id) < 10 ? allowTruckRegistration() : rejectTruckRegistrationWithError('TRUCK_QUOTA_EXCEEDED', current_count=10)",
+    "audit_escalation": "Log entry: truck_registration_attempt, operator_id, current_truck_count, registration_result. Escalation: Quota exceeded attempts logged, admin override requests require MD approval. Audit trail: All truck registration attempts, quota checks, removals, and admin overrides logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-D16",
+    "policy_text": "Driver cannot have more than one active shipment",
+    "business_flow": [
+      "Step 1: Operator attempts to assign driver to new shipment",
+      "Step 2: System checks driver's current active shipment count",
+      "Step 3: System queries database for shipments where driver_id matches AND status IN [IN_TRANSIT, AT_PICKUP, AT_DESTINATION]",
+      "Step 4: If active_shipment_count == 0, system allows driver assignment",
+      "Step 5: If active_shipment_count >= 1, system rejects driver assignment",
+      "Step 6: System displays error indicating driver already has active shipment",
+      "Step 7: Operator must wait for driver's current shipment to complete or assign different driver",
+      "Step 8: Once driver's shipment completes, driver becomes available for new assignment"
+    ],
+    "decision_rules": [
+      "IF driver.active_shipment_count == 0 THEN allow driver assignment",
+      "IF driver.active_shipment_count >= 1 THEN reject driver assignment with error 'DRIVER_ALREADY_ASSIGNED'",
+      "IF shipment.status changes to COMPLETED THEN decrement driver active_shipment_count",
+      "IF shipment.status changes to IN_TRANSIT THEN increment driver active_shipment_count"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot see driver assignment conflicts, sees only assigned driver in shipment",
+      "operator": "Cannot assign driver with active shipment, must check driver availability first",
+      "driver": "Cannot accept multiple shipments simultaneously, can only work on one shipment at a time",
+      "admin": "Can view driver assignment status, can override with justification if exceptional circumstances"
+    },
+    "system_action": "system.checkDriverActiveShipments(driver_id) == 0 ? allowDriverAssignment() : rejectDriverAssignmentWithError('DRIVER_ALREADY_ASSIGNED', active_shipment_id)",
+    "audit_escalation": "Log entry: driver_assignment_attempt, driver_id, operator_id, shipment_id, active_shipment_count, assignment_result. Escalation: Repeated assignment failures may indicate driver overload. Audit trail: All driver assignments, rejections, and completion status changes logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-A03",
+    "policy_text": "Admin must justify override",
+    "business_flow": [
+      "Step 1: Admin identifies need to override system decision (shipment, driver, truck assignment)",
+      "Step 2: Admin selects override action in admin portal",
+      "Step 3: System prompts admin to enter mandatory justification text field",
+      "Step 4: Admin enters detailed justification explaining reason for override",
+      "Step 5: System validates justification field is not empty and meets minimum character requirement",
+      "Step 6: If justification provided, system logs override action with justification and admin details",
+      "Step 7: System executes override action and updates affected entities",
+      "Step 8: Override action and justification stored in audit trail for review"
+    ],
+    "decision_rules": [
+      "IF admin.override_action AND justification.length > 0 THEN allow override and log to audit",
+      "IF admin.override_action AND justification.length == 0 THEN block override with error 'JUSTIFICATION_REQUIRED'",
+      "IF justification.length < 20 THEN warn admin but allow if minimum threshold met",
+      "IF override executed THEN create audit log entry with timestamp, admin_id, justification, action_details"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot perform overrides, may receive notification if shipment affected",
+      "operator": "Cannot perform overrides, may receive notification if assignment affected",
+      "driver": "Cannot perform overrides, may receive notification if assignment changed",
+      "admin": "Must provide justification for all override actions, all overrides logged and auditable"
+    },
+    "system_action": "system.validateOverrideRequest(admin_id, action, justification) AND IF justification.length > 0 THEN executeOverrideAction() AND createAuditLogEntry(admin_id, action, justification, timestamp) ELSE rejectOverrideWithError('JUSTIFICATION_REQUIRED')",
+    "audit_escalation": "Log entry: admin_override, admin_id, override_action, justification, affected_entities, timestamp. Escalation: Frequent overrides by same admin trigger review. Unjustified overrides escalate to HQ. Audit trail: All admin overrides logged with full justification and action details for quarterly review.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "BR-A05",
+    "policy_text": "Admin cannot modify ledger",
+    "business_flow": [
+      "Step 1: Admin attempts to access ledger modification function in admin portal",
+      "Step 2: System checks admin role permissions for ledger access",
+      "Step 3: System identifies ledger modification as restricted function for all admin roles",
+      "Step 4: System blocks ledger modification request and displays access denied error",
+      "Step 5: Admin can only view ledger balances (read-only access)",
+      "Step 6: System logs unauthorized ledger modification attempt in audit trail",
+      "Step 7: Ledger modifications only allowed through operator payment gateway or system fee deductions",
+      "Step 8: Repeated unauthorized access attempts trigger security review"
+    ],
+    "decision_rules": [
+      "IF admin.action == MODIFY_LEDGER THEN block action with error 'LEDGER_MODIFICATION_FORBIDDEN'",
+      "IF admin.action == VIEW_LEDGER THEN allow read-only access",
+      "IF admin.action == MODIFY_LEDGER THEN log unauthorized attempt in audit trail",
+      "IF unauthorized_attempts > 3 THEN trigger security alert"
+    ],
+    "role_permissions": {
+      "shipper": "No access to ledger",
+      "operator": "Can add funds to own ledger, cannot modify others' ledgers",
+      "driver": "No access to ledger",
+      "admin": "Read-only access to view ledger balances for dispute resolution, cannot modify ledger under any circumstances"
+    },
+    "system_action": "system.checkAdminPermission(admin_id, 'MODIFY_LEDGER') == FALSE ? blockActionWithError('LEDGER_MODIFICATION_FORBIDDEN') AND logUnauthorizedAttempt(admin_id) AND allowReadOnlyAccess('VIEW_LEDGER')",
+    "audit_escalation": "Log entry: unauthorized_ledger_modification_attempt, admin_id, timestamp, action_type. Escalation: Unauthorized attempts trigger security review and HQ notification. Audit trail: All ledger modification attempts (blocked), read access, and security alerts logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "POL-2.3",
+    "policy_text": "OTP Delivery Rule - OTP is the only valid proof of delivery completion",
+    "business_flow": [
+      "Step 1: Driver reaches delivery location and uploads drop photo",
+      "Step 2: System generates unique 6-digit OTP valid for 24 hours and sends to shipper mobile",
+      "Step 3: Shipper receives OTP and shares with driver",
+      "Step 4: Driver enters OTP in driver app at delivery location",
+      "Step 5: System validates OTP matches generated OTP for this shipment",
+      "Step 6: If OTP valid, system automatically completes shipment and marks as COMPLETED",
+      "Step 7: System records OTP entry timestamp and delivery completion in audit trail",
+      "Step 8: No manual completion possible without valid OTP - OTP is mandatory and cannot be bypassed"
+    ],
+    "decision_rules": [
+      "IF shipment.status == AT_DESTINATION AND otp_provided == TRUE AND otp_valid == TRUE THEN complete shipment",
+      "IF otp_provided == FALSE THEN block completion - OTP is mandatory",
+      "IF admin attempts manual completion THEN require HQ authorization and full audit trail",
+      "IF OTP bypass attempted THEN log security violation and trigger investigation"
+    ],
+    "role_permissions": {
+      "shipper": "Receives OTP, must share with driver, cannot complete shipment without OTP",
+      "operator": "Cannot bypass OTP, cannot complete shipment, can only view completion status",
+      "driver": "Must enter valid OTP to complete, cannot bypass OTP requirement",
+      "admin": "Cannot override OTP requirement without HQ authorization, exceptional cases require full justification and audit"
+    },
+    "system_action": "system.generateOTP(shipment_id) AND sendOTPToShipper(shipper_mobile) AND IF otp_entered == generated_otp AND otp_valid == TRUE THEN completeShipment() ELSE blockCompletionWithError('OTP_REQUIRED') AND enforceOTPMandatory()",
+    "audit_escalation": "Log entry: otp_generation, otp_validation, completion_status, bypass_attempts. Escalation: OTP bypass attempts trigger immediate HQ security review. Fraud investigation if OTP misuse detected. Audit trail: All OTP generations, validations, completions, and bypass attempts logged with full security audit.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "POL-2.4",
+    "policy_text": "Ledger Integrity - Operator ledger cannot go negative, no exceptions",
+    "business_flow": [
+      "Step 1: Operator attempts bid placement or bid modification",
+      "Step 2: System calculates bidding fee based on tonnage and distance",
+      "Step 3: System retrieves current operator ledger balance",
+      "Step 4: System calculates proposed balance after fee deduction: current_balance - bidding_fee",
+      "Step 5: System validates proposed_balance >= 0 (hard limit at zero)",
+      "Step 6: If proposed_balance < 0, system rejects transaction and blocks bid placement",
+      "Step 7: If proposed_balance >= 0, system deducts fee and updates ledger balance",
+      "Step 8: System enforces zero balance as absolute minimum with no credit or overdraft allowed"
+    ],
+    "decision_rules": [
+      "IF (current_balance - bidding_fee) >= 0 THEN allow transaction and deduct fee",
+      "IF (current_balance - bidding_fee) < 0 THEN reject transaction with error 'INSUFFICIENT_BALANCE'",
+      "IF current_balance == 0 AND bidding_fee > 0 THEN reject transaction",
+      "IF negative balance attempted THEN log violation attempt and block immediately"
+    ],
+    "role_permissions": {
+      "shipper": "No access to operator ledger",
+      "operator": "Can add funds to ledger, cannot force negative balance, must maintain positive balance for bidding",
+      "driver": "No access to ledger",
+      "admin": "Read-only access, cannot modify ledger, cannot allow negative balance under any circumstances"
+    },
+    "system_action": "system.validateLedgerBalance(operator_id, required_fee) AND enforceMinimumBalance(0) AND IF (current_balance - required_fee) >= 0 THEN deductFeeAndUpdateBalance() ELSE rejectTransactionWithError('INSUFFICIENT_BALANCE') AND logBalanceViolationAttempt()",
+    "audit_escalation": "Log entry: ledger_balance_check, transaction_attempt, balance_validation, violation_attempts. Escalation: Repeated insufficient balance may indicate operator financial issues. Negative balance attempts trigger security review. Audit trail: All ledger transactions, balance checks, and violation attempts logged for financial audit.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "POL-2.1",
+    "policy_text": "Truck Eligibility - HGV only, Year ≥ 2018, BS4/BS6, National Permit mandatory",
+    "business_flow": [
+      "Step 1: Operator attempts to register new truck in fleet",
+      "Step 2: System validates vehicle_type == HGV (rejects LCV, passenger vehicles, etc.)",
+      "Step 3: System validates manufacturing_year >= 2018 (rejects older trucks)",
+      "Step 4: System validates emission_standard IN [BS4, BS6] (rejects BS3, BS2, BS1)",
+      "Step 5: System validates national_permit.status == VALID and permit not expired",
+      "Step 6: All four criteria must pass simultaneously for truck eligibility",
+      "Step 7: If any criterion fails, truck registration rejected with specific failure reason",
+      "Step 8: Only trucks meeting all criteria can be registered and assigned to shipments"
+    ],
+    "decision_rules": [
+      "IF vehicle_type == HGV AND year >= 2018 AND emission_standard IN [BS4,BS6] AND permit_valid == TRUE THEN allow registration",
+      "IF vehicle_type != HGV THEN reject with 'NON_HGV_NOT_ALLOWED'",
+      "IF year < 2018 THEN reject with 'TRUCK_YEAR_INVALID'",
+      "IF emission_standard NOT IN [BS4,BS6] THEN reject with 'INVALID_EMISSION_STANDARD'",
+      "IF permit_valid == FALSE THEN reject with 'INVALID_NATIONAL_PERMIT'"
+    ],
+    "role_permissions": {
+      "shipper": "Cannot see truck eligibility details, system ensures only eligible trucks assigned",
+      "operator": "Can register trucks meeting all criteria, cannot bypass eligibility validation",
+      "driver": "Cannot register trucks, can only be assigned to eligible trucks",
+      "admin": "Can view all eligibility validations, cannot override eligibility without HQ authorization"
+    },
+    "system_action": "system.validateTruckEligibility(vehicle_type, year, emission_standard, permit) AND IF all criteria met THEN allowRegistration() ELSE rejectWithError('TRUCK_ELIGIBILITY_FAILED', failed_criteria) AND enforceEligibilityRules()",
+    "audit_escalation": "Log entry: truck_eligibility_validation, operator_id, truck_details, validation_result, failed_criteria. Escalation: Repeated eligibility failures may indicate operator non-compliance. Audit trail: All eligibility validations, rejections, and registration approvals logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "FLOW-5",
+    "policy_text": "Driver Assignment & Approval Flow - Driver must be approved by shipper before shipment starts",
+    "business_flow": [
+      "Step 1: Operator accepts bid and creates shipment assignment",
+      "Step 2: Operator selects eligible truck and assigns driver to shipment",
+      "Step 3: System sends driver approval notification to shipper with driver details (masked)",
+      "Step 4: Shipper reviews driver information (name, rating, KYC status, masked contact)",
+      "Step 5: Shipper approves or rejects driver assignment in shipper app",
+      "Step 6: If approved, system updates shipment status to DRIVER_APPROVED and enables shipment start",
+      "Step 7: If rejected, operator must assign different driver and repeat approval process",
+      "Step 8: Shipment cannot start tracking or move to IN_TRANSIT until driver approval received"
+    ],
+    "decision_rules": [
+      "IF shipment.driver_assigned == TRUE AND driver_approval_status == PENDING THEN block shipment start",
+      "IF driver_approval_status == APPROVED THEN allow shipment to start and enable tracking",
+      "IF driver_approval_status == REJECTED THEN require new driver assignment",
+      "IF shipper non-responsive > 24 hours THEN admin can override with justification"
+    ],
+    "role_permissions": {
+      "shipper": "Must approve driver before shipment begins, can approve or reject based on driver profile",
+      "operator": "Can assign driver but shipment blocked until approval, can reassign if rejected",
+      "driver": "Can see approval status, shipment blocked until approved",
+      "admin": "Can override with justification if shipper unresponsive after 24 hours, override logged in audit"
+    },
+    "system_action": "system.checkDriverApprovalStatus(shipment_id) == APPROVED ? enableShipmentStart() AND allowTrackingActivation() : blockShipmentWithStatus('DRIVER_PENDING_APPROVAL') AND sendApprovalReminder()",
+    "audit_escalation": "Log entry: driver_assignment, approval_request, approval_status, timestamp. Escalation: 24-hour non-response triggers admin review. Audit trail: All driver assignments, approval requests, approvals, rejections, and admin overrides logged.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "FLOW-8",
+    "policy_text": "Accident/Breakdown Flow - Driver reports, operator assigns alternate truck, shipper re-approves",
+    "business_flow": [
+      "Step 1: Driver reports accident or breakdown during active shipment",
+      "Step 2: Driver uploads mandatory photos and location details in driver app",
+      "Step 3: System generates accident/breakdown ticket and alerts operator and admin",
+      "Step 4: Operator must assign alternate truck and alternate driver within 30-60 minutes",
+      "Step 5: System sends new driver approval request to shipper for alternate driver",
+      "Step 6: Shipper must re-approve new driver (same approval process as initial driver)",
+      "Step 7: If shipper approves, alternate truck/driver takes over shipment with same shipment ID",
+      "Step 8: Original truck is marked for inspection and cannot be used until inspected"
+    ],
+    "decision_rules": [
+      "IF driver.reports_accident == TRUE THEN create accident ticket and block current truck",
+      "IF operator.assigns_alternate_truck == TRUE THEN require shipper re-approval for new driver",
+      "IF shipper.approves_alternate_driver == TRUE THEN allow shipment continuation with alternate truck",
+      "IF alternate_truck_assignment_time > 60 minutes THEN trigger admin escalation"
+    ],
+    "role_permissions": {
+      "shipper": "Must re-approve alternate driver, can track shipment continuation with alternate truck",
+      "operator": "Must assign alternate truck within SLA, cannot continue with damaged truck",
+      "driver": "Must report accident/breakdown, cannot continue with damaged/unsafe truck",
+      "admin": "Monitors accident response, ensures SLA compliance, logs accident details for safety audit"
+    },
+    "system_action": "system.createAccidentTicket(shipment_id, driver_report) AND blockOriginalTruck() AND notifyOperator() AND IF alternate_truck_assigned THEN requireShipperReApproval() AND IF approved THEN enableShipmentContinuation()",
+    "audit_escalation": "Log entry: accident_report, alternate_truck_assignment, shipper_re_approval, response_time. Escalation: Delayed alternate assignment triggers admin review. Audit trail: All accident reports, alternate assignments, approvals, and safety incidents logged for safety audit.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "FRAUD-3",
+    "policy_text": "Fake Tracking Detection - System marks suspicious tracking, alerts admin, freezes shipment if mismatch",
+    "business_flow": [
+      "Step 1: System continuously monitors GPS tracking patterns during active shipments",
+      "Step 2: System detects anomalies: sudden 50+ km jumps, straight-line movement, impossible coordinates, rooted device",
+      "Step 3: System marks tracking as SUSPICIOUS and flags shipment for investigation",
+      "Step 4: System immediately sends fraud alert to admin dashboard",
+      "Step 5: Admin receives alert and contacts operator for verification",
+      "Step 6: System requests driver for live location confirmation to verify GPS accuracy",
+      "Step 7: If location mismatch confirmed, system freezes shipment and blocks driver",
+      "Step 8: District Franchise notified for investigation and fraud confirmation"
+    ],
+    "decision_rules": [
+      "IF tracking anomaly detected (jumps, impossible coordinates, rooted device) THEN mark as SUSPICIOUS",
+      "IF tracking marked SUSPICIOUS THEN alert admin immediately",
+      "IF location mismatch confirmed THEN freeze shipment and block driver",
+      "IF fraud confirmed THEN escalate to District Franchise and HQ for permanent action"
+    ],
+    "role_permissions": {
+      "shipper": "May notice tracking anomalies, receives notification if shipment frozen",
+      "operator": "Receives fraud alert, must provide explanation, cannot override tracking freeze",
+      "driver": "Must provide live location verification, fraudulent tracking results in block",
+      "admin": "Receives immediate alert, investigates tracking anomalies, freezes shipment if fraud confirmed"
+    },
+    "system_action": "system.analyzeTrackingPattern(shipment_id) AND IF anomalies_detected THEN markTrackingAsSuspicious() AND alertAdmin() AND requestLiveLocationVerification() AND IF mismatch_confirmed THEN freezeShipment() AND blockDriver()",
+    "audit_escalation": "Log entry: tracking_anomaly_detected, fraud_alert_sent, location_verification, shipment_freeze. Escalation: Fraud confirmation triggers District Franchise investigation and HQ escalation. Audit trail: All tracking anomalies, fraud alerts, investigations, and actions logged for fraud audit.",
+    "conflict_flag": false
+  },
+  {
+    "policy_id": "FRAUD-5",
+    "policy_text": "Delivery Fraud - POD image reused or OTP misuse triggers shipment freeze and investigation",
+    "business_flow": [
+      "Step 1: Driver attempts to upload POD image for delivery completion",
+      "Step 2: System performs image hash/fingerprint comparison against historical POD database",
+      "Step 3: System detects if POD image matches previously used POD from another shipment",
+      "Step 4: If duplicate detected, system flags shipment as DELIVERY_SUSPICIOUS",
+      "Step 5: System blocks shipment completion and sends fraud alert to admin",
+      "Step 6: Admin investigates POD image metadata, GPS location, and shipment timeline",
+      "Step 7: If fraud confirmed, system freezes shipment, suspends driver, and escalates to District Franchise",
+      "Step 8: HQ reviews fraud case and determines permanent action (block, legal escalation)"
+    ],
+    "decision_rules": [
+      "IF POD_image_hash matches historical_POD_hash THEN mark as DELIVERY_SUSPICIOUS",
+      "IF OTP entered incorrectly 3+ times THEN mark as SUSPICIOUS and trigger investigation",
+      "IF delivery fraud confirmed THEN freeze shipment and suspend driver",
+      "IF fraud confirmed THEN escalate to District Franchise and HQ for permanent action"
+    ],
+    "role_permissions": {
+      "shipper": "Receives notification if delivery fraud detected, shipment frozen until investigation complete",
+      "operator": "Receives fraud alert, must cooperate with investigation, cannot override freeze",
+      "driver": "Must upload fresh POD, fraudulent POD results in suspension and investigation",
+      "admin": "Investigates POD fraud, freezes shipment if confirmed, escalates to District Franchise and HQ"
+    },
+    "system_action": "system.comparePODHash(uploaded_POD, historical_PODs) AND IF duplicate_detected THEN flagShipmentAsSuspicious() AND blockCompletion() AND alertAdmin() AND IF fraud_confirmed THEN freezeShipment() AND suspendDriver()",
+    "audit_escalation": "Log entry: POD_upload, hash_comparison, fraud_flag, investigation_result. Escalation: Fraud confirmation triggers District Franchise investigation, HQ review, and potential legal escalation. Audit trail: All POD uploads, hash comparisons, fraud flags, investigations, and actions logged for fraud audit.",
+    "conflict_flag": false
+  }
+]
+
