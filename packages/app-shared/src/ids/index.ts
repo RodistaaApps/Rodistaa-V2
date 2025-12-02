@@ -1,6 +1,6 @@
 /**
  * ID Generators for Rodistaa Platform
- * 
+ *
  * Format conventions:
  * - RID-YYYYMMDD-xxxxxxxx for Bookings
  * - SH-<ulid> for Shipments
@@ -31,10 +31,12 @@ export function generateBookingId(date: Date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const dateStr = `${year}${month}${day}`;
-  
+
   // Generate 4-digit sequential number (in production, use DB sequence)
-  const seq = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  
+  const seq = Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, '0');
+
   return `RID-${dateStr}-${seq}`;
 }
 
@@ -67,8 +69,8 @@ export function generateUserId(role: UserRole): string {
  * Format: TRK-<regno>-<ulid>
  */
 export function generateTruckId(regNo: string): string {
-  // Sanitize reg number (remove spaces, convert to uppercase)
-  const sanitized = regNo.replace(/\s+/g, '').toUpperCase();
+  // Sanitize reg number (remove spaces and dashes, convert to uppercase)
+  const sanitized = regNo.replace(/[\s-]+/g, '').toUpperCase();
   return `TRK-${sanitized}-${ulid()}`;
 }
 
@@ -107,7 +109,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('SH-')) {
     return {
       type: 'shipment',
@@ -116,7 +118,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('BK-')) {
     return {
       type: 'bid',
@@ -125,7 +127,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('USR-')) {
     const parts = id.split('-');
     return {
@@ -136,7 +138,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('TRK-')) {
     const parts = id.split('-');
     // Extract registration number (everything between TRK- and last -)
@@ -149,7 +151,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('POD-')) {
     return {
       type: 'pod',
@@ -158,7 +160,7 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   if (id.startsWith('KYC-')) {
     return {
       type: 'kyc',
@@ -167,10 +169,9 @@ export function parseId(id: string): ParsedId {
       },
     };
   }
-  
+
   return {
     type: 'unknown',
     components: {},
   };
 }
-
