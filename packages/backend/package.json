@@ -15,6 +15,7 @@
     "seed:run": "knex seed:run --env local",
     "db:reset": "knex migrate:rollback --all --env local && knex migrate:latest --env local && knex seed:run --env local",
     "test": "jest",
+    "smoke": "node scripts/smoke_booking_flow.js",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
