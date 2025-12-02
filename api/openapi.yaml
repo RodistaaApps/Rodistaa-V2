@@ -13,6 +13,7 @@ info:
     - Truck & Inspection Management
     - Admin & Franchise Operations
     - ACS (Anti-Corruption Shield) Endpoints
+    - Webhooks
   contact:
     name: Rodistaa Platform Team
     email: tech@rodistaa.com
@@ -54,6 +55,8 @@ tags:
     description: Franchise Operations
   - name: acs
     description: Anti-Corruption Shield
+  - name: webhooks
+    description: Webhook Events
 
 paths:
   /health:
@@ -63,6 +66,15 @@ paths:
       responses:
         '200':
           description: Service is healthy
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                example: 99
           content:
             application/json:
               schema:
@@ -74,6 +86,10 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+                    example: "2024-01-15T10:30:00Z"
+              example:
+                status: ok
+                timestamp: "2024-01-15T10:30:00Z"
 
   /auth/login:
     post:
@@ -90,11 +106,18 @@ paths:
                 mobile:
                   type: string
                   pattern: '^\+91[0-9]{10}$'
+                  example: "+919876543210"
                 otp:
                   type: string
                   pattern: '^[0-9]{6}$'
+                  example: "123456"
                 deviceId:
                   type: string
+                  example: "device-uuid-12345"
+            example:
+              mobile: "+919876543210"
+              otp: "123456"
+              deviceId: "device-uuid-12345"
       responses:
         '200':
           description: Login successful
@@ -102,12 +125,205 @@ paths:
             X-Auth-Token:
               schema:
                 type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                example: 10
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                example: 9
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refreshToken: "refresh-token-xyz"
+                user:
+                  id: "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  role: "SHIPPER"
+                  name: "John Doe"
+                  mobileMasked: "+91****543210"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /auth/refresh:
+    post:
+      summary: Refresh Authentication Token
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+            example:
+              refreshToken: "refresh-token-xyz"
+      responses:
+        '200':
+          description: Token refreshed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /auth/otp:
+    post:
+      summary: Request OTP
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobile]
+              properties:
+                mobile:
+                  type: string
+                  pattern: '^\+91[0-9]{10}$'
+            example:
+              mobile: "+919876543210"
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "OTP sent to +919876543210"
+                  expiresIn:
+                    type: integer
+                    example: 300
+              example:
+                message: "OTP sent to +919876543210"
+                expiresIn: 300
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /users/me:
+    get:
+      summary: Get Current User Profile
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/register:
+    post:
+      summary: Register New User
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobile, name, role]
+              properties:
+                mobile:
+                  type: string
+                name:
+                  type: string
+                role:
+                  type: string
+                  enum: [SHIPPER, OPERATOR, DRIVER]
+            example:
+              mobile: "+919876543210"
+              name: "John Doe"
+              role: "SHIPPER"
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /kyc/upload:
+    post:
+      summary: Upload KYC Documents
+      tags: [kyc]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [documentType, file]
+              properties:
+                documentType:
+                  type: string
+                  enum: [AADHAAR, PAN, GSTIN, LICENSE]
+                file:
+                  type: string
+                  format: binary
+            example:
+              documentType: "AADHAAR"
+              file: "[binary file data]"
+      responses:
+        '201':
+          description: KYC document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycRecord'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: KYC validation failed
+
+  /kyc/status:
+    get:
+      summary: Get KYC Status
+      tags: [kyc]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: KYC status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [PENDING, VERIFIED, REJECTED]
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KycRecord'
 
   /bookings:
     post:
@@ -121,13 +337,72 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BookingCreateRequest'
+            example:
+              pickup:
+                address: "123 Main Street"
+                city: "Mumbai"
+                state: "Maharashtra"
+                pincode: "400001"
+                coordinates:
+                  lat: 19.0760
+                  lng: 72.8777
+              drop:
+                address: "456 Park Avenue"
+                city: "Delhi"
+                state: "Delhi"
+                pincode: "110001"
+                coordinates:
+                  lat: 28.6139
+                  lng: 77.2090
+              goods:
+                type: "Cement"
+                weight: 5000
+                packaging: "Bags"
+              tonnage: 5.0
+              priceRange:
+                min: 15000
+                max: 20000
       responses:
         '201':
           description: Booking created
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Booking'
+              example:
+                id: "RID-20240115-0001"
+                shipperId: "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                pickup:
+                  address: "123 Main Street"
+                  city: "Mumbai"
+                  state: "Maharashtra"
+                  pincode: "400001"
+                  coordinates:
+                    lat: 19.0760
+                    lng: 72.8777
+                drop:
+                  address: "456 Park Avenue"
+                  city: "Delhi"
+                  state: "Delhi"
+                  pincode: "110001"
+                  coordinates:
+                    lat: 28.6139
+                    lng: 77.2090
+                goods:
+                  type: "Cement"
+                  weight: 5000
+                  packaging: "Bags"
+                tonnage: 5.0
+                expectedPrice: 17500
+                status: "OPEN"
+                createdAt: "2024-01-15T10:30:00Z"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -140,6 +415,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "KYC_REQUIRED"
+                message: "KYC verification required to create booking"
 
     get:
       summary: List Bookings
@@ -153,10 +431,28 @@ paths:
       responses:
         '200':
           description: List of bookings
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedBookings'
+              example:
+                data:
+                  - id: "RID-20240115-0001"
+                    shipperId: "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                    status: "OPEN"
+                    createdAt: "2024-01-15T10:30:00Z"
+                meta:
+                  page: 1
+                  pageSize: 20
+                  total: 1
+                  totalPages: 1
 
   /bookings/{bookingId}:
     get:
@@ -171,6 +467,7 @@ paths:
           schema:
             type: string
             pattern: '^RID-\d{8}-\d{4}$'
+          example: "RID-20240115-0001"
       responses:
         '200':
           description: Booking details
@@ -178,6 +475,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Booking'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/{bookingId}/cancel:
+    post:
+      summary: Cancel Booking
+      tags: [bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+            example:
+              reason: "Changed my mind"
+      responses:
+        '200':
+          description: Booking cancelled
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -202,6 +529,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Bid'
+              example:
+                - id: "BK-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  bookingId: "RID-20240115-0001"
+                  operatorId: "USR-OP-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  amount: 16500
+                  status: "ACTIVE"
+                  createdAt: "2024-01-15T11:00:00Z"
 
   /bids:
     post:
@@ -215,6 +549,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BidCreateRequest'
+            example:
+              bookingId: "RID-20240115-0001"
+              amount: 16500
       responses:
         '201':
           description: Bid created
@@ -222,6 +559,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bid'
+              example:
+                id: "BK-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                bookingId: "RID-20240115-0001"
+                operatorId: "USR-OP-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                amount: 16500
+                status: "ACTIVE"
+                createdAt: "2024-01-15T11:00:00Z"
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -230,12 +574,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "DUPLICATE_BID"
+                message: "Operator already has an active bid for this booking"
         '422':
           description: Insufficient ledger balance
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "INSUFFICIENT_BALANCE"
+                message: "Insufficient ledger balance to place bid"
 
   /bids/{bidId}:
     patch:
@@ -260,6 +610,8 @@ paths:
                 amount:
                   type: number
                   minimum: 0
+            example:
+              amount: 16000
       responses:
         '200':
           description: Bid modified
@@ -267,6 +619,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bid'
+
+    delete:
+      summary: Cancel Bid
+      tags: [bids]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bid cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /shipments:
     get:
@@ -281,12 +650,27 @@ paths:
       responses:
         '200':
           description: List of shipments
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Shipment'
+                $ref: '#/components/schemas/PaginatedShipments'
+              example:
+                data:
+                  - id: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                    bookingId: "RID-20240115-0001"
+                    status: "IN_TRANSIT"
+                meta:
+                  page: 1
+                  pageSize: 20
+                  total: 1
+                  totalPages: 1
 
   /shipments/{shipmentId}:
     get:
@@ -301,6 +685,7 @@ paths:
           schema:
             type: string
             pattern: '^SH-'
+          example: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
       responses:
         '200':
           description: Shipment details
@@ -308,6 +693,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Shipment'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /shipments/{shipmentId}/assign:
     post:
@@ -333,9 +720,14 @@ paths:
                   type: string
                 truckId:
                   type: string
+            example:
+              driverId: "USR-DR-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+              truckId: "TRK-MH01AB1234-01ARZ3NDEKTSV4RRFFQ69G5FAV"
       responses:
         '200':
           description: Driver assigned, awaiting approval
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /shipments/{shipmentId}/approve-driver:
     post:
@@ -365,11 +757,40 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GpsPingRequest'
+            example:
+              shipmentId: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+              coordinates:
+                lat: 19.0760
+                lng: 72.8777
+              speed: 60
+              heading: 90
       responses:
         '200':
           description: Ping received
         '400':
           $ref: '#/components/responses/BadRequest'
+
+  /tracking/{shipmentId}:
+    get:
+      summary: Get Tracking History
+      tags: [tracking]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shipmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tracking history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GpsPing'
 
   /pod/upload:
     post:
@@ -390,6 +811,12 @@ paths:
                 file:
                   type: string
                   format: binary
+                otp:
+                  type: string
+            example:
+              shipmentId: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+              file: "[binary file data]"
+              otp: "123456"
       responses:
         '201':
           description: POD uploaded
@@ -397,6 +824,404 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pod'
+              example:
+                id: "POD-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                shipmentId: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                fileUrl: "https://storage.rodistaa.com/pod/xyz.jpg"
+                createdAt: "2024-01-15T15:30:00Z"
+
+  /trucks:
+    get:
+      summary: List Trucks
+      tags: [trucks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of trucks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTrucks'
+
+    post:
+      summary: Register Truck
+      tags: [trucks]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TruckCreateRequest'
+      responses:
+        '201':
+          description: Truck registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Truck'
+
+  /trucks/{truckId}:
+    get:
+      summary: Get Truck Details
+      tags: [trucks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: truckId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Truck details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Truck'
+
+  /trucks/{truckId}/documents:
+    post:
+      summary: Upload Truck Document
+      tags: [trucks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: truckId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [documentType, file, expiryDate]
+              properties:
+                documentType:
+                  type: string
+                  enum: [RC, INSURANCE, PERMIT, FITNESS]
+                file:
+                  type: string
+                  format: binary
+                expiryDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Document uploaded
+
+  /inspections:
+    post:
+      summary: Create Inspection
+      tags: [inspections]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionCreateRequest'
+      responses:
+        '201':
+          description: Inspection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inspection'
+
+  /inspections/{inspectionId}/photos:
+    post:
+      summary: Upload Inspection Photos
+      tags: [inspections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: inspectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Photos uploaded
+
+  /ledger:
+    get:
+      summary: Get Ledger Balance
+      tags: [ledger]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ledger balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerBalance'
+              example:
+                operatorId: "USR-OP-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                balance: 50000
+                currency: "INR"
+                updatedAt: "2024-01-15T10:30:00Z"
+
+  /ledger/transactions:
+    get:
+      summary: List Ledger Transactions
+      tags: [ledger]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CREDIT, DEBIT]
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLedgerTransactions'
+
+  /admin/dashboard:
+    get:
+      summary: Get Admin Dashboard
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+              example:
+                dau: 1250
+                bookings: 150
+                bids: 300
+                flaggedIncidents: 5
+                totalRevenue: 2500000
+
+  /admin/overrides:
+    get:
+      summary: List Override Requests
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED]
+      responses:
+        '200':
+          description: List of override requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOverrideRequests'
+
+    post:
+      summary: Create Override Request
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OverrideCreateRequest'
+      responses:
+        '201':
+          description: Override request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverrideRequest'
+
+  /admin/overrides/{overrideId}/approve:
+    post:
+      summary: Approve Override Request
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+            example:
+              reason: "Approved by second approver after review"
+      responses:
+        '200':
+          description: Override approved
+
+  /admin/overrides/{overrideId}/reject:
+    post:
+      summary: Reject Override Request
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Override rejected
+
+  /admin/audit:
+    get:
+      summary: Get Audit Logs
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogs'
+
+  /admin/kyc/decrypt:
+    post:
+      summary: Decrypt KYC Data (Admin Only)
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kycId]
+              properties:
+                kycId:
+                  type: string
+      responses:
+        '200':
+          description: Decrypted KYC data
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /franchise/dashboard:
+    get:
+      summary: Get Franchise Dashboard
+      tags: [franchise]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Franchise dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FranchiseDashboard'
+
+  /franchise/targets:
+    get:
+      summary: Get Franchise Targets
+      tags: [franchise]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Franchise targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FranchiseTarget'
+
+  /franchise/reports:
+    get:
+      summary: Get Franchise Reports
+      tags: [franchise]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Franchise reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FranchiseReport'
 
   /acs/blocks/{entityType}/{entityId}:
     get:
@@ -411,11 +1236,13 @@ paths:
           schema:
             type: string
             enum: [user, truck, driver, operator, shipment, device]
+          example: "user"
         - name: entityId
           in: path
           required: true
           schema:
             type: string
+          example: "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
       responses:
         '200':
           description: List of blocks
@@ -425,6 +1252,64 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/BlockEntry'
+              example:
+                - id: "BLK-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  entityType: "user"
+                  entityId: "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  reason: "Multiple failed KYC attempts"
+                  severity: "HIGH"
+                  createdAt: "2024-01-15T09:00:00Z"
+
+  /acs/rules:
+    get:
+      summary: List ACS Rules
+      tags: [acs]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of ACS rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcsRule'
+
+  /webhooks/register:
+    post:
+      summary: Register Webhook
+      tags: [webhooks]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [booking.created, booking.finalized, shipment.assigned, shipment.completed, payment.succeeded, acs.block]
+            example:
+              url: "https://example.com/webhook"
+              events:
+                - "booking.created"
+                - "shipment.completed"
+      responses:
+        '201':
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
 
 components:
   securitySchemes:
@@ -440,6 +1325,7 @@ components:
       schema:
         type: string
       description: Filter by status
+      example: "OPEN"
     Page:
       name: page
       in: query
@@ -447,6 +1333,8 @@ components:
         type: integer
         default: 1
         minimum: 1
+      description: Page number
+      example: 1
     PageSize:
       name: pageSize
       in: query
@@ -455,6 +1343,8 @@ components:
         default: 20
         minimum: 1
         maximum: 100
+      description: Number of items per page
+      example: 20
 
   schemas:
     ErrorResponse:
@@ -463,8 +1353,10 @@ components:
       properties:
         code:
           type: string
+          example: "VALIDATION_ERROR"
         message:
           type: string
+          example: "Invalid request data"
         details:
           type: object
 
@@ -477,6 +1369,19 @@ components:
           type: string
         user:
           $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [SHIPPER, OPERATOR, DRIVER, ADMIN, FRANCHISE_UNIT, FRANCHISE_DISTRICT, KYC_ADMIN]
+        name:
+          type: string
+        mobileMasked:
+          type: string
 
     Booking:
       type: object
@@ -577,6 +1482,9 @@ components:
         status:
           type: string
           enum: [ACTIVE, ACCEPTED, REJECTED, EXPIRED]
+        createdAt:
+          type: string
+          format: date-time
 
     BidCreateRequest:
       type: object
@@ -598,6 +1506,23 @@ components:
         status:
           type: string
           enum: [ASSIGNED, DRIVER_PENDING_APPROVAL, IN_TRANSIT, COMPLETED, FAILED]
+        driverId:
+          type: string
+        truckId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedShipments:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shipment'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
 
     Pod:
       type: object
@@ -612,20 +1537,23 @@ components:
           type: string
           format: date-time
 
-    BlockEntry:
+    GpsPing:
       type: object
       properties:
-        id:
+        shipmentId:
           type: string
-        entityType:
-          type: string
-        entityId:
-          type: string
-        reason:
-          type: string
-        severity:
-          type: string
-        createdAt:
+        coordinates:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        speed:
+          type: number
+        heading:
+          type: number
+        timestamp:
           type: string
           format: date-time
 
@@ -648,17 +1576,22 @@ components:
         heading:
           type: number
 
-    User:
+    BlockEntry:
       type: object
       properties:
         id:
           type: string
-        role:
+        entityType:
           type: string
-        name:
+        entityId:
           type: string
-        mobileMasked:
+        reason:
           type: string
+        severity:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     PaginatedBookings:
       type: object
@@ -668,40 +1601,390 @@ components:
           items:
             $ref: '#/components/schemas/Booking'
         meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    KycRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        documentType:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, VERIFIED, REJECTED]
+        fileUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Truck:
+      type: object
+      properties:
+        id:
+          type: string
+        registrationNumber:
+          type: string
+        operatorId:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, BLOCKED, INACTIVE]
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/TruckDocument'
+
+    TruckDocument:
+      type: object
+      properties:
+        type:
+          type: string
+        fileUrl:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+
+    TruckCreateRequest:
+      type: object
+      required: [registrationNumber]
+      properties:
+        registrationNumber:
+          type: string
+        vehicleType:
+          type: string
+
+    PaginatedTrucks:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Truck'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    Inspection:
+      type: object
+      properties:
+        id:
+          type: string
+        truckId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, PASSED, FAILED]
+        photos:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    InspectionCreateRequest:
+      type: object
+      required: [truckId]
+      properties:
+        truckId:
+          type: string
+        notes:
+          type: string
+
+    LedgerBalance:
+      type: object
+      properties:
+        operatorId:
+          type: string
+        balance:
+          type: number
+        currency:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    LedgerTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [CREDIT, DEBIT]
+        amount:
+          type: number
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedLedgerTransactions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerTransaction'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    OverrideRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        action:
+          type: string
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        requestedBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OverrideCreateRequest:
+      type: object
+      required: [entityType, entityId, action, reason]
+      properties:
+        entityType:
+          type: string
+        entityId:
+          type: string
+        action:
+          type: string
+        reason:
+          type: string
+
+    PaginatedOverrideRequests:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OverrideRequest'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    AdminDashboard:
+      type: object
+      properties:
+        dau:
+          type: integer
+        bookings:
+          type: integer
+        bids:
+          type: integer
+        flaggedIncidents:
+          type: integer
+        totalRevenue:
+          type: number
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        action:
+          type: string
+        performedBy:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
           type: object
-          properties:
-            page:
-              type: integer
-            pageSize:
-              type: integer
-            total:
-              type: integer
-            totalPages:
-              type: integer
+
+    PaginatedAuditLogs:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    FranchiseDashboard:
+      type: object
+      properties:
+        dailyActivity:
+          type: integer
+        inspectionsQueue:
+          type: integer
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/FranchiseTarget'
+
+    FranchiseTarget:
+      type: object
+      properties:
+        type:
+          type: string
+        target:
+          type: number
+        current:
+          type: number
+        period:
+          type: string
+
+    FranchiseReport:
+      type: object
+      properties:
+        period:
+          type: string
+        bookings:
+          type: integer
+        revenue:
+          type: number
+        inspections:
+          type: integer
+
+    AcsRule:
+      type: object
+      properties:
+        id:
+          type: string
+        priority:
+          type: integer
+        condition:
+          type: string
+        action:
+          type: string
+        severity:
+          type: string
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
 
   responses:
     BadRequest:
       description: Bad request
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "VALIDATION_ERROR"
+            message: "Invalid request data"
+            details:
+              field: "mobile"
+              error: "Invalid format"
     Unauthorized:
       description: Unauthorized
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "UNAUTHORIZED"
+            message: "Invalid or missing authentication token"
     Forbidden:
       description: Forbidden
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "FORBIDDEN"
+            message: "Insufficient permissions"
     NotFound:
       description: Not found
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "NOT_FOUND"
+            message: "Resource not found"
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            example: 0
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "RATE_LIMIT_EXCEEDED"
+            message: "Too many requests. Please try again later."
 
