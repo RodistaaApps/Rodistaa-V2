@@ -1,11 +1,12 @@
 /**
  * Login Page for Admin & Franchise Portals
+ * Uses Phone/OTP authentication
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Form, Input, Button, Card, Typography, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { PhoneOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useAuth } from '../hooks/useAuth';
 
 const { Title, Text } = Typography;
@@ -14,17 +15,35 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [phone, setPhone] = useState('');
+  const [form] = Form.useForm();
 
-  const handleLogin = async (values: { email: string; password: string }) => {
+  const handleSendOtp = async (values: { phone: string }) => {
     setLoading(true);
     try {
-      await login(values.email, values.password);
+      setPhone(values.phone);
+      // In mock mode, OTP is always 123456
+      message.success('OTP sent! (Mock OTP: 123456)');
+      setStep('otp');
+    } catch (error: any) {
+      message.error('Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (values: { otp: string }) => {
+    setLoading(true);
+    try {
+      // Mock login - replace with actual API call
+      await login(phone, values.otp);
       message.success('Login successful!');
       
-      // Redirect based on role (will be handled by protected routes)
+      // Redirect based on role
       router.push('/admin/dashboard');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      message.error(error.response?.data?.message || 'Login failed. Please check your OTP.');
     } finally {
       setLoading(false);
     }
@@ -38,46 +57,86 @@ export default function LoginPage() {
           <Text style={styles.subtitle}>Admin & Franchise Portal</Text>
         </div>
 
-        <Form
-          name="login"
-          onFinish={handleLogin}
-          layout="vertical"
-          size="large"
-        >
-          <Form.Item
-            name="email"
-            rules={[
-              { required: true, message: 'Please enter your email' },
-              { type: 'email', message: 'Please enter a valid email' },
-            ]}
+        {step === 'phone' ? (
+          <Form
+            form={form}
+            name="phone"
+            onFinish={handleSendOtp}
+            layout="vertical"
+            size="large"
           >
-            <Input
-              prefix={<UserOutlined />}
-              placeholder="Email"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Please enter your password' }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder="Password"
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              block
+            <Form.Item
+              name="phone"
+              rules={[
+                { required: true, message: 'Please enter your phone number' },
+                { pattern: /^[0-9]{10}$/, message: 'Please enter a valid 10-digit phone number' },
+              ]}
             >
-              Login
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                prefix={<PhoneOutlined />}
+                placeholder="Phone Number (10 digits)"
+                maxLength={10}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+              >
+                Send OTP
+              </Button>
+            </Form.Item>
+          </Form>
+        ) : (
+          <Form
+            name="otp"
+            onFinish={handleLogin}
+            layout="vertical"
+            size="large"
+          >
+            <div style={styles.otpInfo}>
+              <Text>Enter OTP sent to {phone}</Text>
+            </div>
+
+            <Form.Item
+              name="otp"
+              rules={[
+                { required: true, message: 'Please enter OTP' },
+                { pattern: /^[0-9]{6}$/, message: 'OTP must be 6 digits' },
+              ]}
+            >
+              <Input
+                prefix={<SafetyOutlined />}
+                placeholder="Enter 6-digit OTP"
+                maxLength={6}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                style={{ marginBottom: 12 }}
+              >
+                Login
+              </Button>
+              <Button
+                onClick={() => {
+                  setStep('phone');
+                  form.resetFields();
+                }}
+                block
+              >
+                Change Phone Number
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
       </Card>
     </div>
   );
@@ -108,6 +167,11 @@ const styles = {
   subtitle: {
     color: '#666666',
     fontSize: 16,
+  } as React.CSSProperties,
+  otpInfo: {
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#666666',
   } as React.CSSProperties,
 };
 
