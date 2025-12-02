@@ -9,6 +9,7 @@ import { BookingsController } from '../modules/bookings/bookings.controller';
 import { BidsController } from '../modules/bids/bids.controller';
 import { ShipmentsController } from '../modules/shipments/shipments.controller';
 import { TrucksController } from '../modules/trucks/trucks.controller';
+import { LedgerController } from '../modules/ledger/ledger.controller';
 import * as shipmentsService from '../modules/shipments/shipments.service';
 import * as bidsService from '../modules/bids/bids.service';
 
@@ -18,6 +19,7 @@ export async function registerRoutes(server: FastifyInstance) {
   const bidsController = new BidsController();
   const shipmentsController = new ShipmentsController();
   const trucksController = new TrucksController();
+  const ledgerController = new LedgerController();
 
   // ==================== Auth Routes ====================
   server.post('/auth/login', async (req, reply) => {
@@ -149,6 +151,15 @@ export async function registerRoutes(server: FastifyInstance) {
 
   server.post('/trucks/:truckId/inspect', async (req, reply) => {
     return trucksController.createInspection(req, reply);
+  });
+
+  // ==================== Ledger Routes ====================
+  server.get('/operators/:operatorId/balance', async (req, reply) => {
+    return ledgerController.getBalance(req, reply);
+  });
+
+  server.get('/operators/:operatorId/ledger', async (req, reply) => {
+    return ledgerController.getLedgerEntries(req, reply);
   });
 
   // TODO: Additional routes to implement:
