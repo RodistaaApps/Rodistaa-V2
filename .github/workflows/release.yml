@@ -89,14 +89,16 @@ jobs:
           DATE=$(date +%Y%m%d)
           PACKAGE_NAME="rodistaa_release_${DATE}_${VERSION}.zip"
           
-          # Create release package excluding node_modules, .git, etc.
+          # Create release package excluding development files
+          # Note: dist/ is INCLUDED (contains compiled application)
           zip -r $PACKAGE_NAME . \
             -x "node_modules/*" \
             -x ".git/*" \
             -x "*.log" \
             -x "coverage/*" \
-            -x "dist/*" \
-            -x ".env*"
+            -x ".env*" \
+            -x "*.test.ts" \
+            -x "*.spec.ts"
           
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
 

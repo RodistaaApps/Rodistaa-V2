@@ -72,8 +72,12 @@ jobs:
 
       - name: Deploy to staging
         run: |
-          echo "Deploying to staging environment"
-          # Add deployment commands here (kubectl, helm, etc.)
+          echo "⚠️  DEPLOYMENT PLACEHOLDER - Configure before production use"
+          echo "Replace this step with actual deployment commands:"
+          echo "  - kubectl apply -f k8s/staging/"
+          echo "  - helm upgrade --install rodistaa ./helm-chart"
+          echo "  - terraform apply -var-file=staging.tfvars"
+          exit 1  # Fail workflow to prevent false success
 
   deploy-production:
     name: Deploy to Production
@@ -90,11 +94,18 @@ jobs:
 
       - name: Deploy to production
         run: |
-          echo "Deploying to production environment"
-          # Add deployment commands here (kubectl, helm, etc.)
+          echo "⚠️  DEPLOYMENT PLACEHOLDER - Configure before production use"
+          echo "Replace this step with actual deployment commands:"
+          echo "  - kubectl apply -f k8s/production/"
+          echo "  - helm upgrade --install rodistaa ./helm-chart --namespace production"
+          echo "  - terraform apply -var-file=production.tfvars"
+          exit 1  # Fail workflow to prevent false success
 
       - name: Run post-deployment tests
         run: |
-          echo "Running post-deployment smoke tests"
-          # Add smoke test commands
+          echo "⚠️  SMOKE TEST PLACEHOLDER - Configure before production use"
+          echo "Replace with actual smoke tests:"
+          echo "  - curl -f https://api.rodistaa.com/health"
+          echo "  - node packages/backend/scripts/smoke_test_comprehensive.js"
+          exit 1  # Fail workflow to prevent false success
 
