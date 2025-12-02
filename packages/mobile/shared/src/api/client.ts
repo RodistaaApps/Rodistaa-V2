@@ -57,18 +57,8 @@ class ApiClient {
     return response.json();
   }
 
-  get<T>(endpoint: string, params?: Record<string, any>) {
-    let url = endpoint;
-    if (params) {
-      const queryString = Object.keys(params)
-        .filter((key) => params[key] !== undefined)
-        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&');
-      if (queryString) {
-        url += `?${queryString}`;
-      }
-    }
-    return this.request<T>(url, { method: 'GET' });
+  get<T>(endpoint: string) {
+    return this.request<T>(endpoint, { method: 'GET' });
   }
 
   post<T>(endpoint: string, body: any) {

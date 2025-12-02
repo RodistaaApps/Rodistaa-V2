@@ -81,7 +81,7 @@ export function useGetBooking(bookingId: string) {
 export function useGetBookings(filters?: any) {
   return useQuery({
     queryKey: ['bookings', filters],
-    queryFn: () => apiClient.get('/bookings', filters),
+    queryFn: () => apiClient.get('/bookings', { params: filters }),
   });
 }
 

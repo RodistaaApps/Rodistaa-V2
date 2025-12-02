@@ -184,7 +184,7 @@ export class TruckInspectionService {
       },
     });
 
-    return trucks.map((truck: { id: string; nextInspectionDue: Date | null }) => ({
+    return trucks.map((truck) => ({
       truckId: truck.id,
       nextInspectionDue: truck.nextInspectionDue!,
       daysUntilDue: differenceInDays(truck.nextInspectionDue!, now),

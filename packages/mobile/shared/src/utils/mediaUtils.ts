@@ -73,7 +73,7 @@ export async function pickImage(
       type: 'image',
       name: asset.uri.split('/').pop() || 'image.jpg',
       size: fileInfo.exists ? fileInfo.size || 0 : 0,
-      base64: asset.base64 || undefined,
+      base64: asset.base64,
     };
   } catch (error) {
     console.error('Pick image error:', error);

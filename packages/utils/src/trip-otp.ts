@@ -200,7 +200,7 @@ export class TripOTPService {
     }
 
     // BUSINESS RULE: Mark OTP as verified and complete shipment
-    await this.prisma.$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx) => {
       // Update OTP record
       await tx.tripOTP.update({
         where: {

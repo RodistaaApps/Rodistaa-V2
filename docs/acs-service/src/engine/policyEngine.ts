@@ -35,7 +35,7 @@ export async function onEvent(event: any, ctx: any) {
 
       default:
         // fallback to default handler: resolve templates then log
-        return [{ ok: true, info: "unknown-action-stub", actionDef }];
+        return { ok: true, info: "unknown-action-stub", actionDef };
     }
   };
 
