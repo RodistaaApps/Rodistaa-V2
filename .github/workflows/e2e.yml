@@ -74,6 +74,20 @@ jobs:
           LOCAL_KMS_KEY_ID: test-key
           ACS_RULES_PATH: ../../acs_rules_top25.yaml
 
+      - name: Wait for backend to be ready
+        run: |
+          echo "Waiting for backend to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:4000/health > /dev/null 2>&1; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30: Backend not ready yet, waiting..."
+            sleep 2
+          done
+          echo "Backend failed to start within 60 seconds"
+          exit 1
+
       - name: Install Playwright
         run: |
           cd packages/portal
