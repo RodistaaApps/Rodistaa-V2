@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@rodistaa/app-shared'],
+  transpilePackages: [
+    '@rodistaa/app-shared',
+    'antd',
+    '@ant-design/icons',
+    'rc-util',
+    'rc-pagination',
+    'rc-picker',
+    'rc-table',
+    'rc-tree',
+  ],
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors. Type safety improvements are follow-up work.
@@ -13,6 +22,13 @@ const nextConfig = {
   // Rodistaa theme configuration
   compiler: {
     styledComponents: true,
+  },
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
+    return config;
   },
 }
 
