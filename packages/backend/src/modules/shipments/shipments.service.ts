@@ -8,7 +8,7 @@ import * as bookingsRepo from '../bookings/bookings.repository';
 import * as bidsRepo from '../bids/bids.repository';
 import { evaluateAcsRules } from '../acs-adapter';
 import logger from 'pino';
-import { Shipment, ShipmentStatus } from '@rodistaa/app-shared';
+import { Shipment, ShipmentStatus, BookingStatus, Bid } from '@rodistaa/app-shared';
 import crypto from 'crypto';
 
 const log = logger({ name: 'shipments-service' });
@@ -22,15 +22,19 @@ export async function createShipmentFromBooking(bookingId: string): Promise<Ship
     throw new Error('Booking not found');
   }
 
-  if (booking.status !== 'FINALIZED') {
+  if (booking.status !== BookingStatus.FINALIZED) {
     throw new Error('Booking must be finalized before creating shipment');
   }
 
-  if (!booking.finalizedBidId) {
+  // Get the accepted/finalized bid from booking
+  const bids = await bidsRepo.listBidsByBooking(bookingId);
+  const finalizedBid = bids.find(b => b.status === 'ACCEPTED');
+  
+  if (!finalizedBid) {
     throw new Error('Booking has no finalized bid');
   }
 
-  const bid = await bidsRepo.getBidById(booking.finalizedBidId);
+  const bid = finalizedBid as Bid & { driverId?: string; truckId?: string };
   if (!bid) {
     throw new Error('Finalized bid not found');
   }
@@ -78,11 +82,11 @@ export async function startShipment(
     throw new Error('Unauthorized: Only assigned driver can start shipment');
   }
 
-  if (shipment.status !== 'PENDING') {
+  if (shipment.status !== ShipmentStatus.ASSIGNED) {
     throw new Error('Shipment cannot be started in current status');
   }
 
-  return shipmentsRepo.updateShipmentStatus(shipmentId, 'IN_TRANSIT');
+  return shipmentsRepo.updateShipmentStatus(shipmentId, ShipmentStatus.IN_TRANSIT);
 }
 
 /**
@@ -160,8 +164,8 @@ export async function uploadPOD(
     throw new Error('Shipment not found');
   }
 
-  if (shipment.status !== 'IN_TRANSIT' && shipment.status !== 'DELIVERED') {
-    throw new Error('POD can only be uploaded for shipments in transit or delivered');
+  if (shipment.status !== ShipmentStatus.IN_TRANSIT && shipment.status !== ShipmentStatus.AT_DESTINATION) {
+    throw new Error('POD can only be uploaded for shipments in transit or at destination');
   }
 
   // Evaluate ACS rules for POD upload (duplicate detection)
@@ -208,8 +212,8 @@ export async function uploadPOD(
     otp,
   });
 
-  // Update shipment status to DELIVERED
-  await shipmentsRepo.updateShipmentStatus(shipmentId, 'DELIVERED');
+  // Update shipment status to OTP_PENDING
+  await shipmentsRepo.updateShipmentStatus(shipmentId, ShipmentStatus.OTP_PENDING);
 
   log.info({ shipmentId, fileHash: pod.fileHash }, 'POD uploaded');
 
@@ -232,8 +236,8 @@ export async function completeShipment(
     throw new Error('Shipment not found');
   }
 
-  if (shipment.status !== 'DELIVERED') {
-    throw new Error('Shipment must be delivered before completion');
+  if (shipment.status !== ShipmentStatus.OTP_PENDING) {
+    throw new Error('Shipment must have POD uploaded before completion');
   }
 
   // Verify OTP (would check against stored POD OTP in production)
@@ -243,7 +247,7 @@ export async function completeShipment(
   }
 
   // Update shipment status
-  const completed = await shipmentsRepo.updateShipmentStatus(shipmentId, 'COMPLETED');
+  const completed = await shipmentsRepo.updateShipmentStatus(shipmentId, ShipmentStatus.COMPLETED);
 
   log.info({ shipmentId }, 'Shipment completed');
 

@@ -189,13 +189,17 @@ function mapRowToBid(row: any): Bid {
     id: row.id,
     bookingId: row.booking_id,
     operatorId: row.operator_id,
-    truckId: row.truck_id,
-    driverId: row.driver_id || undefined,
     amount: parseFloat(row.amount),
-    notes: row.notes || undefined,
     status: row.status as BidStatus,
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at?.toISOString(),
+    biddingFee: parseFloat(row.bidding_fee || '0'),
+    ledgerDeducted: row.ledger_deducted || false,
+    ledgerTransactionId: row.ledger_transaction_id,
+    modificationsCount: parseInt(row.modifications_count || '0'),
+    modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined,
+    acceptedAt: row.accepted_at ? new Date(row.accepted_at) : undefined,
+    rejectedAt: row.rejected_at ? new Date(row.rejected_at) : undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 

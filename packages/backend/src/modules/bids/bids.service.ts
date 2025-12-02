@@ -81,9 +81,9 @@ export async function createBid(
   log.info({ bidId: bid.id, bookingId: input.bookingId, operatorId }, 'Bid created');
 
   // Update booking status to NEGOTIATION if first bid
-  if (booking.status === 'OPEN') {
+  if (booking.status === BookingStatus.OPEN) {
     await bookingsRepo.updateBooking(input.bookingId, {
-      status: 'NEGOTIATION',
+      status: BookingStatus.NEGOTIATION,
     });
   }
 
@@ -118,7 +118,7 @@ export async function autoFinalizeBid(bookingId: string): Promise<{ bid: Bid | n
     if (!lowestBid) {
       // No valid bids, cancel booking
       await bookingsRepo.updateBooking(bookingId, {
-        status: 'CANCELLED',
+        status: BookingStatus.CANCELLED,
         cancellationReason: 'No bids received before auto-finalize deadline',
       });
       return { bid: null, finalized: false };
@@ -126,7 +126,7 @@ export async function autoFinalizeBid(bookingId: string): Promise<{ bid: Bid | n
 
     // Finalize the bid
     await bidsRepo.updateBid(lowestBid.id, {
-      status: 'ACCEPTED',
+      status: BidStatus.ACCEPTED,
     });
 
     // Reject all other bids
@@ -134,14 +134,14 @@ export async function autoFinalizeBid(bookingId: string): Promise<{ bid: Bid | n
     for (const bid of validBids) {
       if (bid.id !== lowestBid.id) {
         await bidsRepo.updateBid(bid.id, {
-          status: 'REJECTED',
+          status: BidStatus.REJECTED,
         });
       }
     }
 
     // Update booking
     await bookingsRepo.updateBooking(bookingId, {
-      status: 'FINALIZED',
+      status: BookingStatus.AUTO_FINALIZED,
       finalizedBidId: lowestBid.id,
     });
 
@@ -163,8 +163,8 @@ export async function finalizeBid(bidId: string, adminId: string): Promise<Bid> 
     throw new Error('Bid not found');
   }
 
-  if (bid.status !== 'PENDING') {
-    throw new Error('Bid is not in pending status');
+  if (bid.status !== BidStatus.ACTIVE) {
+    throw new Error('Bid is not in active status');
   }
 
   const booking = await bookingsRepo.getBookingById(bid.bookingId);
@@ -174,7 +174,7 @@ export async function finalizeBid(bidId: string, adminId: string): Promise<Bid> 
 
   // Update bid status
   await bidsRepo.updateBid(bidId, {
-    status: 'ACCEPTED',
+    status: BidStatus.ACCEPTED,
   });
 
   // Reject all other bids
@@ -182,14 +182,14 @@ export async function finalizeBid(bidId: string, adminId: string): Promise<Bid> 
   for (const otherBid of validBids) {
     if (otherBid.id !== bidId) {
       await bidsRepo.updateBid(otherBid.id, {
-        status: 'REJECTED',
+        status: BidStatus.REJECTED,
       });
     }
   }
 
   // Update booking
   await bookingsRepo.updateBooking(bid.bookingId, {
-    status: 'FINALIZED',
+    status: BookingStatus.FINALIZED,
     finalizedBidId: bidId,
   });
 
@@ -229,7 +229,7 @@ export async function updateBid(
     throw new Error('Unauthorized: Cannot modify another operator\'s bid');
   }
 
-  if (bid.status !== 'PENDING') {
+  if (bid.status !== BidStatus.ACTIVE) {
     throw new Error('Cannot modify bid in current status');
   }
 

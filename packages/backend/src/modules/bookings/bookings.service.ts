@@ -6,7 +6,7 @@
 import * as bookingsRepo from './bookings.repository';
 import { evaluateAcsRules } from '../acs-adapter';
 import logger from 'pino';
-import { generateBookingId, Booking } from '@rodistaa/app-shared';
+import { generateBookingId, Booking, BookingStatus } from '@rodistaa/app-shared';
 
 const log = logger({ name: 'bookings-service' });
 
@@ -118,11 +118,14 @@ export async function getBookingById(bookingId: string): Promise<Booking | null>
  */
 export async function listBookings(filters: {
   shipperId?: string;
-  status?: string;
+  status?: BookingStatus | string;
   page?: number;
   limit?: number;
 }): Promise<{ data: Booking[]; total: number; page: number; limit: number; totalPages: number }> {
-  const result = await bookingsRepo.listBookings(filters);
+  const result = await bookingsRepo.listBookings({
+    ...filters,
+    status: filters.status as BookingStatus,
+  });
   const page = filters.page || 1;
   const limit = filters.limit || 20;
   const totalPages = Math.ceil(result.total / limit);
@@ -168,7 +171,7 @@ export async function cancelBooking(
   }
 
   return updateBooking(bookingId, {
-    status: 'CANCELLED',
+    status: BookingStatus.CANCELLED,
     cancellationReason: reason,
   });
 }

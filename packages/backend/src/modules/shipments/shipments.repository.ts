@@ -160,12 +160,22 @@ function mapRowToShipment(row: any): Shipment {
     id: row.id,
     bookingId: row.booking_id,
     bidId: row.bid_id,
+    shipperId: row.shipper_id,
     operatorId: row.operator_id,
     driverId: row.driver_id,
     truckId: row.truck_id,
     status: row.status as ShipmentStatus,
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at?.toISOString(),
+    pickup: typeof row.pickup === 'string' ? JSON.parse(row.pickup) : row.pickup,
+    drop: typeof row.drop === 'string' ? JSON.parse(row.drop) : row.drop,
+    goods: typeof row.goods === 'string' ? JSON.parse(row.goods) : row.goods,
+    agreedPrice: parseFloat(row.agreed_price),
+    tracking: typeof row.tracking === 'string' ? JSON.parse(row.tracking) : (row.tracking || { pings: [], lastUpdate: null }),
+    photos: {
+      pickup: row.pickup_photo ? JSON.parse(row.pickup_photo) : undefined,
+      drop: row.drop_photo ? JSON.parse(row.drop_photo) : undefined,
+    },
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 

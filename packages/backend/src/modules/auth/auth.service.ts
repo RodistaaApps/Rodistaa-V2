@@ -9,6 +9,8 @@ import { query } from '../../db/connection';
 import logger from 'pino';
 import { generateUserId, UserRole } from '@rodistaa/app-shared';
 
+export { UserRole };
+
 const log = logger({ name: 'auth-service' });
 
 export interface LoginRequest {
@@ -147,11 +149,11 @@ export function generateTokens(user: UserContext, deviceId?: string): TokenPair 
 
   const token = jwt.sign(payload, config.jwt.secret, {
     expiresIn: config.jwt.expiresIn,
-  });
+  } as jwt.SignOptions);
 
   const refreshToken = jwt.sign({ userId: user.id }, config.jwt.secret, {
     expiresIn: '30d',
-  });
+  } as jwt.SignOptions);
 
   return { token, refreshToken };
 }

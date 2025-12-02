@@ -50,12 +50,16 @@ export async function createBooking(input: BookingCreateInput): Promise<Booking>
         input.expectedPrice || null,
         input.priceRangeMin,
         input.priceRangeMax,
-        'OPEN',
+        BookingStatus.OPEN,
         input.autoFinalizeAt || null,
       ]
     );
 
-    return getBookingById(bookingId);
+    const booking = await getBookingById(bookingId);
+    if (!booking) {
+      throw new Error('Failed to retrieve created booking');
+    }
+    return booking;
   } catch (error: any) {
     log.error({ error, bookingId }, 'Failed to create booking');
     throw new Error('Failed to create booking');
@@ -193,18 +197,16 @@ function mapRowToBooking(row: any): Booking {
     drop: typeof row.drop === 'string' ? JSON.parse(row.drop) : row.drop,
     goods: typeof row.goods === 'string' ? JSON.parse(row.goods) : row.goods,
     tonnage: parseFloat(row.tonnage),
-    expectedPrice: row.expected_price ? parseFloat(row.expected_price) : undefined,
+    expectedPrice: row.expected_price ? parseFloat(row.expected_price) : 0,
     priceRange: {
       min: parseFloat(row.price_range_min),
       max: parseFloat(row.price_range_max),
     },
+    bidsCount: row.bids_count !== null && row.bids_count !== undefined ? parseInt(row.bids_count) : 0,
     status: row.status as BookingStatus,
-    finalizedBidId: row.finalized_bid_id,
     cancellationReason: row.cancellation_reason,
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at?.toISOString(),
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
-
-import { generateBookingId, Booking, BookingStatus } from '@rodistaa/app-shared';
 

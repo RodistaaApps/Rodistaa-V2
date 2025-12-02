@@ -16,7 +16,7 @@ export class KycController {
   async upload(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = (req as any).user;
-      const data = await req.file();
+      const data = await (req as any).file();
 
       if (!data) {
         return reply.code(400).send({

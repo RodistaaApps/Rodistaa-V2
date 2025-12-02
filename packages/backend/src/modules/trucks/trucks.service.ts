@@ -96,7 +96,7 @@ export async function blockTruck(
   }
 
   return trucksRepo.updateTruck(truckId, {
-    status: 'BLOCKED',
+    status: TruckStatus.BLOCKED,
     blockedReason: reason,
   }, adminId);
 }
@@ -111,7 +111,7 @@ export async function unblockTruck(truckId: string): Promise<Truck> {
   }
 
   return trucksRepo.updateTruck(truckId, {
-    status: 'ACTIVE',
+    status: TruckStatus.ACTIVE,
   });
 }
 
@@ -189,7 +189,7 @@ export async function checkDocumentExpiry(): Promise<void> {
           // Auto-block truck if critical document expired
           if (doc.documentType === 'FITNESS' || doc.documentType === 'PERMIT') {
             await trucksRepo.updateTruck(doc.truckId, {
-              status: 'BLOCKED',
+              status: TruckStatus.BLOCKED,
               blockedReason: `${doc.documentType} expired`,
             });
           }

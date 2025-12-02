@@ -28,6 +28,7 @@ export class TrucksController {
       const truck = await trucksService.createTruck(
         user.id,
         {
+          operatorId: user.id,
           registrationNumber: payload.registrationNumber,
           vehicleType: payload.vehicleType,
           capacityTons: payload.capacityTons,
