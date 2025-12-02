@@ -3,10 +3,16 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@rodistaa/mobile-shared": ["../shared/src"],
-      "@rodistaa/app-shared": ["../../app-shared/src"]
+      "@rodistaa/mobile-shared": [
+        "../shared/src"
+      ],
+      "@rodistaa/app-shared": [
+        "../../app-shared/src"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }
-
