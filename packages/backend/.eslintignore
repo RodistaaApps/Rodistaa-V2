@@ -1,0 +1,19 @@
+# ESLint Ignore File for Backend Package
+
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Scripts (CommonJS Node.js scripts, not TypeScript)
+scripts/
+knexfile.js
+
+# Generated files
+src/generated/
+
+# Test coverage
+coverage/
+
