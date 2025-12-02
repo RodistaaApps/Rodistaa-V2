@@ -5,8 +5,9 @@
 
 import path from 'path';
 import { loadRulesFromFile, watchRulesFile, getRules } from './ruleLoader';
-import { evaluateRules } from './evaluator';
-import * as actions from './actions';
+import { evaluateRules, defaultActionHandler } from './evaluator';
+import { setDbAdapter } from './actions';
+import { MockDbAdapter } from './dbAdapter';
 
 const RULE_FILE = path.join(__dirname, '..', '..', '..', 'acs_rules_top25.yaml');
 
@@ -25,30 +26,9 @@ async function main() {
       console.log(`   - ${r.id} (priority: ${r.priority}, severity: ${r.severity})`);
     });
 
-    // Setup action handler
-    const actionHandler = async (actionDef: any, evalCtx: any) => {
-      const key = Object.keys(actionDef)[0];
-      const payload = actionDef[key];
-
-      switch (key) {
-        case 'freezeShipment':
-          return actions.freezeShipmentAction(payload, evalCtx);
-        case 'blockEntity':
-          return actions.blockEntityAction(payload, evalCtx);
-        case 'createTicket':
-          return actions.createTicketAction(payload, evalCtx);
-        case 'emitEvent':
-          return actions.emitEventAction(payload, evalCtx);
-        case 'rejectRequest':
-          return actions.rejectRequestAction(payload, evalCtx);
-        case 'flagWatchlist':
-          return actions.flagWatchlistAction(payload, evalCtx);
-        case 'requireManualReview':
-          return actions.requireManualReviewAction(payload, evalCtx);
-        default:
-          return { ok: true, info: 'unknown-action-stub', actionDef };
-      }
-    };
+    // Setup mock DB adapter for CLI testing
+    const mockDb = new MockDbAdapter();
+    setDbAdapter(mockDb);
 
     // Test with sample GPS ping event
     console.log('\n🧪 Testing with sample GPS jump event...');
@@ -64,7 +44,7 @@ async function main() {
       route: 'gps.ping',
     };
 
-    const matches = await evaluateRules(testEvent, testCtx, {}, actionHandler);
+    const matches = await evaluateRules(testEvent, testCtx, {}, defaultActionHandler, mockDb);
 
     if (matches.length > 0) {
       console.log(`\n⚠️  ${matches.length} rule(s) matched:`);

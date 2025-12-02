@@ -4,6 +4,8 @@
  */
 
 import { Rule, getRules } from './ruleLoader';
+import { actionHandlers, getDbAdapter } from './actions';
+import { writeAuditEntry, createAuditEntry } from './auditWriter';
 import Jexl from 'jexl';
 import logger from 'pino';
 
@@ -14,6 +16,7 @@ export type EvalContext = {
   ctx?: any;
   system?: any;
   db?: any;
+  ruleId?: string;
 };
 
 export type RuleMatch = {
@@ -22,6 +25,7 @@ export type RuleMatch = {
   matched: boolean;
   evaluationResult?: any;
   actionResults?: any[];
+  auditId?: string;
 };
 
 export async function defaultActionHandler(actionDef: any, context: EvalContext) {
@@ -33,13 +37,27 @@ export async function defaultActionHandler(actionDef: any, context: EvalContext)
   for (const key of actionKeys) {
     const payload = actionDef[key];
 
+    // Resolve JEXL expressions in payload
     const resolvedPayload: any = {};
     for (const k of Object.keys(payload || {})) {
       const v = payload[k];
-      if (typeof v === 'string') {
+      if (typeof v === 'string' && v.includes('{{')) {
         try {
-          const res = await Jexl.eval(v, context);
-          resolvedPayload[k] = res;
+          // Replace {{variable}} with JEXL evaluation
+          let resolved = v;
+          const matches = v.match(/\{\{([^}]+)\}\}/g);
+          if (matches) {
+            for (const match of matches) {
+              const expr = match.replace(/\{\{|\}\}/g, '').trim();
+              try {
+                const res = await Jexl.eval(expr, context);
+                resolved = resolved.replace(match, res);
+              } catch {
+                // Keep original if evaluation fails
+              }
+            }
+          }
+          resolvedPayload[k] = resolved;
         } catch {
           resolvedPayload[k] = payload[k];
         }
@@ -48,8 +66,25 @@ export async function defaultActionHandler(actionDef: any, context: EvalContext)
       }
     }
 
-    log.info({ action: key, payload: resolvedPayload }, 'ACTION_EXECUTED (stub)');
-    results.push({ action: key, payload: resolvedPayload, status: 'stub-executed' });
+    // Use action handler if available
+    const handler = actionHandlers[key];
+    if (handler) {
+      try {
+        const evalCtx = {
+          event: context.event,
+          ctx: context.ctx,
+          ruleId: context.ruleId,
+        };
+        const result = await handler(resolvedPayload, evalCtx);
+        results.push(result);
+      } catch (error: any) {
+        log.error({ error, action: key }, 'Action handler failed');
+        results.push({ ok: false, error: error.message, action: key });
+      }
+    } else {
+      log.warn({ action: key }, 'No handler found for action, using stub');
+      results.push({ action: key, payload: resolvedPayload, status: 'stub-executed' });
+    }
   }
 
   return results;
@@ -59,12 +94,14 @@ export async function evaluateRules(
   event: any,
   ctx: any,
   systemConfig: any = {},
-  actionHandler = defaultActionHandler
+  actionHandler = defaultActionHandler,
+  dbAdapter?: any
 ): Promise<RuleMatch[]> {
   const rules = getRules();
-  const evalCtx: EvalContext = { event, ctx, system: systemConfig };
+  const evalCtx: EvalContext = { event, ctx, system: systemConfig, db: dbAdapter };
 
   const matched: RuleMatch[] = [];
+  let auditId: string | undefined;
 
   for (const r of rules) {
     try {
@@ -78,10 +115,39 @@ export async function evaluateRules(
       if (res) {
         log.debug({ ruleId: r.id, severity: r.severity }, 'Rule matched');
 
+        // Pass ruleId to action handler context
+        const actionEvalCtx: EvalContext = {
+          ...evalCtx,
+          ruleId: r.id,
+        };
+
         const actionResults = [];
         for (const ad of r.action || []) {
-          const ar = await actionHandler(ad, evalCtx);
+          const ar = await actionHandler(ad, actionEvalCtx);
           actionResults.push(ar);
+        }
+
+        // Create audit entry if rule requires auditing
+        if (r.audit) {
+          const auditEntry = createAuditEntry(
+            'rule',
+            r.id,
+            'RULE_MATCHED',
+            {
+              ruleId: r.id,
+              severity: r.severity,
+              description: r.description,
+              eventType: event?.type,
+              evaluationResult: res,
+            },
+            {
+              performedBy: ctx?.userId,
+              ruleId: r.id,
+            }
+          );
+
+          auditId = auditEntry.id;
+          await writeAuditEntry(auditEntry, dbAdapter || getDbAdapter());
         }
 
         matched.push({
@@ -90,9 +156,10 @@ export async function evaluateRules(
           matched: true,
           evaluationResult: res,
           actionResults,
+          auditId,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       log.error({ ruleId: r.id, err }, 'Error evaluating rule');
     }
   }

@@ -19,7 +19,7 @@ export type Rule = {
   severity: string;
   description?: string;
   condition: string;
-  compiled?: Jexl.Expression;
+  compiled?: any; // Jexl.Expression type
   action?: ActionDef[];
   audit?: boolean;
   raw?: any;
