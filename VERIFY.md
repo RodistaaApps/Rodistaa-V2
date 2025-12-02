@@ -1,513 +1,377 @@
-# OpenAPI Specification Verification Guide
+# ACS Hardening Verification Guide
 
-This document provides commands to validate the OpenAPI specification and test endpoints with sample curl commands.
+This document provides exact commands and expected outputs for verifying the ACS hardening implementation.
 
 ## Prerequisites
 
-Install validation tools:
-
 ```bash
-# Install openapi-cli (Swagger CLI)
-npm install -g @apidevtools/swagger-cli
-
-# Or install redoc-cli
-npm install -g redoc-cli
-
-# Or install Spectral for linting
-npm install -g @stoplight/spectral-cli
+# Install dependencies
+cd packages/acs
+pnpm install
+pnpm build
 ```
 
-## Validation Commands
+## 1. Unit Tests
 
-### 1. Validate OpenAPI Specification
+Run all ACS unit tests:
 
 ```bash
-# Using swagger-cli
-swagger-cli validate api/openapi.yaml
-
-# Expected output:
-# api/openapi.yaml is valid
+cd packages/acs
+pnpm test
 ```
 
-```bash
-# Using redoc-cli
-redoc-cli lint api/openapi.yaml
+**Expected Output:**
+```
+PASS  src/evaluator.test.ts
+PASS  src/ruleLoader.test.ts
+PASS  src/ruleLint.test.ts
+PASS  src/auditWriter.test.ts
+PASS  src/actions.test.ts
+PASS  src/dbAdapter.test.ts
 
-# Expected output:
-# No errors found
+Test Suites: 6 passed, 6 total
+Tests:       45 passed, 45 total
+Snapshots:   0 total
+Time:        3.234 s
 ```
 
-### 2. Lint with Spectral
+## 2. Rule Linting
+
+Lint the rules file:
 
 ```bash
-spectral lint api/openapi.yaml
-
-# Expected output:
-# No errors or warnings
+cd packages/acs
+pnpm rule-lint ../../acs_rules_top25.yaml
 ```
 
-### 3. Generate TypeScript Types
+**Expected Output:**
+```
+🔍 ACS Rule Linter
 
-```bash
-# Generate types for app-shared package
-cd packages/app-shared
-npx openapi-typescript-codegen \
-  --input ../../api/openapi.yaml \
-  --output src/generated \
-  --client axios
+File: ../../acs_rules_top25.yaml
 
-# Or using openapi-typescript (types only)
-npx openapi-typescript ../../api/openapi.yaml -o src/generated/types.ts
+✅ All checks passed!
 ```
 
-### 4. Build and Type Check
+**If errors found:**
+```
+🔍 ACS Rule Linter
 
-```bash
-# From monorepo root
-pnpm -w -r build
+File: ../../acs_rules_top25.yaml
 
-# Expected: All packages compile successfully
-
-# Type check
-pnpm -w -r typecheck
-
-# Expected: No TypeScript errors
+❌ Errors:
+   [RF01_KYC_MANDATORY] Rule 'RF01_KYC_MANDATORY' condition uses forbidden functions: eval
+   
+❌ Linting failed
 ```
 
-## Sample curl Commands
+## 3. Test Event CLI
 
-### Health Check
+### GPS Jump Anomaly (RF05)
 
 ```bash
-curl -X GET http://localhost:3000/v1/health \
-  -H "Content-Type: application/json"
-
-# Expected response:
-# {
-#   "status": "ok",
-#   "timestamp": "2024-01-15T10:30:00Z"
-# }
+cd packages/acs
+pnpm test-event gps-jump
 ```
 
-### Authentication
-
-#### Request OTP
-
-```bash
-curl -X POST http://localhost:3000/v1/auth/otp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mobile": "+919876543210"
-  }'
-
-# Expected response:
-# {
-#   "message": "OTP sent to +919876543210",
-#   "expiresIn": 300
-# }
+**Expected Output:**
 ```
+🔍 ACS Test Event Evaluator
 
-#### Login
+Testing event type: gps-jump
 
-```bash
-curl -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mobile": "+919876543210",
-    "otp": "123456",
-    "deviceId": "device-uuid-12345"
-  }'
+📋 Loading rules from: C:\...\acs_rules_top25.yaml
+✅ Loaded 25 rules
 
-# Expected response:
-# {
-#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-#   "refreshToken": "refresh-token-xyz",
-#   "user": {
-#     "id": "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-#     "role": "SHIPPER",
-#     "name": "John Doe",
-#     "mobileMasked": "+91****543210"
-#   }
-# }
-```
-
-#### Refresh Token
-
-```bash
-curl -X POST http://localhost:3000/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "refresh-token-xyz"
-  }'
-```
-
-### Bookings
-
-#### Create Booking
-
-```bash
-TOKEN="your-auth-token-here"
-
-curl -X POST http://localhost:3000/v1/bookings \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "pickup": {
-      "address": "123 Main Street",
-      "city": "Mumbai",
-      "state": "Maharashtra",
-      "pincode": "400001",
-      "coordinates": {
-        "lat": 19.0760,
-        "lng": 72.8777
-      }
+📤 Test Event:
+{
+  "event": {
+    "type": "gps.ping",
+    "gps": {
+      "deltaDistanceKm": 250,
+      "deltaTimeSec": 200
     },
-    "drop": {
-      "address": "456 Park Avenue",
-      "city": "Delhi",
-      "state": "Delhi",
-      "pincode": "110001",
-      "coordinates": {
-        "lat": 28.6139,
-        "lng": 77.2090
-      }
-    },
-    "goods": {
-      "type": "Cement",
-      "weight": 5000,
-      "packaging": "Bags"
-    },
-    "tonnage": 5.0,
-    "priceRange": {
-      "min": 15000,
-      "max": 20000
+    "shipment": {
+      "id": "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
     }
-  }'
+  },
+  ...
+}
 
-# Expected response:
-# {
-#   "id": "RID-20240115-0001",
-#   "shipperId": "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-#   "pickup": {...},
-#   "drop": {...},
-#   "goods": {...},
-#   "tonnage": 5.0,
-#   "expectedPrice": 17500,
-#   "status": "OPEN",
-#   "createdAt": "2024-01-15T10:30:00Z"
-# }
+⚠️  Results:
+
+Matched 1 rule(s):
+
+  Rule ID: RF05_GPS_JUMP_ANOMALY
+  Description: Detect improbable GPS jump (very large distance in short time).
+  Severity: high
+  Priority: 980
+  Matched: true
+  Evaluation Result: true
+  Action Results:
+    [1] {
+      "ok": true,
+      "shipmentId": "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "reason": "GPS_JUMP",
+      "auditId": "AUD-...",
+      "timestamp": "2024-02-01T..."
+    }
+  Audit ID: AUD-...
+
+✅ Test complete!
 ```
 
-#### List Bookings
+### POD Duplicate (RF07)
 
 ```bash
-curl -X GET "http://localhost:3000/v1/bookings?status=OPEN&page=1&pageSize=20" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Expected response:
-# {
-#   "data": [...],
-#   "meta": {
-#     "page": 1,
-#     "pageSize": 20,
-#     "total": 1,
-#     "totalPages": 1
-#   }
-# }
+pnpm test-event pod-duplicate
 ```
 
-#### Get Booking Details
+**Expected Output:**
+```
+🔍 ACS Test Event Evaluator
+
+Testing event type: pod-duplicate
+
+📋 Loading rules from: C:\...\acs_rules_top25.yaml
+✅ Loaded 25 rules
+
+⚠️  Results:
+
+Matched 1 rule(s):
+
+  Rule ID: RF07_POD_DUPLICATE_HASH
+  Description: Reject POD reuse based on exact file-hash matches across shipments.
+  Severity: high
+  Priority: 970
+  ...
+```
+
+### OTP Brute Force (RF04)
 
 ```bash
-curl -X GET http://localhost:3000/v1/bookings/RID-20240115-0001 \
-  -H "Authorization: Bearer $TOKEN"
+pnpm test-event otp-brute-force
 ```
 
-### Bids
+**Expected Output:**
+```
+Matched 1 rule(s):
 
-#### Create Bid
+  Rule ID: RF04_OTP_BRUTE_FORCE_PROTECTION
+  Description: Lock shipment and escalate when OTP retry threshold exceeded (brute-force).
+  ...
+```
+
+### Inspection Geo Missing (RF09)
 
 ```bash
-curl -X POST http://localhost:3000/v1/bids \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "bookingId": "RID-20240115-0001",
-    "amount": 16500
-  }'
+pnpm test-event inspection-geo
 ```
 
-#### Modify Bid
+**Expected Output:**
+```
+Matched 1 rule(s):
+
+  Rule ID: RF09_INSPECTION_GEO_MISSING
+  Description: Reject inspection uploads missing geotag or with invalid geolocation.
+  ...
+```
+
+## 4. Database Migration
+
+Run migration to add prev_hash and signature fields:
 
 ```bash
-curl -X PATCH http://localhost:3000/v1/bids/BK-01ARZ3NDEKTSV4RRFFQ69G5FAV \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "amount": 16000
-  }'
+cd packages/backend
+pnpm knex migrate:latest
 ```
 
-### Shipments
+**Expected Output:**
+```
+Batch 1 run: 1 migrations
+20240201000001_enhance_audit_logs
+```
 
-#### List Shipments
+## 5. Audit Log Verification
+
+### Query Latest Audit Entries
+
+```sql
+SELECT id, rule_id, entity_type, entity_id, action, created_at, audit_hash, prev_hash, signature
+FROM audit_logs
+ORDER BY timestamp DESC
+LIMIT 5;
+```
+
+**Expected Output:**
+```
+id                  | rule_id              | entity_type | entity_id        | action        | created_at          | audit_hash | prev_hash | signature
+--------------------|----------------------|-------------|------------------|---------------|---------------------|------------|-----------|----------
+AUD-01ARZ3ND...     | RF05_GPS_JUMP_ANOMALY| shipment    | SH-01ARZ3ND...   | FREEZE        | 2024-02-01 10:30:00 | abc123...  | def456... | xyz789...
+AUD-01ARZ3ND...     | RF07_POD_DUPLICATE   | shipment    | SH-01ARZ3ND...   | FREEZE        | 2024-02-01 10:29:00 | def456...  | ghi789... | mno123...
+...
+```
+
+### Verify Audit Chain
+
+```sql
+-- Get audit chain for a specific entity
+SELECT id, audit_hash, prev_hash, timestamp
+FROM audit_logs
+WHERE entity_type = 'shipment' AND entity_id = 'SH-01ARZ3NDEKTSV4RRFFQ69G5FAV'
+ORDER BY timestamp ASC;
+```
+
+**Expected Output:**
+```
+id                  | audit_hash | prev_hash | timestamp
+--------------------|------------|-----------|------------------
+AUD-001             | hash1      | NULL      | 2024-02-01 10:00:00
+AUD-002             | hash2      | hash1     | 2024-02-01 10:01:00
+AUD-003             | hash3      | hash2     | 2024-02-01 10:02:00
+```
+
+### Verify Audit Hash Integrity
+
+```typescript
+import { verifyAuditHash } from '@rodistaa/acs';
+
+const entry = await auditRepo.getAuditEntriesByEntity('shipment', 'SH-...');
+const isValid = verifyAuditHash(entry[0]);
+console.log(`Audit hash valid: ${isValid}`); // true
+```
+
+## 6. End-to-End Test
+
+### Run Comprehensive Test
 
 ```bash
-curl -X GET "http://localhost:3000/v1/shipments?status=IN_TRANSIT&page=1&pageSize=20" \
-  -H "Authorization: Bearer $TOKEN"
+cd packages/acs
+node dist/cli/test-event.js gps-jump
 ```
 
-#### Assign Driver
+Then verify audit entry was created:
+
+```sql
+SELECT id, rule_id, audit_hash, prev_hash, signature
+FROM audit_logs
+WHERE rule_id = 'RF05_GPS_JUMP_ANOMALY'
+ORDER BY timestamp DESC
+LIMIT 1;
+```
+
+**Expected:**
+- `audit_hash` is non-empty (64 hex chars)
+- `signature` is non-empty (128 hex chars for HMAC-SHA256)
+- `prev_hash` is either NULL (first entry) or links to previous entry
+
+## 7. Rule Coverage Verification
+
+Verify all 25 rules are present:
 
 ```bash
-curl -X POST http://localhost:3000/v1/shipments/SH-01ARZ3NDEKTSV4RRFFQ69G5FAV/assign \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "driverId": "USR-DR-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-    "truckId": "TRK-MH01AB1234-01ARZ3NDEKTSV4RRFFQ69G5FAV"
-  }'
+cd packages/acs
+node -e "
+const { loadRulesFromFile } = require('./dist/ruleLoader');
+const rules = loadRulesFromFile('../../acs_rules_top25.yaml');
+console.log('Total rules:', rules.length);
+console.log('Rule IDs:', rules.map(r => r.id).join(', '));
+"
 ```
 
-### GPS Tracking
+**Expected Output:**
+```
+Total rules: 25
+Rule IDs: RF01_KYC_MANDATORY, RF02_TRUCK_DOCS_EXPIRED, RF03_OTP_MANDATORY_COMPLETION, ...
+```
 
-#### Send GPS Ping
+## 8. CI Integration
+
+### Local CI Check
 
 ```bash
-curl -X POST http://localhost:3000/v1/tracking/ping \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "shipmentId": "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-    "coordinates": {
-      "lat": 19.0760,
-      "lng": 72.8777
-    },
-    "speed": 60,
-    "heading": 90
-  }'
+# Run all checks
+cd packages/acs
+pnpm build
+pnpm test
+pnpm rule-lint ../../acs_rules_top25.yaml
+
+# Verify test-event works
+pnpm test-event gps-jump
 ```
 
-#### Get Tracking History
+All should exit with code 0.
+
+## 9. Rollback Script Test
 
 ```bash
-curl -X GET http://localhost:3000/v1/tracking/SH-01ARZ3NDEKTSV4RRFFQ69G5FAV \
-  -H "Authorization: Bearer $TOKEN"
+cd packages/acs
+node dist/scripts/unapply-rule.js RF05_GPS_JUMP_ANOMALY
 ```
 
-### POD Upload
+**Expected Output:**
+```
+⚠️  Disabling rule: RF05_GPS_JUMP_ANOMALY
+✅ Rule moved to .disabled/rules/
+✅ Audit entry created: AUD-...
+```
+
+## 10. Watch Mode Test
 
 ```bash
-curl -X POST http://localhost:3000/v1/pod/upload \
-  -H "Authorization: Bearer $TOKEN" \
-  -F "shipmentId=SH-01ARZ3NDEKTSV4RRFFQ69G5FAV" \
-  -F "file=@/path/to/pod.jpg" \
-  -F "otp=123456"
+cd packages/acs
+pnpm dev
 ```
 
-### Ledger
+In another terminal, modify `acs_rules_top25.yaml`. The watcher should reload rules automatically.
 
-#### Get Ledger Balance
-
-```bash
-curl -X GET http://localhost:3000/v1/ledger \
-  -H "Authorization: Bearer $TOKEN"
-
-# Expected response:
-# {
-#   "operatorId": "USR-OP-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-#   "balance": 50000,
-#   "currency": "INR",
-#   "updatedAt": "2024-01-15T10:30:00Z"
-# }
+**Expected Output:**
+```
+[acs-rule-loader] Loading ACS rule file
+[acs-rule-loader] Loaded ACS rules
+[acs-rule-loader] Rules reloaded via watch
 ```
 
-#### List Transactions
+## Troubleshooting
 
-```bash
-curl -X GET "http://localhost:3000/v1/ledger/transactions?page=1&pageSize=20" \
-  -H "Authorization: Bearer $TOKEN"
-```
+### Tests Fail
 
-### Admin Endpoints
+1. Ensure all dependencies are installed: `pnpm install`
+2. Build packages: `pnpm build`
+3. Check database connection if using Postgres adapter
 
-#### Get Dashboard
+### Rule Linting Errors
 
-```bash
-curl -X GET http://localhost:3000/v1/admin/dashboard \
-  -H "Authorization: Bearer $TOKEN"
+1. Check YAML syntax
+2. Verify no forbidden functions in conditions
+3. Ensure all required fields are present
 
-# Expected response:
-# {
-#   "dau": 1250,
-#   "bookings": 150,
-#   "bids": 300,
-#   "flaggedIncidents": 5,
-#   "totalRevenue": 2500000
-# }
-```
+### Audit Logs Not Persisted
 
-#### List Override Requests
+1. Verify database connection
+2. Check audit_logs table exists with required columns
+3. Verify DB adapter is configured correctly
 
-```bash
-curl -X GET "http://localhost:3000/v1/admin/overrides?status=PENDING&page=1&pageSize=20" \
-  -H "Authorization: Bearer $TOKEN"
-```
+### KMS Signing Issues
 
-#### Approve Override
+1. Check `LOCAL_KMS_KEY_ID` environment variable
+2. Verify local KMS key exists
+3. In production, verify cloud KMS credentials
 
-```bash
-curl -X POST http://localhost:3000/v1/admin/overrides/OVR-123/approve \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "reason": "Approved by second approver after review"
-  }'
-```
+## Success Criteria
 
-### ACS Endpoints
-
-#### Get ACS Blocks
-
-```bash
-curl -X GET http://localhost:3000/v1/acs/blocks/user/USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV \
-  -H "Authorization: Bearer $TOKEN"
-
-# Expected response:
-# [
-#   {
-#     "id": "BLK-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-#     "entityType": "user",
-#     "entityId": "USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV",
-#     "reason": "Multiple failed KYC attempts",
-#     "severity": "HIGH",
-#     "createdAt": "2024-01-15T09:00:00Z"
-#   }
-# ]
-```
-
-### Webhooks
-
-#### Register Webhook
-
-```bash
-curl -X POST http://localhost:3000/v1/webhooks/register \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "url": "https://example.com/webhook",
-    "events": [
-      "booking.created",
-      "shipment.completed"
-    ]
-  }'
-```
-
-## Testing Rate Limits
-
-Test rate limiting by making multiple requests rapidly:
-
-```bash
-# Make 10 requests quickly to test rate limiting
-for i in {1..10}; do
-  curl -X GET http://localhost:3000/v1/health
-  echo "Request $i completed"
-done
-
-# Check rate limit headers in response:
-# X-RateLimit-Limit: 100
-# X-RateLimit-Remaining: 90
-```
-
-## Error Response Examples
-
-### 400 Bad Request
-
-```bash
-curl -X POST http://localhost:3000/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mobile": "invalid"
-  }'
-
-# Expected response (400):
-# {
-#   "code": "VALIDATION_ERROR",
-#   "message": "Invalid request data",
-#   "details": {
-#     "field": "mobile",
-#     "error": "Invalid format"
-#   }
-# }
-```
-
-### 401 Unauthorized
-
-```bash
-curl -X GET http://localhost:3000/v1/bookings \
-  -H "Authorization: Bearer invalid-token"
-
-# Expected response (401):
-# {
-#   "code": "UNAUTHORIZED",
-#   "message": "Invalid or missing authentication token"
-# }
-```
-
-### 404 Not Found
-
-```bash
-curl -X GET http://localhost:3000/v1/bookings/RID-99999999-9999 \
-  -H "Authorization: Bearer $TOKEN"
-
-# Expected response (404):
-# {
-#   "code": "NOT_FOUND",
-#   "message": "Resource not found"
-# }
-```
-
-### 429 Rate Limit Exceeded
-
-```bash
-# Make excessive requests to trigger rate limit
-for i in {1..200}; do
-  curl -X GET http://localhost:3000/v1/health
-done
-
-# Expected response (429):
-# {
-#   "code": "RATE_LIMIT_EXCEEDED",
-#   "message": "Too many requests. Please try again later."
-# }
-# Headers:
-# X-RateLimit-Limit: 100
-# X-RateLimit-Remaining: 0
-# Retry-After: 60
-```
-
-## Verification Checklist
-
-- [ ] OpenAPI spec validates without errors
-- [ ] TypeScript types generate successfully
-- [ ] All packages compile with generated types
-- [ ] Health check endpoint responds correctly
-- [ ] Authentication flow works (OTP → Login)
-- [ ] Booking creation works with valid data
-- [ ] Bid creation works
-- [ ] Pagination works on list endpoints
-- [ ] Rate limit headers are present
-- [ ] Error responses follow consistent format
-- [ ] All examples in spec are valid JSON
+✅ All unit tests pass (45+ tests)
+✅ Rule linting returns zero errors
+✅ Test event CLI shows matched rules for all test vectors
+✅ Audit entries have non-empty hash and signature
+✅ Database migration adds prev_hash and signature columns
+✅ Audit chain links prev_hash correctly
+✅ All 25 rules are present and valid
 
 ## Next Steps
 
 After verification:
-
-1. Generate TypeScript types: `pnpm --filter @rodistaa/app-shared build`
-2. Run type check: `pnpm -w -r typecheck`
-3. Commit generated types to repository
-4. Update backend to use generated types
-5. Update mobile apps to use generated types
-6. Update portal to use generated API client
-
+1. Merge PR to `develop`
+2. Run integration tests
+3. Deploy to staging
+4. Monitor audit logs in production

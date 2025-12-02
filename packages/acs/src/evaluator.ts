@@ -28,6 +28,16 @@ export type RuleMatch = {
   auditId?: string;
 };
 
+export type Decision = {
+  ruleId: string;
+  rule: Rule;
+  matched: boolean;
+  evaluationResult?: any;
+  actionResults?: any[];
+  auditId?: string;
+  timestamp: Date;
+};
+
 export async function defaultActionHandler(actionDef: any, context: EvalContext) {
   const actionKeys = Object.keys(actionDef || {});
   if (actionKeys.length === 0) return { ok: true, info: 'no-op' };
@@ -88,6 +98,23 @@ export async function defaultActionHandler(actionDef: any, context: EvalContext)
   }
 
   return results;
+}
+
+/**
+ * Evaluate rules and return structured Decision[] array
+ */
+export async function evaluate(
+  event: any,
+  ctx: any,
+  systemConfig: any = {},
+  actionHandler = defaultActionHandler,
+  dbAdapter?: any
+): Promise<Decision[]> {
+  const ruleMatches = await evaluateRules(event, ctx, systemConfig, actionHandler, dbAdapter);
+  return ruleMatches.map((match) => ({
+    ...match,
+    timestamp: new Date(),
+  }));
 }
 
 export async function evaluateRules(

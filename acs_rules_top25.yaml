@@ -103,7 +103,7 @@
   priority: 955
   severity: high
   description: "Flag duplicate inspection photos reused across different trucks."
-  condition: "event.type == 'inspection.uploaded' && image.hash in db.indexes.inspection_image_hashes and db.indexes.inspection_image_hashes[image.hash].truckId != inspection.truckId"
+  condition: "event.type == 'inspection.uploaded' && image.hash in db.indexes.inspection_image_hashes && db.indexes.inspection_image_hashes[image.hash].truckId != inspection.truckId"
   action:
     - rejectRequest: { code: "INSPECTION_DUPLICATE_PHOTO", message: "Duplicate inspection photo detected" }
     - flagWatchlist: { entityType: "unit_franchise", entityId: "{{inspection.unitFranchiseId}}", reason: "POTENTIAL_FAKE_INSPECTION" }
@@ -186,7 +186,7 @@
   priority: 915
   severity: critical
   description: "Prevent admin override without justification and 2FA for high-risk ops."
-  condition: "event.type == 'admin.override.request' && (override.justification == null || override.2faVerified != true) && override.target.ruleSeverity == 'critical'"
+  condition: "event.type == 'admin.override.request' && (override.justification == null || override.twoFaVerified != true) && override.target.ruleSeverity == 'critical'"
   action:
     - rejectRequest: { code: "OVERRIDE_REQUIRES_2FA_AND_JUSTIFICATION", message: "Critical overrides need justification and 2FA" }
     - emitEvent: { name: "governance.override.attempt", payload: { adminId: "{{ctx.userId}}", targetRule: "{{override.target.ruleId}}"} }
@@ -196,7 +196,7 @@
   priority: 910
   severity: critical
   description: "Detect repeated triad patterns (shipper+operator+driver) and freeze triad on threshold."
-  condition: "event.type in ['shipment.completed'] && collusionGraph.triadFrequency(shipperId, operatorId, driverId, window=system.config.triadWindow) >= system.config.triadFrequencyThreshold"
+  condition: "event.type in ['shipment.completed'] && collusionGraph.triadFrequency >= system.config.triadFrequencyThreshold"
   action:
     - freezeShipment: { shipmentId: "{{shipment.id}}", reason: "TRIAD_COLLUSION" }
     - suspendAccount: { accountId: "{{operator.id}}", reason: "POSSIBLE_COLLUSION", severity: "critical" }

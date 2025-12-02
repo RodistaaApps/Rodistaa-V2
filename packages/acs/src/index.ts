@@ -7,4 +7,6 @@
 export * from './ruleLoader';
 export * from './evaluator';
 export * from './actions';
+export * from './auditWriter';
+export * from './ruleLint';
 

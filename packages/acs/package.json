@@ -9,6 +9,8 @@
     "dev": "tsc -p tsconfig.json --watch",
     "cli": "ts-node src/cli.ts",
     "test": "jest",
+    "test-event": "ts-node src/cli/test-event.ts",
+    "rule-lint": "ts-node -e \"import('./src/ruleLint').then(m => process.exit(m.lintCli(process.argv[2] || '../../acs_rules_top25.yaml')))\"",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
