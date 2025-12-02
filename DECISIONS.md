@@ -231,12 +231,125 @@ Provide comprehensive development scripts:
 
 ---
 
+## Decision 014: OpenAPI-First API Development
+
+**Date**: 2025-01-02  
+**Status**: ✅ Approved  
+**Decision Maker**: Autonomous AI CTO
+
+### Decision
+
+Use **OpenAPI 3.0.3 specification** as the single source of truth for all API contracts. Generate TypeScript types, client SDKs, and documentation from the spec.
+
+### Rationale
+
+1. **Contract-First Development**: API contracts defined before implementation ensures consistency
+2. **Type Safety**: Generated TypeScript types prevent API mismatches between frontend and backend
+3. **Documentation**: Interactive API documentation auto-generated from spec
+4. **Client Generation**: SDK generation for portal and mobile apps reduces boilerplate
+5. **Validation**: Automated validation catches schema errors early
+6. **Versioning**: Clear API versioning and change tracking
+
+### Implementation
+
+**OpenAPI Specification Location:**
+- `api/openapi.yaml` - Complete OpenAPI v3.0.3 specification
+- Covers all endpoints: auth, users/KYC, trucks, bookings, bids, shipments, tracking, POD, inspections, ledger, admin, franchise, ACS, webhooks
+
+**Code Generation:**
+```bash
+# Generate TypeScript types for shared package
+npx openapi-typescript api/openapi.yaml -o packages/app-shared/src/generated/openapi-types.ts
+
+# Generate fetch client for portal
+npx @openapitools/openapi-generator-cli generate \
+  -i api/openapi.yaml \
+  -g typescript-fetch \
+  -o packages/portal/src/api-client
+```
+
+**Validation:**
+```bash
+# Validate OpenAPI spec
+npx @redocly/openapi-cli validate api/openapi.yaml
+
+# Lint with Spectral
+spectral lint api/openapi.yaml
+```
+
+### API Design Standards
+
+**ID Formats (ULID-based):**
+- Bookings: `RID-YYYYMMDD-xxxx` (e.g., `RID-20240115-0001`)
+- Shipments: `SH-<ulid>` (e.g., `SH-01ARZ3NDEKTSV4RRFFQ69G5FAV`)
+- Bids: `BK-<ulid>`
+- Users: `USR-<role>-<ulid>` (e.g., `USR-SH-01ARZ3NDEKTSV4RRFFQ69G5FAV`)
+- Trucks: `TRK-<regno>-<ulid>` (e.g., `TRK-MH01AB1234-01ARZ3NDEKTSV4RRFFQ69G5FAV`)
+- PODs: `POD-<ulid>`
+
+**Pagination:**
+- Query params: `page` (default: 1), `pageSize` (default: 20, max: 100)
+- Response meta: `{ page, pageSize, total, totalPages }`
+
+**Error Responses:**
+- Standard format: `{ code: string, message: string, details?: object }`
+- Common codes: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `RATE_LIMIT_EXCEEDED`
+
+**Rate Limiting:**
+- Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After` (on 429)
+- Authentication endpoints: 10 req/hour
+- Booking creation: 100 req/day
+- GPS pings: 1000 req/hour
+- Default: 1000 req/hour
+
+**Timestamps:**
+- ISO 8601 format: `YYYY-MM-DDTHH:mm:ss.sssZ`
+- Always UTC
+
+**Security:**
+- Bearer JWT authentication for all protected endpoints
+- Role-based access control (RBAC) defined in schemas
+- Device binding via `x-device-id` header
+
+### Trade-offs
+
+**Pros:**
+- Type safety across entire stack
+- Reduced API drift between frontend/backend
+- Automated documentation and client generation
+- Clear API contracts for external integrations
+- Easier API versioning and deprecation
+
+**Cons:**
+- Requires maintaining OpenAPI spec alongside code
+- Code generation adds build step
+- Generated code can be verbose
+- Team needs to learn OpenAPI specification
+
+### Integration with Monorepo
+
+- `packages/app-shared/src/generated/` - Generated TypeScript types used by all packages
+- `packages/backend/src/` - Backend implements OpenAPI contract
+- `packages/mobile/shared/src/` - Mobile apps use generated types
+- `packages/portal/src/api-client/` - Portal uses generated fetch client
+
+### Rollback Strategy
+
+If OpenAPI-first proves problematic:
+1. Stop generating types, maintain manual type definitions
+2. Keep OpenAPI spec for documentation only
+3. Use traditional API development approach
+4. Gradual migration path available (not all-or-nothing)
+
+---
+
 ## Change Log
 
 | Date | Decision | Status | Notes |
 |------|----------|--------|-------|
 | 2025-01-02 | 001-010 | ✅ Approved | Initial technical decisions |
 | 2025-01-02 | 011-013 | ✅ Approved | Local-first development and tooling |
+| 2025-01-02 | 014 | ✅ Approved | OpenAPI-first API development |
 
 ---
 

@@ -13,3 +13,6 @@ export * from './idGen';
 // Common Types
 export * from './types';
 
+// Generated OpenAPI Types
+export * from './generated';
+
