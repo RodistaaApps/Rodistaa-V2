@@ -11,7 +11,7 @@ import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 
-const { Title, Text } = Typography;
+const { Title, Text: AntText } = Typography;
 
 function KycManagementPage() {
   const [selectedKyc, setSelectedKyc] = useState<any>(null);
@@ -65,7 +65,7 @@ function KycManagementPage() {
       title: 'KYC ID',
       dataIndex: 'id',
       key: 'id',
-      render: (id: string) => <Text code>{id}</Text>,
+      render: (id: string) => <AntText code>{id}</AntText>,
     },
     {
       title: 'User',
@@ -163,11 +163,11 @@ function KycManagementPage() {
               
               {decryptedData ? (
                 <div style={{ marginTop: 16, padding: 16, backgroundColor: '#FFF3E0', borderRadius: 8 }}>
-                  <Text type="warning">⚠️ Decrypted Data (audit logged)</Text>
+                  <AntText type="warning">⚠️ Decrypted Data (audit logged)</AntText>
                   <pre style={{ marginTop: 12 }}>{JSON.stringify(decryptedData, null, 2)}</pre>
                 </div>
               ) : (
-                <Text type="secondary">Click "Decrypt & View" to see document details</Text>
+                <AntText type="secondary">Click "Decrypt & View" to see document details</AntText>
               )}
             </div>
           )}

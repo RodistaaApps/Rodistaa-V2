@@ -3,7 +3,7 @@
  * Different views for District vs Unit franchises
  */
 
-import { Card, Row, Col, Statistic, Typography, Table, Button } from 'antd';
+import { Card, Row, Col, Statistic, Typography, Table, Button, Tag } from 'antd';
 import { TeamOutlined, CarOutlined, CheckCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { useAuth } from '../../hooks/useAuth';

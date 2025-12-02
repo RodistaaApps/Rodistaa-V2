@@ -8,7 +8,7 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 
-const { Title, Text } = Typography;
+const { Title, Text: AntText } = Typography;
 
 function OverridesPage() {
   const mockOverrides = [
@@ -65,7 +65,7 @@ function OverridesPage() {
       title: 'Request ID',
       dataIndex: 'id',
       key: 'id',
-      render: (id: string) => <Text code>{id}</Text>,
+      render: (id: string) => <AntText code>{id}</AntText>,
     },
     {
       title: 'Requested By',

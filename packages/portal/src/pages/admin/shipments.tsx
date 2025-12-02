@@ -10,7 +10,7 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { Typography } from 'antd';
 
-const { Title, Text } = Typography;
+const { Title, Text: AntText } = Typography;
 
 function ShipmentsPage() {
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
@@ -139,7 +139,7 @@ function ShipmentsPage() {
                   icon: <EnvironmentOutlined />,
                   children: (
                     <div style={{ height: 400, backgroundColor: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text type="secondary">GPS Map View (integrate with maps mock)</Text>
+                      <AntText type="secondary">GPS Map View (integrate with maps mock)</AntText>
                     </div>
                   ),
                 },
@@ -149,13 +149,13 @@ function ShipmentsPage() {
                   icon: <FileTextOutlined />,
                   children: selectedShipment.hasPod ? (
                     <div>
-                      <Text>POD uploaded on: 2024-01-02 18:30</Text>
+                      <AntText>POD uploaded on: 2024-01-02 18:30</AntText>
                       <div style={{ marginTop: 16, height: 400, backgroundColor: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text type="secondary">PDF Viewer (react-pdf integration)</Text>
+                        <AntText type="secondary">PDF Viewer (react-pdf integration)</AntText>
                       </div>
                     </div>
                   ) : (
-                    <Text type="secondary">POD not yet uploaded</Text>
+                    <AntText type="secondary">POD not yet uploaded</AntText>
                   ),
                 },
               ]}

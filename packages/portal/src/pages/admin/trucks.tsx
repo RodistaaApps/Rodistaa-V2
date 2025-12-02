@@ -10,7 +10,7 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { Typography } from 'antd';
 
-const { Title } = Typography;
+const { Title, Text: AntText } = Typography;
 
 function TruckManagementPage() {
   const [selectedTruck, setSelectedTruck] = useState<any>(null);
@@ -205,7 +205,7 @@ function TruckManagementPage() {
                 {
                   key: 'documents',
                   label: 'Documents',
-                  children: <Text>Document status and expiry tracking</Text>,
+                  children: <AntText>Document status and expiry tracking</AntText>,
                 },
               ]}
             />

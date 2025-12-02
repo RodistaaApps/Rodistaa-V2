@@ -8,7 +8,7 @@
 import fs from "fs";
 import path from "path";
 import jsyaml from "js-yaml";
-import Jexl from "jexl";
+import Jexl, { Expression } from "jexl";
 import chokidar from "chokidar";
 import logger from "pino";
 
@@ -22,7 +22,7 @@ export type Rule = {
   severity: string;
   description?: string;
   condition: string; // original string
-  compiled?: Jexl.Expression;
+  compiled?: Expression;
   action?: ActionDef[];
   audit?: boolean;
   raw?: any;
