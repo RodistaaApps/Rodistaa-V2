@@ -351,6 +351,131 @@ If OpenAPI-first proves problematic:
 | 2025-01-02 | 011-013 | ✅ Approved | Local-first development and tooling |
 | 2025-01-02 | 014 | ✅ Approved | OpenAPI-first API development |
 
+## Decision 015: ACS Audit Canonicalization Format
+
+**Date**: 2025-02-01  
+**Status**: ✅ Approved  
+**Decision Maker**: Autonomous AI CTO
+
+### Decision
+
+Use **deterministic JSON serialization with sorted keys** for audit entry canonicalization. Include all fields (entityType, entityId, action, performedBy, metadata, ruleId, prevHash) in canonical form, with keys sorted alphabetically.
+
+### Rationale
+
+1. **Tamper Detection**: Deterministic JSON ensures same content always produces same hash
+2. **Audit Chain Integrity**: prevHash linking enables verification of audit chain integrity
+3. **Reproducibility**: Sorted keys guarantee consistent hashing across systems
+4. **Standards Compliance**: Follows cryptographic best practices for audit logging
+
+### Implementation
+
+- Canonical JSON: All fields sorted alphabetically
+- SHA256 hash: Computed from canonical JSON
+- prevHash: Links to previous audit entry for same entity
+- Signature: HMAC-SHA256 for additional tamper protection
+
+### Trade-offs
+
+**Pros:**
+- Immutable audit trail
+- Easy tamper detection
+- Audit chain verification
+- Standard cryptographic practices
+
+**Cons:**
+- Slightly larger storage (hash + signature fields)
+- Requires careful canonicalization logic
+
+---
+
+## Decision 016: Local KMS Signing Choice
+
+**Date**: 2025-02-01  
+**Status**: ✅ Approved  
+**Decision Maker**: Autonomous AI CTO
+
+### Decision
+
+Use **local KMS stub with HMAC-SHA256** for development/staging, with pluggable interface for production cloud KMS (AWS KMS, GCP KMS, Azure Key Vault).
+
+### Rationale
+
+1. **Development Speed**: Local stub enables fast iteration without cloud dependencies
+2. **Cost Efficiency**: No cloud KMS costs during development
+3. **Flexibility**: Pluggable interface allows production upgrade without code changes
+4. **Security**: HMAC-SHA256 provides adequate signing for audit entries
+5. **Production Ready**: Easy migration path to cloud KMS
+
+### Implementation
+
+- Local KMS: HMAC-SHA256 using `LOCAL_KMS_KEY_ID` environment variable
+- Production: Replace with AWS KMS, GCP KMS, or Azure Key Vault
+- Interface: `sign(payload, keyId)` function signature remains consistent
+
+### Trade-offs
+
+**Pros:**
+- Fast local development
+- No cloud dependencies during development
+- Easy production migration
+- Consistent interface
+
+**Cons:**
+- Local keys stored in memory (acceptable for development)
+- Requires environment variable management
+
+### Production Migration
+
+Replace local KMS with cloud KMS:
+- AWS KMS: Use `aws-sdk` KMS client
+- GCP KMS: Use `@google-cloud/kms` client
+- Azure Key Vault: Use `@azure/keyvault-keys` client
+
+---
+
+## Decision 017: Action Handler Idempotency Guarantees
+
+**Date**: 2025-02-01  
+**Status**: ✅ Approved  
+**Decision Maker**: Autonomous AI CTO
+
+### Decision
+
+All ACS action handlers must be **idempotent** - safe to retry without side effects. Actions are identified by ruleId + entityId + action type + timestamp for deduplication.
+
+### Rationale
+
+1. **Reliability**: Safe retries in case of network failures or partial execution
+2. **Audit Integrity**: Prevents duplicate actions in audit log
+3. **Race Condition Safety**: Handles concurrent rule evaluations gracefully
+4. **Production Resilience**: Critical for high-availability systems
+
+### Implementation
+
+- Deduplication: Rule ID + entity ID + action type + timestamp
+- Idempotent Operations: Database updates use UPSERT, audit entries use unique IDs
+- Retry Safety: All handlers check if action already executed before proceeding
+- State Checks: Handlers verify current state before applying changes
+
+### Trade-offs
+
+**Pros:**
+- Safe retries
+- Race condition resilience
+- Production-grade reliability
+- Easier debugging
+
+**Cons:**
+- Slightly more complex handler logic
+- Requires state verification checks
+
+### Examples
+
+- `freezeShipment`: Check if shipment already frozen before freezing
+- `blockEntity`: Use UPSERT to avoid duplicate blocks
+- `createTicket`: Check if ticket already exists before creating
+
 ---
 
 **Note**: This document is living and will be updated as new decisions are made. Each decision should be reviewed periodically for relevance and accuracy.

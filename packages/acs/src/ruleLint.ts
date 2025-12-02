@@ -39,7 +39,7 @@ const FORBIDDEN_FUNCTIONS = [
   'import',
   'exec',
   'spawn',
-  'system',
+  // Note: 'system' is allowed as it's used for system.config references
 ];
 
 // Maximum expression complexity (approximate AST node count)
@@ -58,6 +58,7 @@ const ALLOWED_ACTIONS = [
   'throttle',
   'notifyRole',
   'suspendAccount',
+  'proceed', // Internal action for tie-breakers and fallbacks
 ];
 
 /**

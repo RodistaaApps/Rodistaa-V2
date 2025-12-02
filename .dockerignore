@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+__tests__
+__mocks__
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Temporary files
+tmp
+temp
+*.log
+
+# Development files
+.prettierrc
+.eslintrc
+.eslintignore
+tsconfig.json
+jest.config.js
+
