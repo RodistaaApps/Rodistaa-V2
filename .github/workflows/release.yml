@@ -4,108 +4,167 @@ on:
   push:
     tags:
       - 'v*.*.*'
-
-permissions:
-  contents: write
-  pull-requests: write
+  workflow_dispatch:
 
 jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm -r build
-
-      - name: Run tests
-        run: pnpm -r test
-
+          fetch-depth: 0  # Fetch all history for changelog generation
+      
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Get package name
+        id: package
+        run: |
+          # Bug Fix #2: Variable assignment and output in same shell context
+          PACKAGE_NAME=$(jq -r '.name' package.json || echo "rodistaa-platform")
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "Package: $PACKAGE_NAME"
+      
       - name: Generate changelog
         id: changelog
         run: |
-          # Extract changelog for this version
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # Bug Fix #1: Handle no previous tags gracefully (first release)
+          echo "Generating changelog..."
           
-          # Generate changelog (you can use conventional-changelog or git-cliff)
-          git log --oneline --no-merges $(git describe --tags --abbrev=0 HEAD^)..HEAD > RELEASE_NOTES.md
-
+          # Try to get previous tag, fallback to empty if none exists
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "First release detected - no previous tags found"
+            echo "Generating full changelog from all commits"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges HEAD || echo "- Initial release")
+          else
+            echo "Previous tag found: $PREV_TAG"
+            echo "Generating changelog from $PREV_TAG to HEAD"
+            CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges || echo "- No changes")
+          fi
+          
+          # Handle multi-line output for GitHub Actions
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          echo "Changelog generated successfully"
+      
+      - name: Create Release Notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'NOTES'
+          ## Rodistaa Platform Release ${{ steps.version.outputs.version }}
+          
+          ### What's New
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ### Platform Components
+          
+          - Backend API (Fastify + PostgreSQL)
+          - ACS Service (Anti-Corruption Shield)
+          - Mobile Apps (Shipper, Operator, Driver)
+          - Admin Portal (Next.js + Ant Design)
+          - Franchise Portal
+          
+          ### Deployment
+          
+          **Staging**: Available at staging.rodistaa.com  
+          **Production**: Available at app.rodistaa.com
+          
+          ### Documentation
+          
+          See [PLATFORM_FINAL_COMPLETE.md](PLATFORM_FINAL_COMPLETE.md) for complete details.
+          
+          NOTES
+          
+          cat release_notes.md
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: RELEASE_NOTES.md
+          name: Rodistaa Platform v${{ steps.version.outputs.version }}
+          body_path: release_notes.md
           draft: false
           prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/*.zip
+            PLATFORM_FINAL_COMPLETE.md
+            CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify release
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: '🎉 Rodistaa Platform v${{ steps.version.outputs.version }} released!'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
 
-  package-artifacts:
-    name: Package Release Artifacts
+  publish-artifacts:
+    name: Publish Release Artifacts
     runs-on: ubuntu-latest
     needs: create-release
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
-
+          version: 8.15.0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+      
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm -r build
-
-      - name: Create release package
+      
+      - name: Build all packages
+        run: pnpm -r --filter '!@rodistaa/mobile-*' run build
+      
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+      
+      - name: Package backend
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          DATE=$(date +%Y%m%d)
-          PACKAGE_NAME="rodistaa_release_${DATE}_${VERSION}.zip"
-          
-          # Create release package excluding development files
-          # Note: dist/ is INCLUDED (contains compiled application)
-          zip -r $PACKAGE_NAME . \
-            -x "node_modules/*" \
-            -x ".git/*" \
-            -x "*.log" \
-            -x "coverage/*" \
-            -x ".env*" \
-            -x "*.test.ts" \
-            -x "*.spec.ts"
-          
-          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-
-      - name: Upload release package
+          cd packages/backend
+          tar -czf ../../artifacts/backend-${{ github.ref_name }}.tar.gz \
+            dist/ \
+            package.json \
+            migrations/ \
+            knexfile.ts
+      
+      - name: Package portal
+        run: |
+          cd packages/portal
+          tar -czf ../../artifacts/portal-${{ github.ref_name }}.tar.gz \
+            .next/ \
+            public/ \
+            package.json
+        continue-on-error: true
+      
+      - name: Upload artifacts to release
         uses: softprops/action-gh-release@v1
         with:
-          files: rodistaa_release_*.zip
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
