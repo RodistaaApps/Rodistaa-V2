@@ -8,6 +8,7 @@ import { AuthController } from '../modules/auth/auth.controller';
 import { BookingsController } from '../modules/bookings/bookings.controller';
 import { BidsController } from '../modules/bids/bids.controller';
 import { ShipmentsController } from '../modules/shipments/shipments.controller';
+import { TrucksController } from '../modules/trucks/trucks.controller';
 import * as shipmentsService from '../modules/shipments/shipments.service';
 import * as bidsService from '../modules/bids/bids.service';
 
@@ -16,6 +17,7 @@ export async function registerRoutes(server: FastifyInstance) {
   const bookingsController = new BookingsController();
   const bidsController = new BidsController();
   const shipmentsController = new ShipmentsController();
+  const trucksController = new TrucksController();
 
   // ==================== Auth Routes ====================
   server.post('/auth/login', async (req, reply) => {
@@ -124,9 +126,33 @@ export async function registerRoutes(server: FastifyInstance) {
     }
   });
 
+  // ==================== Truck Routes ====================
+  server.post('/trucks', async (req, reply) => {
+    return trucksController.createTruck(req, reply);
+  });
+
+  server.get('/trucks', async (req, reply) => {
+    return trucksController.listTrucks(req, reply);
+  });
+
+  server.get('/trucks/:truckId', async (req, reply) => {
+    return trucksController.getTruck(req, reply);
+  });
+
+  server.post('/trucks/:truckId/block', async (req, reply) => {
+    return trucksController.blockTruck(req, reply);
+  });
+
+  server.post('/trucks/:truckId/unblock', async (req, reply) => {
+    return trucksController.unblockTruck(req, reply);
+  });
+
+  server.post('/trucks/:truckId/inspect', async (req, reply) => {
+    return trucksController.createInspection(req, reply);
+  });
+
   // TODO: Additional routes to implement:
   // - Users/KYC routes
-  // - Trucks routes
   // - Drivers routes
   // - Admin routes
   // - Franchise routes
