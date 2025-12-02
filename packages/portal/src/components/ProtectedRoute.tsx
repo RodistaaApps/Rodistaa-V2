@@ -17,7 +17,15 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const router = useRouter();
   const { isAuthenticated, checkAuth, user, hasRole } = useAuth();
 
+  // DEV MODE: Bypass auth for demo/testing
+  const isDev = process.env.NODE_ENV === 'development';
+
   useEffect(() => {
+    if (isDev) {
+      // In development, allow access without authentication
+      return;
+    }
+
     const isAuth = checkAuth();
     
     if (!isAuth) {
@@ -31,7 +39,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         return;
       }
     }
-  }, [isAuthenticated, user, router, allowedRoles]);
+  }, [isAuthenticated, user, router, allowedRoles, isDev]);
+
+  // In dev mode, render directly
+  if (isDev) {
+    return <>{children}</>;
+  }
 
   if (!isAuthenticated || !user) {
     return (
