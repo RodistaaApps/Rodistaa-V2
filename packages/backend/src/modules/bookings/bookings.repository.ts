@@ -31,7 +31,7 @@ export interface BookingUpdateInput {
  * Create a new booking
  */
 export async function createBooking(input: BookingCreateInput): Promise<Booking> {
-  const bookingId = generateBookingId(input.createdAt);
+  const bookingId = generateBookingId();
 
   try {
     await query(
