@@ -4,9 +4,9 @@
   "description": "Rodistaa Admin & Franchise Portals - Next.js + Ant Design",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start -p 3001",
+    "dev": "pnpm exec next dev -p 3001",
+    "build": "pnpm exec next build",
+    "start": "pnpm exec next start -p 3001",
     "lint": "next lint",
     "test": "jest",
     "test:e2e": "playwright test",
