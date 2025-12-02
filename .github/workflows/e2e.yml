@@ -1,0 +1,167 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+jobs:
+  playwright-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rodistaa_user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: rodistaa_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm -r build
+
+      - name: Run migrations
+        run: |
+          cd packages/backend
+          pnpm knex migrate:latest
+        env:
+          DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_e2e
+
+      - name: Run seed data
+        run: |
+          cd packages/backend
+          pnpm knex seed:run
+        env:
+          DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_e2e
+
+      - name: Start backend server
+        run: |
+          cd packages/backend
+          pnpm dev &
+          sleep 10
+        env:
+          DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_e2e
+          NODE_ENV: test
+          PORT: 4000
+          JWT_SECRET: test-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          LOCAL_KMS_KEY_ID: test-key
+          ACS_RULES_PATH: ../../acs_rules_top25.yaml
+
+      - name: Install Playwright
+        run: |
+          cd packages/portal
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: |
+          cd packages/portal
+          pnpm exec playwright test
+        env:
+          BASE_URL: http://localhost:4000
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: packages/portal/playwright-report/
+          retention-days: 30
+
+  smoke-tests:
+    name: Backend Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rodistaa_user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: rodistaa_smoke
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm -r build
+
+      - name: Run migrations
+        run: |
+          cd packages/backend
+          pnpm knex migrate:latest
+        env:
+          DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_smoke
+
+      - name: Start backend
+        run: |
+          cd packages/backend
+          pnpm dev &
+          sleep 10
+        env:
+          DATABASE_URL: postgresql://rodistaa_user:password@localhost:5432/rodistaa_smoke
+          NODE_ENV: test
+          PORT: 4000
+          JWT_SECRET: test-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          LOCAL_KMS_KEY_ID: test-key
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:4000/health || exit 1
+
+      - name: Run smoke tests
+        run: |
+          cd packages/backend/scripts
+          node smoke_test_comprehensive.js
+        env:
+          API_BASE_URL: http://localhost:4000
+

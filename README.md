@@ -1,7 +1,12 @@
 # Rodistaa Platform - Complete Full-Stack Monorepo
 
+[![CI](https://github.com/rodistaa/rodistaa/actions/workflows/ci.yml/badge.svg)](https://github.com/rodistaa/rodistaa/actions/workflows/ci.yml)
+[![E2E Tests](https://github.com/rodistaa/rodistaa/actions/workflows/e2e.yml/badge.svg)](https://github.com/rodistaa/rodistaa/actions/workflows/e2e.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
+
 **Version**: 1.0.0  
-**Status**: 🚧 **Foundation Complete - Implementation In Progress**
+**Status**: ✅ **Backend & ACS Complete - Production Ready**
 
 ---
 
