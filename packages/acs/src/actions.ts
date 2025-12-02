@@ -490,7 +490,7 @@ export async function suspendAccountAction(payload: any, evalCtx: any) {
   log.info({ accountId, reason, severity, durationDays }, 'suspendAccountAction called');
 
   try {
-    const adapter = getDbAdapterFromContextOrGlobal(evalCtx);
+    const adapter = getDbAdapterFromContext(evalCtx);
 
     if (adapter && 'query' in adapter) {
       // Calculate suspension end date (if temporary)

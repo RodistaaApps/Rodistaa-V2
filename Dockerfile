@@ -31,10 +31,11 @@ WORKDIR /app
 
 # Copy dependencies from previous stage
 COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=dependencies /app/packages ./packages
 
-# Copy source code
-COPY . .
+# Copy source code (workspace config first, then source)
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages ./packages
+COPY acs_rules_top25.yaml ./
 
 # Build all packages
 RUN pnpm --filter @rodistaa/app-shared build
