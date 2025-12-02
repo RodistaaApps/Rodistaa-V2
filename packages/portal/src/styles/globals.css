@@ -1,0 +1,46 @@
+/**
+ * Global Styles for Rodistaa Portals
+ */
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+body {
+  background-color: #F5F5F5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Rodistaa branding colors */
+:root {
+  --rodistaa-primary: #C90D0D;
+  --rodistaa-bg: #F5F5F5;
+  --rodistaa-white: #FFFFFF;
+}
+
+/* Ant Design overrides for Rodistaa theme */
+.ant-layout-header {
+  background-color: var(--rodistaa-primary) !important;
+  color: var(--rodistaa-white) !important;
+}
+
+.rodistaa-logo {
+  font-family: 'Baloo Bhai', 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--rodistaa-white);
+}
+
