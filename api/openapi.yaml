@@ -804,15 +804,21 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [shipmentId, file]
+              required: [shipmentId, file, otp]
               properties:
                 shipmentId:
                   type: string
+                  description: Shipment ID for which POD is being uploaded
+                  example: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 file:
                   type: string
                   format: binary
+                  description: POD image/document file
                 otp:
                   type: string
+                  pattern: '^[0-9]{6}$'
+                  description: 6-digit OTP for delivery verification (required for completion)
+                  example: "123456"
             example:
               shipmentId: "SH-01ARZ3NDEKTSV4RRFFQ69G5FAV"
               file: "[binary file data]"

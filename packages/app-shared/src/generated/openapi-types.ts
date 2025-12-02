@@ -1218,10 +1218,21 @@ export interface paths {
                      *     }
                      */
                     "multipart/form-data": {
+                        /**
+                         * @description Shipment ID for which POD is being uploaded
+                         * @example SH-01ARZ3NDEKTSV4RRFFQ69G5FAV
+                         */
                         shipmentId: string;
-                        /** Format: binary */
+                        /**
+                         * Format: binary
+                         * @description POD image/document file
+                         */
                         file: string;
-                        otp?: string;
+                        /**
+                         * @description 6-digit OTP for delivery verification (required for completion)
+                         * @example 123456
+                         */
+                        otp: string;
                     };
                 };
             };
