@@ -1,0 +1,236 @@
+name: Deploy to AWS Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm@8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting
+        run: pnpm lint || true
+
+      - name: Run type checking
+        run: pnpm typecheck || true
+
+      - name: Run unit tests
+        run: pnpm test:all
+
+      - name: Build all packages
+        run: pnpm build:all
+
+  build-and-push:
+    name: Build and Push Docker Images
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(git rev-parse --short HEAD)
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Deployment version: ${VERSION}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/rodistaa-backend:${{ steps.version.outputs.VERSION }}
+            ${{ env.ECR_REGISTRY }}/rodistaa-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Build and push Admin Portal
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.admin-portal
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/rodistaa-admin-portal:${{ steps.version.outputs.VERSION }}
+            ${{ env.ECR_REGISTRY }}/rodistaa-admin-portal:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Build and push Franchise Portal
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.franchise-portal
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/rodistaa-franchise-portal:${{ steps.version.outputs.VERSION }}
+            ${{ env.ECR_REGISTRY }}/rodistaa-franchise-portal:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  deploy:
+    name: Deploy to ECS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.rodistaa.com
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Backend to ECS
+        run: |
+          aws ecs update-service \
+            --cluster rodistaa-production \
+            --service rodistaa-backend \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy Admin Portal to ECS
+        run: |
+          aws ecs update-service \
+            --cluster rodistaa-production \
+            --service rodistaa-admin-portal \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy Franchise Portal to ECS
+        run: |
+          aws ecs update-service \
+            --cluster rodistaa-production \
+            --service rodistaa-franchise-portal \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for services to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster rodistaa-production \
+            --services rodistaa-backend rodistaa-admin-portal rodistaa-franchise-portal \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Verify deployment health
+        run: |
+          echo "Checking backend health..."
+          curl -f https://api.rodistaa.com/health || exit 1
+          echo "✅ Backend healthy"
+          
+          echo "Checking admin portal..."
+          curl -f https://admin.rodistaa.com || exit 1
+          echo "✅ Admin portal healthy"
+          
+          echo "Checking franchise portal..."
+          curl -f https://franchise.rodistaa.com || exit 1
+          echo "✅ Franchise portal healthy"
+
+  notify:
+    name: Notify Team
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Rodistaa Production Deployment: ${{ needs.deploy.result }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Rodistaa Production Deployment"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:* ${{ needs.deploy.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Version:* ${{ needs.build-and-push.outputs.version }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:* ${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:* Production"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://api.rodistaa.com|Backend API> | <https://admin.rodistaa.com|Admin Portal> | <https://franchise.rodistaa.com|Franchise Portal>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+

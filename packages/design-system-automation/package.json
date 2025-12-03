@@ -1,0 +1,26 @@
+{
+  "name": "@rodistaa/design-system-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automated Figma ↔ Code token synchronization for Rodistaa Design System",
+  "scripts": {
+    "figma:sync": "node ./scripts/figma-sync.js",
+    "tokens:generate": "node ./scripts/generate-ts-from-tokens.js",
+    "tokens:validate": "node ./scripts/validate-tokens.js",
+    "tokens:scan": "node ../design-system/scripts/scan-hardcoded.js",
+    "storybook:snap": "bash ./scripts/run-storybook-snapshots.sh",
+    "token:full": "pnpm run figma:sync && pnpm run tokens:generate && pnpm run tokens:validate"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "prettier": "^2.8.0",
+    "fast-glob": "^3.2.7",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "playwright": "^1.40.0",
+    "@types/node": "^20.10.0"
+  }
+}
+

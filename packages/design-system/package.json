@@ -1,0 +1,34 @@
+{
+  "name": "@rodistaa/design-system",
+  "version": "1.0.0",
+  "description": "Rodistaa Unified Design System - Mobile & Web",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No tests configured for design-system yet'",
+    "figma:sync": "cd ../design-system-automation && pnpm figma:sync",
+    "tokens:generate": "cd ../design-system-automation && pnpm tokens:generate",
+    "tokens:validate": "cd ../design-system-automation && pnpm tokens:validate",
+    "tokens:scan": "node scripts/scan-hardcoded.js",
+    "storybook:snap": "cd ../design-system-automation && pnpm storybook:snap",
+    "token:full": "cd ../design-system-automation && pnpm token:full"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-native": "^0.72.6"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.72.0",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0"
+  }
+}
+

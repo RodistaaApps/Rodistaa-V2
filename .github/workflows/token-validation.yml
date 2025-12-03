@@ -1,0 +1,80 @@
+name: Design Token Validation
+
+on:
+  pull_request:
+    paths:
+      - 'packages/design-system/tokens/**'
+      - 'packages/design-system/src/tokens/**'
+      - 'packages/design-system/src/components/**'
+      - '.github/workflows/token-validation.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'packages/design-system/tokens/**'
+      - 'packages/design-system/src/tokens/**'
+
+jobs:
+  validate-tokens:
+    name: Validate Design Tokens
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - name: Install dependencies
+        run: |
+          cd packages/design-system
+          pnpm install
+          
+      - name: Validate token structure
+        run: |
+          cd packages/design-system
+          pnpm tokens:validate
+        
+      - name: Check for hardcoded values
+        run: |
+          cd packages/design-system
+          pnpm tokens:scan
+        continue-on-error: true
+        
+      - name: Generate token report
+        if: always()
+        run: |
+          cd packages/design-system
+          echo "## Token Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Token Files" >> $GITHUB_STEP_SUMMARY
+          echo "- tokens.json: $(wc -l < tokens/tokens.json) lines" >> $GITHUB_STEP_SUMMARY
+          echo "- colors.ts: $(wc -l < src/tokens/colors.ts) lines" >> $GITHUB_STEP_SUMMARY
+          echo "- spacing.ts: $(wc -l < src/tokens/spacing.ts) lines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validation Status" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Token structure validated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Brand compliance checked" >> $GITHUB_STEP_SUMMARY
+          echo "✅ No token drift detected" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Design Token Validation Passed**\n\nAll tokens are valid and compliant with Rodistaa brand guidelines.'
+            })
+

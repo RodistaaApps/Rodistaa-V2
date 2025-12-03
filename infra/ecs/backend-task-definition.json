@@ -1,0 +1,89 @@
+{
+  "family": "rodistaa-backend-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/rodistaaBackendTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "rodistaa-backend",
+      "image": "{{ECR_REGISTRY}}/rodistaa-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "4000" },
+        { "name": "AWS_REGION", "value": "ap-south-1" },
+        { "name": "ACS_ENABLED", "value": "true" },
+        { "name": "ACS_RULES_PATH", "value": "/app/acs_rules_top25.yaml" },
+        { "name": "LOG_LEVEL", "value": "info" },
+        { "name": "PGSSLMODE", "value": "require" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/database/url"
+        },
+        {
+          "name": "PGHOST",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/database/host"
+        },
+        {
+          "name": "PGPASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/database/password"
+        },
+        {
+          "name": "REDIS_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/redis/url"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/jwt/secret"
+        },
+        {
+          "name": "JWT_REFRESH_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/jwt/refresh-secret"
+        },
+        {
+          "name": "RAZORPAY_KEY_ID",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/razorpay/credentials:key_id::"
+        },
+        {
+          "name": "RAZORPAY_KEY_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/razorpay/credentials:key_secret::"
+        },
+        {
+          "name": "GOOGLE_MAPS_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/google-maps/api-key"
+        },
+        {
+          "name": "SENTRY_DSN",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:{{AWS_ACCOUNT_ID}}:secret:rodistaa/production/sentry/dsn"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/rodistaa-backend-production",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
+

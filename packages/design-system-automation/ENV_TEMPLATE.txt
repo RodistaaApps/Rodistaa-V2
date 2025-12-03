@@ -1,0 +1,21 @@
+# ==============================================
+# Figma Token Sync - Environment Variables
+# ==============================================
+# Copy this to .env and fill in your values
+# NEVER commit .env to version control!
+
+# Figma Personal Access Token
+# Get from: https://www.figma.com/settings → Personal access tokens
+# Required scope: file:read
+FIGMA_TOKEN=figd_YOUR_FIGMA_PERSONAL_ACCESS_TOKEN_HERE
+
+# Alternative name (both work)
+# FIGMA_ACCESS_TOKEN=figd_YOUR_FIGMA_PERSONAL_ACCESS_TOKEN_HERE
+
+# Figma File Key
+# Extract from Figma URL: https://www.figma.com/design/{FILE_KEY}/...
+FIGMA_FILE_KEY=YOUR_FIGMA_FILE_KEY_HERE
+
+# Optional: Specific page name to sync from
+# FIGMA_PAGE_NAME=Design Tokens
+
