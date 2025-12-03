@@ -19,6 +19,7 @@
     "@rodistaa/app-shared": "workspace:*",
     "@rodistaa/mobile-shared": "workspace:*",
     "@tanstack/react-query": "^5.17.0",
+    "css-in-js-utils": "^3.1.0",
     "expo": "~49.0.23",
     "expo-image-picker": "~14.3.2",
     "expo-location": "~16.1.0",
