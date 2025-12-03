@@ -4,8 +4,30 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { SecureStorage } from '@rodistaa/mobile-shared';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+
+// Simple storage wrapper that works on web and mobile
+const Storage = {
+  getToken: async () => {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem('authToken');
+    }
+    // For mobile, would use SecureStore
+    return null;
+  },
+  setToken: async (token: string) => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem('authToken', token);
+    }
+    // For mobile, would use SecureStore
+  },
+  removeToken: async () => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem('authToken');
+    }
+    // For mobile, would use SecureStore
+  }
+};
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +42,7 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const token = await SecureStorage.getToken();
+      const token = await Storage.getToken();
       if (token) {
         setIsAuthenticated(true);
       }
@@ -40,12 +62,12 @@ export default function App() {
   const handleLogin = async () => {
     // Mock login
     console.log('Logging in with OTP:', otp);
-    await SecureStorage.setToken('mock-token-' + Date.now());
+    await Storage.setToken('mock-token-' + Date.now());
     setIsAuthenticated(true);
   };
 
   const handleLogout = async () => {
-    await SecureStorage.removeToken();
+    await Storage.removeToken();
     setIsAuthenticated(false);
     setOtpSent(false);
     setPhone('');
