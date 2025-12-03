@@ -2,7 +2,7 @@
  * Auth Service Unit Tests
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+// Jest globals are available without import
 
 describe('AuthService', () => {
   describe('OTP Generation', () => {

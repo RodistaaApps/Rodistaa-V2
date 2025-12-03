@@ -17,31 +17,36 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const router = useRouter();
   const { isAuthenticated, checkAuth, user, hasRole } = useAuth();
 
-  // DEV MODE: Bypass auth for demo/testing
+  // DEV MODE: Completely bypass auth for demo/testing
   const isDev = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
+    // Skip auth checks entirely in development
     if (isDev) {
-      // In development, allow access without authentication
       return;
     }
 
-    const isAuth = checkAuth();
-    
-    if (!isAuth) {
-      router.push('/login');
-      return;
-    }
-
-    if (allowedRoles && allowedRoles.length > 0) {
-      if (!hasRole(allowedRoles)) {
-        router.push('/unauthorized');
+    // Small delay to allow zustand persist to rehydrate
+    const timer = setTimeout(() => {
+      const isAuth = checkAuth();
+      
+      if (!isAuth) {
+        router.push('/login');
         return;
       }
-    }
-  }, [isAuthenticated, user, router, allowedRoles, isDev]);
 
-  // In dev mode, render directly
+      if (allowedRoles && allowedRoles.length > 0) {
+        if (!hasRole(allowedRoles)) {
+          router.push('/unauthorized');
+          return;
+        }
+      }
+    }, 100); // 100ms delay for rehydration
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user, router, allowedRoles, checkAuth, hasRole, isDev]);
+
+  // In dev mode, skip all auth checks and render directly
   if (isDev) {
     return <>{children}</>;
   }

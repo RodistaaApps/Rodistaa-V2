@@ -15,12 +15,20 @@ const log = logger({ name: 'auth-middleware' });
  */
 export async function registerAuthMiddleware(server: FastifyInstance) {
   server.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+    // Skip auth for OPTIONS (CORS preflight)
+    if (request.method === 'OPTIONS') {
+      return;
+    }
+
+    // Normalize URL (remove /v1 prefix if present)
+    const normalizedUrl = request.url.replace(/^\/v\d+/, '');
+
     // Skip auth for public endpoints
     if (
-      request.url === '/health' ||
-      request.url.startsWith('/auth/') ||
-      request.url.startsWith('/docs') ||
-      request.url.startsWith('/webhooks/')
+      normalizedUrl === '/health' ||
+      normalizedUrl.startsWith('/auth/') ||
+      normalizedUrl.startsWith('/docs') ||
+      normalizedUrl.startsWith('/webhooks/')
     ) {
       return;
     }

@@ -15,7 +15,7 @@ const ENCRYPTION_KEY = process.env.EXPO_PUBLIC_KYC_ENCRYPTION_KEY || 'default-de
 export function encryptKycData(data: string): string {
   try {
     const encrypted = CryptoJS.AES.encrypt(data, ENCRYPTION_KEY, {
-      mode: CryptoJS.mode.GCM,
+      mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     });
     return encrypted.toString();
@@ -33,7 +33,7 @@ export function encryptKycData(data: string): string {
 export function decryptKycData(encryptedData: string): string {
   try {
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY, {
-      mode: CryptoJS.mode.GCM,
+      mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     });
     return decrypted.toString(CryptoJS.enc.Utf8);

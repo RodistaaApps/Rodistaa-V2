@@ -17,6 +17,12 @@ export async function createServer(): Promise<FastifyInstance> {
     },
   });
 
+  // Enable CORS for portal
+  await server.register(require('@fastify/cors'), {
+    origin: true, // Allow all origins in development
+    credentials: true,
+  });
+
   // Health check
   server.get('/health', async () => ({
     status: 'ok',
@@ -28,8 +34,13 @@ export async function createServer(): Promise<FastifyInstance> {
   await registerAuthMiddleware(server);
   await registerAcsMiddleware(server);
 
-  // Register routes
-  await registerRoutes(server);
+  // Register routes with /v1 prefix
+  await server.register(
+    async function (apiServer) {
+      await registerRoutes(apiServer);
+    },
+    { prefix: '/v1' }
+  );
 
   return server;
 }

@@ -38,7 +38,8 @@ class ApiClient {
         if (error.response?.status === 401) {
           // Token expired or invalid
           this.clearToken();
-          if (typeof window !== 'undefined') {
+          // Only redirect in production (not during development)
+          if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'development') {
             window.location.href = '/login';
           }
         }
@@ -70,8 +71,13 @@ class ApiClient {
   }
 
   // Auth
-  async login(email: string, password: string) {
-    const response = await this.client.post('/auth/login', { email, password });
+  async sendOTP(mobile: string) {
+    const response = await this.client.post('/auth/otp', { mobile });
+    return response;
+  }
+
+  async login(mobile: string, otp: string) {
+    const response = await this.client.post('/auth/login', { mobile, otp });
     return response;
   }
 

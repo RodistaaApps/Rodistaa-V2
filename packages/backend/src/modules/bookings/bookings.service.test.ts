@@ -2,7 +2,7 @@
  * Booking Service Unit Tests
  */
 
-import { describe, it, expect } from '@jest/globals';
+// Jest globals are available without import
 import { BookingStatus } from '@rodistaa/app-shared';
 
 describe('BookingService', () => {
@@ -65,8 +65,7 @@ describe('BookingService', () => {
     it('should prevent invalid status transitions', () => {
       const invalidTransitions = [
         { from: BookingStatus.FINALIZED, to: BookingStatus.OPEN }, // Cannot reopen
-        { from: BookingStatus.CANCELLED, to: BookingStatus.NEGOTIATION }, // Cannot uncance
-l
+        { from: BookingStatus.CANCELLED, to: BookingStatus.NEGOTIATION }, // Cannot uncancel
       ];
 
       // In real implementation, these would throw errors

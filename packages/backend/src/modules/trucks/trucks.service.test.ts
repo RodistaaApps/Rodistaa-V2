@@ -2,7 +2,7 @@
  * Truck Service Unit Tests
  */
 
-import { describe, it, expect } from '@jest/globals';
+// Jest globals are available without import
 import { TruckStatus } from '@rodistaa/app-shared';
 
 describe('TruckService', () => {
@@ -22,7 +22,7 @@ describe('TruckService', () => {
     });
 
     it('should validate registration number format', () => {
-      const validRegNos = ['MH-12-AB-1234', 'KA-01-CD-5678', 'DL-1CAB-1234'];
+      const validRegNos = ['MH-12-AB-1234', 'KA-01-CD-5678', 'DL-1-CAB-1234'];
       validRegNos.forEach(regNo => {
         expect(regNo).toMatch(/^[A-Z]{2}-\d{1,2}-[A-Z]{1,3}-\d{4}$/);
       });

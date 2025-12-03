@@ -1,0 +1,84 @@
+global:
+  resolve_timeout: 5m
+  # Configure SMTP for email alerts
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@rodistaa.com'
+  smtp_auth_username: 'alerts@rodistaa.com'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+# Alert routing tree
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+
+    # High severity - 5 min grouping
+    - match:
+        severity: high
+      receiver: 'high-alerts'
+      group_wait: 5m
+
+    # Medium/Low - 30 min grouping
+    - match_re:
+        severity: medium|low
+      receiver: 'standard-alerts'
+      group_wait: 30m
+
+# Alert receivers
+receivers:
+  # Default receiver
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://backend:4000/v1/webhooks/alerts'
+        send_resolved: true
+
+  # Critical alerts - multiple channels
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'cto@rodistaa.com'
+        headers:
+          Subject: '[CRITICAL] Rodistaa Alert'
+    webhook_configs:
+      - url: 'http://backend:4000/v1/webhooks/alerts/critical'
+        send_resolved: true
+    # Add Slack/PagerDuty here in production
+
+  # High severity alerts
+  - name: 'high-alerts'
+    email_configs:
+      - to: 'devops@rodistaa.com'
+        headers:
+          Subject: '[HIGH] Rodistaa Alert'
+    webhook_configs:
+      - url: 'http://backend:4000/v1/webhooks/alerts/high'
+
+  # Standard alerts
+  - name: 'standard-alerts'
+    webhook_configs:
+      - url: 'http://backend:4000/v1/webhooks/alerts/standard'
+
+# Inhibition rules - suppress dependent alerts
+inhibit_rules:
+  # Suppress warning if critical is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+  # Suppress info if warning is firing
+  - source_match:
+      severity: 'warning'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'cluster', 'service']
+

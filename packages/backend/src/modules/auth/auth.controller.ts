@@ -50,6 +50,8 @@ export class AuthController {
     try {
       const payload = req.body as { mobile: string; otp: string; deviceId?: string };
 
+      req.log.info({ mobile: payload.mobile?.substring(0, 5) + '***' }, 'Login attempt');
+
       if (!payload.mobile || !payload.otp) {
         return reply.code(400).send({
           code: 'MISSING_FIELDS',
@@ -58,7 +60,9 @@ export class AuthController {
       }
 
       // Validate OTP
+      req.log.info('Validating OTP');
       if (!validateOTP(payload.mobile, payload.otp)) {
+        req.log.warn('OTP validation failed');
         return reply.code(401).send({
           code: 'INVALID_OTP',
           message: 'Invalid or expired OTP',
@@ -66,14 +70,19 @@ export class AuthController {
       }
 
       // Find or create user
+      req.log.info('Finding or creating user');
       const user = await findOrCreateUser(payload.mobile, UserRole.SHIPPER);
+      req.log.info({ userId: user.id }, 'User found/created');
 
       // Generate tokens
+      req.log.info('Generating tokens');
       const tokens = generateTokens(user, payload.deviceId);
 
       // Update user session
+      req.log.info('Updating session');
       await updateUserSession(user.id, payload.deviceId);
 
+      req.log.info('Login successful');
       return reply.code(200).send({
         token: tokens.token,
         refreshToken: tokens.refreshToken,
@@ -85,7 +94,11 @@ export class AuthController {
         },
       });
     } catch (error: any) {
-      req.log.error({ error }, 'Login failed');
+      req.log.error({ 
+        error: error.message,
+        stack: error.stack,
+        name: error.name 
+      }, 'Login failed with exception');
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message: 'Login failed',

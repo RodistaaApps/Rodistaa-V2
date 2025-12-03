@@ -1,9 +1,10 @@
 /**
  * API Client for Mobile Apps
- * Shared HTTP client with authentication
+ * Shared HTTP client with authentication and type safety
  */
 
 import { config } from './config';
+import type { ApiResponse, ApiError } from '../types/api';
 
 const API_BASE_URL = config.API_URL || 'http://localhost:4000/v1';
 
@@ -25,8 +26,22 @@ class ApiClient {
     this.deviceId = deviceId;
   }
 
-  async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+  async request<T>(endpoint: string, options: RequestOptions & { params?: any } = {}): Promise<T> {
+    // Build URL with query parameters
+    let url = `${API_BASE_URL}${endpoint}`;
+    if (options.params) {
+      const params = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -57,8 +72,8 @@ class ApiClient {
     return response.json();
   }
 
-  get<T>(endpoint: string) {
-    return this.request<T>(endpoint, { method: 'GET' });
+  get<T>(endpoint: string, params?: any) {
+    return this.request<T>(endpoint, { method: 'GET', params });
   }
 
   post<T>(endpoint: string, body: any) {

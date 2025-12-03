@@ -40,13 +40,19 @@ const otpStore: Map<string, { otp: string; expiresAt: Date }> = new Map();
  * In production, this would send SMS via Twilio/MessageBird
  */
 export async function generateOTP(mobile: string): Promise<void> {
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  // In development, use fixed OTP for easier testing
+  const otp = process.env.NODE_ENV === 'development' 
+    ? '123456' 
+    : Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   otpStore.set(mobile, { otp, expiresAt });
 
-  log.info({ mobile: maskMobile(mobile) }, 'OTP generated (mock - would send SMS)');
+  if (process.env.NODE_ENV === 'development') {
+    log.info({ mobile: maskMobile(mobile), otp }, 'OTP generated (development mode)');
+  } else {
+    log.info({ mobile: maskMobile(mobile) }, 'OTP generated (mock - would send SMS)');
+  }
   // In production: await smsService.send(mobile, `Your Rodistaa OTP: ${otp}`);
 }
 
@@ -131,8 +137,13 @@ export async function findOrCreateUser(mobile: string, role: UserRole = UserRole
       kycStatus: 'PENDING',
     };
   } catch (error: any) {
-    log.error({ error, mobile: maskMobile(fullMobile) }, 'Failed to find or create user');
-    throw new Error('Authentication failed');
+    log.error({ 
+      error: error.message, 
+      stack: error.stack,
+      code: error.code,
+      mobile: maskMobile(fullMobile) 
+    }, 'Failed to find or create user');
+    throw error; // Re-throw original error for better debugging
   }
 }
 

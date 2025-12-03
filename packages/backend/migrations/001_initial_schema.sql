@@ -176,10 +176,10 @@ CREATE TABLE IF NOT EXISTS gps_logs (
   coordinates JSONB NOT NULL, -- {lat, lng}
   speed DECIMAL(8, 2),
   heading DECIMAL(8, 2),
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
-  
-  INDEX idx_gps_shipment_time (shipment_id, timestamp)
+  timestamp TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_gps_shipment_time ON gps_logs (shipment_id, timestamp);
 
 -- POD files table
 CREATE TABLE IF NOT EXISTS pod_files (
@@ -225,6 +225,19 @@ CREATE TABLE IF NOT EXISTS ledger_transactions (
   CONSTRAINT valid_transaction_type CHECK (type IN ('DEPOSIT', 'BIDDING_FEE', 'REFUND'))
 );
 
+-- Audit logs table (hash-chained)
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source VARCHAR(128) NOT NULL,
+  event JSONB NOT NULL,
+  rule_id VARCHAR(128),
+  rule_version VARCHAR(64),
+  prev_hash TEXT, -- Previous audit log hash (for chaining)
+  hash TEXT NOT NULL, -- SHA256 hash of this entry
+  signer VARCHAR(128) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ACS blocks table
 CREATE TABLE IF NOT EXISTS acs_blocks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -240,19 +253,6 @@ CREATE TABLE IF NOT EXISTS acs_blocks (
   
   CONSTRAINT valid_entity_type CHECK (entity_type IN ('user', 'truck', 'driver', 'operator', 'shipment', 'device')),
   CONSTRAINT valid_severity CHECK (severity IN ('low', 'medium', 'high', 'critical'))
-);
-
--- Audit logs table (hash-chained)
-CREATE TABLE IF NOT EXISTS audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  source VARCHAR(128) NOT NULL,
-  event JSONB NOT NULL,
-  rule_id VARCHAR(128),
-  rule_version VARCHAR(64),
-  prev_hash TEXT, -- Previous audit log hash (for chaining)
-  hash TEXT NOT NULL, -- SHA256 hash of this entry
-  signer VARCHAR(128) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Watchlist table

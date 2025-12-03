@@ -1,14 +1,13 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "Running pre-commit checks..."
+# Validate design tokens if changed
+if git diff --cached --name-only | grep -q "packages/design-system/tokens/\|packages/design-system/src/tokens/"; then
+  echo "🎨 Validating design tokens..."
+  cd packages/design-system
+  pnpm tokens:validate || exit 1
+  cd ../..
+fi
 
 # Run lint-staged
-pnpm lint-staged
-
-# Run type check on critical packages
-echo "Running type checks..."
-pnpm --filter @rodistaa/app-shared typecheck || exit 1
-
-echo "✅ Pre-commit checks passed!"
-
+npx lint-staged

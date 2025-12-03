@@ -9,7 +9,8 @@ import { apiClient } from '../api/client';
 
 interface User {
   id: string;
-  email: string;
+  email?: string;
+  phone?: string;
   name: string;
   role: 'SUPER_ADMIN' | 'FRAUD_INVESTIGATOR' | 'ACCOUNTS' | 'SUPPORT' | 'FRANCHISE_DISTRICT' | 'FRANCHISE_UNIT';
   franchiseId?: string;
@@ -19,7 +20,8 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  sendOTP: (mobile: string) => Promise<void>;
+  login: (mobile: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => boolean;
   hasRole: (roles: string | string[]) => boolean;
@@ -32,17 +34,25 @@ export const useAuth = create<AuthState>()(
       token: null,
       isAuthenticated: false,
 
-      login: async (email: string, password: string) => {
+      sendOTP: async (mobile: string) => {
         try {
-          const response: any = await apiClient.login(email, password);
+          await apiClient.sendOTP(mobile);
+        } catch (error) {
+          throw error;
+        }
+      },
+
+      login: async (mobile: string, otp: string) => {
+        try {
+          const response: any = await apiClient.login(mobile, otp);
           
-          const { accessToken, user } = response;
+          const { token, user } = response;
           
-          apiClient.setToken(accessToken);
+          apiClient.setToken(token);
           
           set({
             user,
-            token: accessToken,
+            token,
             isAuthenticated: true,
           });
           

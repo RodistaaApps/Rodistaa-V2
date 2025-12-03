@@ -13,7 +13,7 @@ const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, sendOTP } = useAuth();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
@@ -22,9 +22,10 @@ export default function LoginPage() {
   const handleSendOtp = async (values: { phone: string }) => {
     setLoading(true);
     try {
-      setPhone(values.phone);
-      // In mock mode, OTP is always 123456
-      message.success('OTP sent! (Mock OTP: 123456)');
+      const mobile = values.phone.startsWith('+') ? values.phone : `+91${values.phone}`;
+      await sendOTP(mobile);
+      setPhone(mobile);
+      message.success('OTP sent successfully!');
       setStep('otp');
     } catch (error: any) {
       message.error('Failed to send OTP');

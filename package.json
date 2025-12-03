@@ -11,6 +11,8 @@
     "typecheck:all": "pnpm -w -r typecheck",
     "clean:all": "pnpm -w -r clean",
     "package:zip": "node scripts/package-zip.js",
+    "health-check": "node scripts/health-check.js",
+    "deployment-check": "node scripts/deployment-checklist.js",
     "prepare": "husky install"
   },
   "devDependencies": {
