@@ -2,7 +2,7 @@
   "name": "@rodistaa/mobile-operator",
   "version": "1.0.0",
   "description": "Rodistaa Operator Mobile App",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
