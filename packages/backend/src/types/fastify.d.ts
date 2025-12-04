@@ -15,6 +15,7 @@ declare module 'fastify' {
       kycStatus: string;
       deviceId?: string;
       franchiseId?: string;
+      franchiseType?: string;
     };
   }
 }
