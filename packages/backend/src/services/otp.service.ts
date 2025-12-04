@@ -1,10 +1,15 @@
 /**
  * OTP Service
- * BUSINESS RULE: OTP delivery via in-app notifications ONLY - No SMS/WhatsApp
- * Handles OTP generation and storage for in-app notification delivery
+ * Handles OTP generation and delivery
+ * 
+ * NOTE: Login OTP is sent via SMS. All other OTPs (shipment completion, etc.) use in-app notifications.
  */
 
 import crypto from 'crypto';
+import { smsService } from './sms.service';
+import logger from 'pino';
+
+const log = logger({ name: 'otp-service' });
 
 interface OTPRecord {
   phone: string;
@@ -28,14 +33,70 @@ export class OTPService {
   }
 
   /**
-   * BUSINESS RULE: OTP delivery via in-app notifications ONLY
-   * SMS/WhatsApp sending methods removed - violates business rule
-   * OTP is stored and delivered via in-app notification system
+   * Generate and send login OTP via SMS
+   * 
+   * NOTE: Login OTP is sent via SMS. Other OTPs (shipment completion, etc.) use in-app notifications.
    */
+  async generateAndSendLoginOTP(phone: string): Promise<{ success: boolean; message: string; otp?: string }> {
+    // Check rate limiting (max 3 OTPs per hour)
+    const recentOTPs = this.getRecentOTPCount(phone);
+    if (recentOTPs >= 3) {
+      return {
+        success: false,
+        message: 'Too many OTP requests. Please try after 1 hour.',
+      };
+    }
+
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP
+    this.otpStore.set(phone, {
+      phone,
+      otp,
+      expiresAt,
+      attempts: 0,
+    });
+
+    // Send OTP via SMS
+    const smsResult = await smsService.sendLoginOTP(phone, otp);
+
+    if (!smsResult.success) {
+      log.warn({ phone: this.maskPhone(phone), error: smsResult.error }, 'Failed to send OTP via SMS');
+      // In development, still return OTP even if SMS fails
+      if (process.env.NODE_ENV === 'development') {
+        return {
+          success: true,
+          message: `OTP generated. SMS sending failed: ${smsResult.error}. (DEV OTP: ${otp})`,
+          otp,
+        };
+      }
+      return {
+        success: false,
+        message: `Failed to send OTP. Please try again.`,
+      };
+    }
+
+    // In development, also return OTP for testing
+    if (process.env.NODE_ENV === 'development') {
+      log.info({ phone: this.maskPhone(phone), otp }, 'Login OTP sent via SMS (DEV mode - OTP visible)');
+      return {
+        success: true,
+        message: `OTP sent to your phone. (DEV: ${otp})`,
+        otp, // Only in development
+      };
+    }
+
+    log.info({ phone: this.maskPhone(phone) }, 'Login OTP sent via SMS');
+    return {
+      success: true,
+      message: 'OTP sent to your phone. Please check your SMS.',
+    };
+  }
 
   /**
-   * Generate and store OTP for in-app notification delivery
-   * BUSINESS RULE: OTP delivered via in-app notifications ONLY - No SMS/WhatsApp
+   * Generate and store OTP for in-app notification delivery (non-login OTPs)
+   * Used for shipment completion OTP, etc.
    */
   async generateAndStoreOTP(phone: string): Promise<{ success: boolean; message: string; otp?: string }> {
     // Check rate limiting (max 3 OTPs per hour)
@@ -58,10 +119,9 @@ export class OTPService {
       attempts: 0,
     });
 
-    // BUSINESS RULE: OTP is delivered via in-app notification system
     // In development, return OTP for testing purposes
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV OTP] Phone: ${phone}, OTP: ${otp} (for testing - production uses in-app notifications)`);
+      log.info({ phone: this.maskPhone(phone), otp }, '[DEV OTP] Generated for in-app notification (DEV: OTP visible)');
       return {
         success: true,
         message: `OTP generated. Check your in-app notifications. (DEV: ${otp})`,
@@ -70,10 +130,20 @@ export class OTPService {
     }
 
     // Production: OTP delivered via in-app notification (handled by notification service)
+    log.info({ phone: this.maskPhone(phone) }, 'OTP generated for in-app notification');
     return {
       success: true,
       message: 'OTP generated. Please check your in-app notifications.',
     };
+  }
+
+  /**
+   * Mask phone number for logging
+   */
+  private maskPhone(phone: string): string {
+    if (phone.length < 4) return phone;
+    const visible = phone.slice(-4);
+    return `${phone.slice(0, -4).replace(/\d/g, 'X')}${visible}`;
   }
 
   /**

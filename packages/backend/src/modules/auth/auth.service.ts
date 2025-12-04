@@ -36,26 +36,34 @@ export interface UserContext {
 const otpStore: Map<string, { otp: string; expiresAt: Date }> = new Map();
 
 /**
- * Generate and store OTP for in-app notification delivery
- * BUSINESS RULE: OTP delivered via in-app notifications ONLY - No SMS/WhatsApp
+ * Generate and send login OTP via SMS
+ * 
+ * NOTE: Login OTP is sent via SMS. Other OTPs (shipment completion, etc.) use in-app notifications.
  */
 export async function generateOTP(mobile: string): Promise<void> {
-  // In development, use fixed OTP for easier testing
-  const otp = process.env.NODE_ENV === 'development' 
-    ? '123456' 
-    : Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-  otpStore.set(mobile, { otp, expiresAt });
-
-  if (process.env.NODE_ENV === 'development') {
-    log.info({ mobile: maskMobile(mobile), otp }, 'OTP generated (development mode - check in-app notifications)');
-  } else {
-    log.info({ mobile: maskMobile(mobile) }, 'OTP generated - delivered via in-app notification system');
-  }
+  // Import OTP service for SMS sending
+  const { otpService } = await import('../../services/otp.service');
   
-  // BUSINESS RULE: OTP is delivered via in-app notification system
-  // Notification service handles delivery - no SMS/WhatsApp
+  // Format phone number to E.164 format
+  const cleaned = mobile.replace(/\D/g, '');
+  const phoneNumber = cleaned.startsWith('91') ? `+${cleaned}` : `+91${cleaned}`;
+
+  // Generate and send OTP via SMS
+  const result = await otpService.generateAndSendLoginOTP(phoneNumber);
+
+  if (!result.success) {
+    log.error({ mobile: maskMobile(mobile), error: result.message }, 'Failed to generate/send login OTP');
+    throw new Error(result.message || 'Failed to send OTP');
+  }
+
+  // Store OTP in local store for validation (backup)
+  // The OTP service also stores it, but we keep this for backward compatibility
+  if (result.otp) {
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    otpStore.set(mobile, { otp: result.otp, expiresAt });
+  }
+
+  log.info({ mobile: maskMobile(mobile) }, 'Login OTP sent via SMS');
 }
 
 /**
