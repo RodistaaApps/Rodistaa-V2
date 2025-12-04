@@ -1,147 +1,77 @@
 /**
- * Override Requests Page
- * Approve or deny override requests from ACS or franchises
+ * Override Requests Page - Uses design system ACSPanel component
  */
 
-import { Card, Table, Button, Tag, message, Modal, Typography, Space } from 'antd';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-
-const { Title, Text: AntText } = Typography;
+import { ACSPanel } from '@rodistaa/design-system';
+import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 
 function OverridesPage() {
   const mockOverrides = [
     {
       id: 'OVR-001',
+      entityType: 'bid' as const,
+      entityId: 'BID-001',
+      ruleId: 'RULE-001',
+      ruleName: 'One Active Bid Per Operator',
+      violation: 'Operator has multiple active bids for same booking',
       requestedBy: 'District Franchise - North',
-      type: 'bid_finalization',
-      reason: 'Operator dispute resolution',
-      status: 'pending',
-      createdAt: '2024-01-02 10:30',
+      requestedAt: '2024-01-02T10:30:00Z',
+      justification: 'Operator dispute resolution - special case',
+      status: 'pending' as const,
     },
     {
       id: 'OVR-002',
+      entityType: 'truck' as const,
+      entityId: 'TRK-001',
+      ruleId: 'RULE-002',
+      ruleName: 'Truck Document Expiry',
+      violation: 'Truck documents expired',
       requestedBy: 'ACS Engine',
-      type: 'truck_unblock',
-      reason: 'Document verification completed',
-      status: 'pending',
-      createdAt: '2024-01-02 09:15',
+      requestedAt: '2024-01-02T09:15:00Z',
+      justification: 'Document verification completed - renewal in process',
+      status: 'pending' as const,
     },
   ];
 
-  const handleApprove = (overrideId: string) => {
-    Modal.confirm({
-      title: 'Approve Override Request',
-      content: 'This action will be audited. Do you want to continue?',
-      onOk: async () => {
-        try {
-          // await apiClient.approveOverride(overrideId);
-          message.success('Override request approved');
-        } catch (error) {
-          message.error('Failed to approve override');
-        }
-      },
-    });
+  const handleApprove = async (overrideId: string, notes?: string) => {
+    console.log('Approve override:', overrideId, notes);
+    const override = mockOverrides.find((o) => o.id === overrideId);
+    if (override) {
+      override.status = 'approved';
+      override.reviewedBy = 'Admin User';
+      override.reviewedAt = new Date().toISOString();
+      override.reviewNotes = notes;
+    }
   };
 
-  const handleDeny = (overrideId: string) => {
-    Modal.confirm({
-      title: 'Deny Override Request',
-      content: 'Please provide a reason for denial:',
-      onOk: async () => {
-        try {
-          // await apiClient.denyOverride(overrideId, 'Reason here');
-          message.success('Override request denied');
-        } catch (error) {
-          message.error('Failed to deny override');
-        }
-      },
-    });
+  const handleReject = async (overrideId: string, reason: string) => {
+    console.log('Reject override:', overrideId, reason);
+    const override = mockOverrides.find((o) => o.id === overrideId);
+    if (override) {
+      override.status = 'rejected';
+      override.reviewedBy = 'Admin User';
+      override.reviewedAt = new Date().toISOString();
+      override.reviewNotes = reason;
+    }
   };
-
-  const columns = [
-    {
-      title: 'Request ID',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id: string) => <AntText code>{id}</AntText>,
-    },
-    {
-      title: 'Requested By',
-      dataIndex: 'requestedBy',
-      key: 'requestedBy',
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => <Tag>{type.replace('_', ' ').toUpperCase()}</Tag>,
-    },
-    {
-      title: 'Reason',
-      dataIndex: 'reason',
-      key: 'reason',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const color = status === 'approved' ? 'green' : status === 'denied' ? 'red' : 'orange';
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
-    },
-    {
-      title: 'Created',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_: any, record: any) => (
-        record.status === 'pending' && (
-          <Space>
-            <Button
-              type="primary"
-              size="small"
-              icon={<CheckOutlined />}
-              onClick={() => handleApprove(record.id)}
-            >
-              Approve
-            </Button>
-            <Button
-              danger
-              size="small"
-              icon={<CloseOutlined />}
-              onClick={() => handleDeny(record.id)}
-            >
-              Deny
-            </Button>
-          </Space>
-        )
-      ),
-    },
-  ];
 
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <Title level={2}>Override Requests</Title>
+        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Override Requests</h1>
 
-        <Card style={{ marginTop: 24 }}>
-          <Table
-            columns={columns}
-            dataSource={mockOverrides}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
+        <ACSPanel
+          overrides={mockOverrides}
+          canApprove={true}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onViewDetails={(override) => console.log('View details:', override)}
+        />
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
 export default OverridesPage;
-
