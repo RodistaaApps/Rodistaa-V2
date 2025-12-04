@@ -31,14 +31,12 @@ const ShippersPage: React.FC = () => {
       </Head>
       <AdminLayout theme={theme} toggleTheme={toggleTheme}>
         <ShippersList theme={theme} onViewShipper={handleViewShipper} />
-        {selectedShipperId && (
-          <ShipperDetailPanel
-            shipperId={selectedShipperId}
-            visible={!!selectedShipperId}
-            onClose={handleCloseDetail}
-            theme={theme}
-          />
-        )}
+        <ShipperDetailPanel
+          shipperId={selectedShipperId}
+          open={!!selectedShipperId}
+          onClose={handleCloseDetail}
+          theme={theme}
+        />
       </AdminLayout>
     </>
   );
