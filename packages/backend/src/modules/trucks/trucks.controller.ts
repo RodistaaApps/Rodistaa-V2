@@ -159,6 +159,12 @@ export class TrucksController {
   async unblockTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { truckId } = req.params as { truckId: string };
 
       if (user.role !== 'ADMIN' && user.role !== 'AD') {
@@ -194,6 +200,12 @@ export class TrucksController {
   async createInspection(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { truckId } = req.params as { truckId: string };
       const payload = req.body as any;
 

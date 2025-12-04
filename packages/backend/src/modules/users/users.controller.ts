@@ -49,6 +49,12 @@ export class UsersController {
   async getUser(req: FastifyRequest, reply: FastifyReply) {
     try {
       const requestingUser = req.user;
+      if (!requestingUser) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { userId } = req.params as { userId: string };
 
       const user = await usersService.getUserById(
