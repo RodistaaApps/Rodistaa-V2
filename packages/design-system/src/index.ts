@@ -27,6 +27,10 @@ export * from './components/mobile/RTag';
 export * from './components/mobile/RStepper';
 export * from './components/mobile/RList';
 export * from './components/mobile/RNavBar';
+export * from './components/mobile/LoadCard';
+export * from './components/mobile/TruckCard';
+export * from './components/mobile/BidCard';
+export * from './components/mobile/Timeline';
 
 // Export web components
 export * from './components/web/RButtonWeb';
@@ -44,6 +48,10 @@ export * from './components/web/RTabs';
 export * from './components/web/RMetricsCard';
 export * from './components/web/RTagWeb';
 export * from './components/web/RStepperWeb';
+export * from './components/web/LoadCardWeb';
+export * from './components/web/TruckCardWeb';
+export * from './components/web/BidCardWeb';
+export * from './components/web/TimelineWeb';
 
 export { RodistaaTheme as default } from './tokens';
 
