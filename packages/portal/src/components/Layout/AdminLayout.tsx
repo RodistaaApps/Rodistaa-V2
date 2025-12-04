@@ -1,10 +1,10 @@
 /**
- * Admin Layout Component
- * Sidebar navigation for admin portal
+ * Admin Layout - Redesigned to match reference UI with theme toggle
  */
 
-import { Layout, Menu, Typography, Button, Avatar, Dropdown } from 'antd';
+import { Layout, Menu, Button, Switch } from 'antd';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 import {
   DashboardOutlined,
   IdcardOutlined,
@@ -12,25 +12,25 @@ import {
   FileProtectOutlined,
   TeamOutlined,
   BarChartOutlined,
-  LogoutOutlined,
   UserOutlined,
+  SettingOutlined,
+  MenuOutlined,
+  BellOutlined,
+  SearchOutlined,
+  SunOutlined,
+  MoonOutlined,
 } from '@ant-design/icons';
-import { useAuth } from '../../hooks/useAuth';
 
 const { Header, Sider, Content } = Layout;
-const { Title } = Typography;
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+    document.body.setAttribute('data-theme', isDarkTheme ? 'light' : 'dark');
   };
 
   const menuItems = [
@@ -40,14 +40,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       label: 'Dashboard',
     },
     {
+      key: '/admin/users',
+      icon: <UserOutlined />,
+      label: 'Users',
+    },
+    {
       key: '/admin/kyc',
       icon: <IdcardOutlined />,
       label: 'KYC Management',
     },
     {
-      key: '/admin/trucks',
+      key: '/admin/fleet',
       icon: <CarOutlined />,
-      label: 'Truck Management',
+      label: 'Fleet Management',
+    },
+    {
+      key: '/admin/bookings',
+      icon: <FileProtectOutlined />,
+      label: 'Bookings',
+    },
+    {
+      key: '/admin/shipments',
+      icon: <TeamOutlined />,
+      label: 'Shipments',
     },
     {
       key: '/admin/overrides',
@@ -55,9 +70,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       label: 'Override Requests',
     },
     {
-      key: '/admin/franchises',
-      icon: <TeamOutlined />,
-      label: 'Franchises',
+      key: '/admin/controls',
+      icon: <SettingOutlined />,
+      label: 'Admin Controls',
     },
     {
       key: '/admin/reports',
@@ -66,99 +81,167 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     },
   ];
 
-  const userMenu = {
-    items: [
-      {
-        key: 'profile',
-        label: 'Profile',
-        icon: <UserOutlined />,
-      },
-      {
-        key: 'logout',
-        label: 'Logout',
-        icon: <LogoutOutlined />,
-        danger: true,
-        onClick: handleLogout,
-      },
-    ],
+  const headerStyle = isDarkTheme ? {
+    background: '#0A0E14',
+    borderBottom: '1px solid #2D3748',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+  } : {
+    background: '#FFFFFF',
+    borderBottom: '1px solid #E5E7EB',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+  };
+
+  const siderStyle = isDarkTheme ? {
+    background: '#0A0E14',
+    borderRight: '1px solid #2D3748',
+  } : {
+    background: '#FFFFFF',
+    borderRight: '1px solid #E5E7EB',
+  };
+
+  const contentStyle = isDarkTheme ? {
+    background: '#0A0E14',
+    minHeight: '100vh',
+  } : {
+    background: '#F9FAFB',
+    minHeight: '100vh',
+  };
+
+  const logoStyle = isDarkTheme ? {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: "'Baloo Bhai 2', sans-serif",
+  } : {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#0A0E14',
+    fontFamily: "'Baloo Bhai 2', sans-serif",
   };
 
   return (
-    <Layout style={styles.layout}>
-      <Header style={styles.header}>
-        <div style={styles.headerContent}>
-          <Title level={3} style={styles.logo}>Rodistaa Admin</Title>
-          <Dropdown menu={userMenu} placement="bottomRight">
-            <div style={styles.userSection}>
-              <Avatar icon={<UserOutlined />} />
-              <span style={styles.userName}>{user?.name}</span>
-            </div>
-          </Dropdown>
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* Sidebar */}
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        width={250}
+        style={siderStyle}
+      >
+        <div style={{
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderBottom: isDarkTheme ? '1px solid #2D3748' : '1px solid #E5E7EB',
+        }}>
+          <div style={logoStyle}>
+            🚛 Rodistaa Admin
+          </div>
         </div>
-      </Header>
+        
+        <Menu
+          mode="inline"
+          selectedKeys={[router.pathname]}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: isDarkTheme ? '#FFFFFF' : '#0A0E14',
+          }}
+          theme={isDarkTheme ? 'dark' : 'light'}
+          items={menuItems}
+          onClick={({ key }) => router.push(key)}
+        />
+      </Sider>
 
       <Layout>
-        <Sider
-          width={250}
-          style={styles.sider}
-          breakpoint="lg"
-          collapsedWidth="0"
-        >
-          <Menu
-            mode="inline"
-            selectedKeys={[router.pathname]}
-            items={menuItems}
-            onClick={({ key }) => router.push(key)}
-            style={styles.menu}
-          />
-        </Sider>
+        {/* Header */}
+        <Header style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Button
+              type="text"
+              icon={<MenuOutlined style={{ color: isDarkTheme ? '#FFFFFF' : '#0A0E14' }} />}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+            
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: isDarkTheme ? '#1E2430' : '#F3F4F6',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              width: '300px',
+            }}>
+              <SearchOutlined style={{ color: '#6B7280' }} />
+              <input
+                type="text"
+                placeholder="Search..."
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  outline: 'none',
+                  color: isDarkTheme ? '#FFFFFF' : '#0A0E14',
+                  width: '100%',
+                  fontSize: '14px',
+                }}
+              />
+            </div>
+          </div>
 
-        <Content style={styles.content}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Theme Toggle */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 8px',
+              background: isDarkTheme ? '#1E2430' : '#F3F4F6',
+              borderRadius: '8px',
+            }}>
+              <SunOutlined style={{ color: isDarkTheme ? '#6B7280' : '#C90D0D', fontSize: '16px' }} />
+              <Switch
+                checked={isDarkTheme}
+                onChange={toggleTheme}
+                size="small"
+              />
+              <MoonOutlined style={{ color: isDarkTheme ? '#C90D0D' : '#6B7280', fontSize: '16px' }} />
+            </div>
+
+            <Button
+              type="text"
+              icon={<BellOutlined style={{ color: isDarkTheme ? '#FFFFFF' : '#0A0E14', fontSize: '20px' }} />}
+            />
+            
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: '#C90D0D',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontWeight: 'bold',
+              fontSize: '14px',
+            }}>
+              AD
+            </div>
+          </div>
+        </Header>
+
+        {/* Content */}
+        <Content style={contentStyle}>
           {children}
         </Content>
       </Layout>
     </Layout>
   );
 }
-
-const styles = {
-  layout: {
-    minHeight: '100vh',
-  } as React.CSSProperties,
-  header: {
-    backgroundColor: '#C90D0D',
-    padding: '0 24px',
-  } as React.CSSProperties,
-  headerContent: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  } as React.CSSProperties,
-  logo: {
-    color: '#FFFFFF',
-    margin: 0,
-    fontFamily: 'Times New Roman',
-  } as React.CSSProperties,
-  userSection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    cursor: 'pointer',
-    color: '#FFFFFF',
-  } as React.CSSProperties,
-  userName: {
-    fontFamily: 'Times New Roman',
-  } as React.CSSProperties,
-  sider: {
-    backgroundColor: '#FFFFFF',
-  } as React.CSSProperties,
-  menu: {
-    height: '100%',
-    borderRight: 0,
-  } as React.CSSProperties,
-  content: {
-    padding: 24,
-    backgroundColor: '#F5F5F5',
-  } as React.CSSProperties,
-};
-

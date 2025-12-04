@@ -1,31 +1,39 @@
 /**
- * Next.js App Component
- * Configured with Ant Design and Rodistaa theme
+ * App Entry Point - With Theme Support
  */
 
 import type { AppProps } from 'next/app';
-import { ConfigProvider } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { rodistaaTheme } from '../theme/rodistaa';
+import { ConfigProvider } from 'antd';
 import '../styles/globals.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
+      retry: 1,
     },
   },
 });
 
-export default function App({ Component, pageProps }: AppProps) {
+// Ant Design Theme Config
+const antdTheme = {
+  token: {
+    colorPrimary: '#C90D0D',
+    borderRadius: 8,
+    fontSize: 14,
+    fontFamily: "'Times New Roman', Times, serif",
+  },
+};
+
+function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider theme={rodistaaTheme}>
+    <ConfigProvider theme={antdTheme}>
+      <QueryClientProvider client={queryClient}>
         <Component {...pageProps} />
-      </ConfigProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ConfigProvider>
   );
 }
 
+export default MyApp;
