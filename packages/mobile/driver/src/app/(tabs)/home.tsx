@@ -1,13 +1,15 @@
 /**
- * Driver Home/Dashboard Screen
- * Overview of assigned shipments and current status
+ * Driver Home/Dashboard Screen - Uses design system
  */
 
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useState } from 'react';
-import { Card, Button } from '@rodistaa/mobile-shared';
+import { RCard, RButton, RTag } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing, RNShadowStyles } from '@rodistaa/design-system';
+import { useRouter } from 'expo-router';
 
 export default function DriverHomeScreen() {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [gpsActive, setGpsActive] = useState(false);
 
@@ -23,7 +25,7 @@ export default function DriverHomeScreen() {
     currentShipment: {
       id: 'SH-001',
       route: 'Mumbai → Delhi',
-      progress: '45%',
+      progress: 45,
       eta: '4 hours',
     },
   };
@@ -32,50 +34,57 @@ export default function DriverHomeScreen() {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#C90D0D']} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={RodistaaColors.primary.main}
+        />
       }
     >
       <View style={styles.header}>
         <Text style={styles.title}>Driver Dashboard</Text>
-        <View style={[styles.gpsBadge, { backgroundColor: gpsActive ? '#4CAF50' : '#F44336' }]}>
-          <Text style={styles.gpsText}>{gpsActive ? '● GPS Active' : '● GPS Inactive'}</Text>
-        </View>
+        <RTag
+          label={gpsActive ? 'GPS Active' : 'GPS Inactive'}
+          variant={gpsActive ? 'success' : 'error'}
+          size="small"
+        />
       </View>
 
       {stats.currentShipment && (
-        <Card style={styles.currentShipmentCard}>
+        <RCard style={styles.currentShipmentCard}>
           <Text style={styles.cardTitle}>Current Shipment</Text>
           <Text style={styles.shipmentId}>{stats.currentShipment.id}</Text>
           <Text style={styles.route}>{stats.currentShipment.route}</Text>
           <View style={styles.progressRow}>
             <Text style={styles.label}>Progress:</Text>
-            <Text style={styles.progress}>{stats.currentShipment.progress}</Text>
+            <Text style={styles.progress}>{stats.currentShipment.progress}%</Text>
           </View>
           <View style={styles.progressRow}>
             <Text style={styles.label}>ETA:</Text>
             <Text style={styles.value}>{stats.currentShipment.eta}</Text>
           </View>
-          <Button
+          <RButton
             title="View Details"
-            onPress={() => {}}
+            variant="primary"
+            onPress={() => router.push(`/shipments/${stats.currentShipment.id}`)}
             style={styles.detailsButton}
           />
-        </Card>
+        </RCard>
       )}
 
       <View style={styles.statsGrid}>
-        <Card style={styles.statCard}>
+        <RCard style={styles.statCard}>
           <Text style={styles.statValue}>{stats.assignedShipments}</Text>
           <Text style={styles.statLabel}>Assigned</Text>
-        </Card>
-        <Card style={styles.statCard}>
+        </RCard>
+        <RCard style={styles.statCard}>
           <Text style={styles.statValue}>{stats.completedToday}</Text>
           <Text style={styles.statLabel}>Today</Text>
-        </Card>
-        <Card style={styles.statCard}>
-          <Text style={styles.statValue}>₹{stats.totalEarnings.toLocaleString()}</Text>
+        </RCard>
+        <RCard style={styles.statCard}>
+          <Text style={styles.statValue}>₹{stats.totalEarnings.toLocaleString('en-IN')}</Text>
           <Text style={styles.statLabel}>Earnings</Text>
-        </Card>
+        </RCard>
       </View>
     </ScrollView>
   );
@@ -84,104 +93,80 @@ export default function DriverHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   header: {
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 16,
+    padding: RodistaaSpacing.xl,
+    backgroundColor: RodistaaColors.background.default,
+    marginBottom: RodistaaSpacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  gpsBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  gpsText: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
   },
   currentShipmentCard: {
-    margin: 16,
-    padding: 20,
-    backgroundColor: '#FFF3E0',
+    margin: RodistaaSpacing.lg,
+    padding: RodistaaSpacing.lg,
+    backgroundColor: RodistaaColors.warning.light,
   },
   cardTitle: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 8,
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.sm,
   },
   shipmentId: {
-    fontSize: 16,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 4,
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.primary,
+    fontWeight: '600',
+    marginBottom: RodistaaSpacing.xs,
   },
   route: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#C90D0D',
-    marginBottom: 12,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.primary.main,
+    marginBottom: RodistaaSpacing.md,
   },
   progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: RodistaaSpacing.sm,
   },
   label: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
   value: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#333333',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.primary,
   },
   progress: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#C90D0D',
+    ...MobileTextStyles.bodySmall,
+    fontWeight: '600',
+    color: RodistaaColors.primary.main,
   },
   detailsButton: {
-    marginTop: 12,
+    marginTop: RodistaaSpacing.md,
   },
   statsGrid: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    gap: 12,
+    paddingHorizontal: RodistaaSpacing.md,
+    gap: RodistaaSpacing.md,
   },
   statCard: {
     flex: 1,
-    padding: 20,
+    padding: RodistaaSpacing.lg,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#C90D0D',
-    marginBottom: 8,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.primary.main,
+    marginBottom: RodistaaSpacing.sm,
   },
   statLabel: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.secondary,
     textAlign: 'center',
   },
 });
-

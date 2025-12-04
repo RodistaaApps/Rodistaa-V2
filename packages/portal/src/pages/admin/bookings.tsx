@@ -1,16 +1,13 @@
 /**
- * Bookings Management Page
- * View and manage all bookings
+ * Bookings Management Page - Uses design system components
  */
 
-import { Card, Table, Tag, Button, Space, Modal, Descriptions } from 'antd';
-import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { Typography } from 'antd';
-
-const { Title } = Typography;
+import { RCardWeb, RTableWeb, RModalWeb, RButtonWeb, LoadCardWeb } from '@rodistaa/design-system';
+import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 function BookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -20,20 +17,24 @@ function BookingsPage() {
     {
       id: 'RID-20240102-0001',
       shipper: 'ABC Corp',
-      route: 'Bangalore → Chennai',
-      weight: 15,
-      status: 'open',
+      pickup: { address: '123 Main St', city: 'Bangalore', state: 'KA' },
+      drop: { address: '456 Park Ave', city: 'Chennai', state: 'TN' },
+      tonnage: 15,
+      priceRange: { min: 20000, max: 30000 },
+      status: 'OPEN_FOR_BIDDING' as const,
       bidsCount: 5,
-      createdAt: '2024-01-02 10:00',
+      createdAt: '2024-01-02T10:00:00Z',
     },
     {
       id: 'RID-20240102-0002',
       shipper: 'XYZ Ltd',
-      route: 'Mumbai → Delhi',
-      weight: 20,
-      status: 'finalized',
+      pickup: { address: '789 Market Rd', city: 'Mumbai', state: 'MH' },
+      drop: { address: '321 Tower St', city: 'Delhi', state: 'DL' },
+      tonnage: 20,
+      priceRange: { min: 50000, max: 60000 },
+      status: 'CONFIRMED' as const,
       bidsCount: 3,
-      createdAt: '2024-01-02 09:30',
+      createdAt: '2024-01-02T09:30:00Z',
     },
   ];
 
@@ -42,7 +43,6 @@ function BookingsPage() {
       title: 'Booking ID',
       dataIndex: 'id',
       key: 'id',
-      render: (id: string) => <code>{id}</code>,
     },
     {
       title: 'Shipper',
@@ -51,23 +51,19 @@ function BookingsPage() {
     },
     {
       title: 'Route',
-      dataIndex: 'route',
       key: 'route',
+      render: (_: any, record: any) => `${record.pickup.city} → ${record.drop.city}`,
     },
     {
       title: 'Weight',
-      dataIndex: 'weight',
-      key: 'weight',
-      render: (weight: number) => `${weight} tons`,
+      dataIndex: 'tonnage',
+      key: 'tonnage',
+      render: (tonnage: number) => `${tonnage} tons`,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
-        const color = status === 'finalized' ? 'green' : status === 'open' ? 'blue' : 'orange';
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
     },
     {
       title: 'Bids',
@@ -78,23 +74,23 @@ function BookingsPage() {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
-        <Space>
-          <Button
+        <div style={{ display: 'flex', gap: `${RodistaaSpacing.sm}px` }}>
+          <RButtonWeb
+            variant="secondary"
             size="small"
-            icon={<EyeOutlined />}
             onClick={() => {
               setSelectedBooking(record);
               setModalVisible(true);
             }}
           >
-            View
-          </Button>
-          {record.status === 'open' && (
-            <Button size="small" type="primary" icon={<CheckCircleOutlined />}>
-              Force Finalize
-            </Button>
+            <EyeOutlined /> View
+          </RButtonWeb>
+          {record.status === 'OPEN_FOR_BIDDING' && (
+            <RButtonWeb variant="primary" size="small">
+              <CheckCircleOutlined /> Force Finalize
+            </RButtonWeb>
           )}
-        </Space>
+        </div>
       ),
     },
   ];
@@ -102,42 +98,42 @@ function BookingsPage() {
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <Title level={2}>Booking Management</Title>
+        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Booking Management</h1>
 
-        <Card style={{ marginTop: 24 }}>
-          <Table
+        <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
+          <RTableWeb
             columns={columns}
-            dataSource={mockBookings}
-            rowKey="id"
+            data={mockBookings.map((booking) => ({
+              ...booking,
+              status: booking.status.replace('_', ' '),
+            }))}
             pagination={{ pageSize: 20 }}
           />
-        </Card>
+        </RCardWeb>
 
-        <Modal
+        <RModalWeb
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
           title="Booking Details"
-          open={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
-          width={700}
+          size="large"
         >
           {selectedBooking && (
-            <Descriptions column={2} bordered>
-              <Descriptions.Item label="Booking ID">{selectedBooking.id}</Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag>{selectedBooking.status.toUpperCase()}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Shipper">{selectedBooking.shipper}</Descriptions.Item>
-              <Descriptions.Item label="Route">{selectedBooking.route}</Descriptions.Item>
-              <Descriptions.Item label="Weight">{selectedBooking.weight} tons</Descriptions.Item>
-              <Descriptions.Item label="Bids">{selectedBooking.bidsCount}</Descriptions.Item>
-              <Descriptions.Item label="Created">{selectedBooking.createdAt}</Descriptions.Item>
-            </Descriptions>
+            <LoadCardWeb
+              id={selectedBooking.id}
+              pickup={selectedBooking.pickup}
+              drop={selectedBooking.drop}
+              tonnage={selectedBooking.tonnage}
+              priceRange={selectedBooking.priceRange}
+              status={selectedBooking.status}
+              bidCount={selectedBooking.bidsCount}
+              shipperName={selectedBooking.shipper}
+              createdAt={selectedBooking.createdAt}
+            />
           )}
-        </Modal>
+        </RModalWeb>
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
 export default BookingsPage;
-

@@ -1,19 +1,18 @@
 /**
- * Admin Dashboard
+ * Admin Dashboard - Uses design system components
  * Overview of platform metrics and KPIs
  */
 
-import { Card, Row, Col, Statistic, Typography, Table, Tag, Button } from 'antd';
-import { UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, WarningOutlined } from '@ant-design/icons';
+import { Row, Col } from 'antd';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
-
-const { Title } = Typography;
+import { RMetricsCard, RCardWeb, RTableWeb, RButtonWeb } from '@rodistaa/design-system';
+import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, WarningOutlined } from '@ant-design/icons';
 
 function DashboardPage() {
-  // Mock data for display
   const mockStats = {
     dau: 1247,
     totalBookings: 3542,
@@ -28,12 +27,10 @@ function DashboardPage() {
       const response = await apiClient.getDashboardStats();
       return response.data;
     },
-    // Use mock data on error (development mode)
     placeholderData: mockStats,
     retry: false,
   });
 
-  // Use actual stats or fallback to mock
   const displayStats = stats || mockStats;
 
   const recentAlerts = [
@@ -53,12 +50,11 @@ function DashboardPage() {
     },
   ];
 
-  const columns = [
+  const alertColumns = [
     {
       title: 'Alert Type',
       dataIndex: 'type',
       key: 'type',
-      render: (type: string) => <Tag color="red">{type}</Tag>,
     },
     {
       title: 'Shipment',
@@ -69,9 +65,6 @@ function DashboardPage() {
       title: 'Severity',
       dataIndex: 'severity',
       key: 'severity',
-      render: (severity: string) => (
-        <Tag color={severity === 'high' ? 'red' : 'orange'}>{severity.toUpperCase()}</Tag>
-      ),
     },
     {
       title: 'Time',
@@ -83,82 +76,77 @@ function DashboardPage() {
   return (
     <ProtectedRoute allowedRoles={process.env.NODE_ENV === 'development' ? undefined : ['SUPER_ADMIN', 'FRAUD_INVESTIGATOR']}>
       <AdminLayout>
-        <Title level={2}>Dashboard</Title>
+        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Dashboard</h1>
 
-        <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Daily Active Users"
-                value={displayStats.dau}
-                prefix={<UserOutlined />}
-                valueStyle={{ color: '#C90D0D' }}
-              />
-            </Card>
+            <RMetricsCard
+              title="Daily Active Users"
+              value={displayStats.dau.toString()}
+              icon={<UserOutlined />}
+              trend="up"
+            />
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Bookings"
-                value={displayStats.totalBookings}
-                prefix={<FileTextOutlined />}
-                valueStyle={{ color: '#C90D0D' }}
-              />
-            </Card>
+            <RMetricsCard
+              title="Total Bookings"
+              value={displayStats.totalBookings.toString()}
+              icon={<FileTextOutlined />}
+              trend="up"
+            />
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Active Trucks"
-                value={displayStats.activeTrucks}
-                prefix={<CarOutlined />}
-                valueStyle={{ color: '#C90D0D' }}
-              />
-            </Card>
+            <RMetricsCard
+              title="Active Trucks"
+              value={displayStats.activeTrucks.toString()}
+              icon={<CarOutlined />}
+              trend="neutral"
+            />
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Revenue (₹)"
-                value={displayStats.revenue}
-                prefix={<DollarOutlined />}
-                valueStyle={{ color: '#4CAF50' }}
-                precision={0}
-              />
-            </Card>
+            <RMetricsCard
+              title="Revenue (₹)"
+              value={displayStats.revenue.toLocaleString('en-IN')}
+              icon={<DollarOutlined />}
+              trend="up"
+            />
           </Col>
         </Row>
 
-        <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
           <Col xs={24} lg={12}>
-            <Card title="Recent Fraud Alerts" extra={<WarningOutlined style={{ color: '#F44336' }} />}>
-              <Table
-                columns={columns}
-                dataSource={recentAlerts}
-                rowKey="id"
+            <RCardWeb title="Recent Fraud Alerts" style={{ height: '100%' }}>
+              <RTableWeb
+                columns={alertColumns}
+                data={recentAlerts.map((alert) => ({
+                  ...alert,
+                  type: alert.type,
+                  shipment: alert.shipment,
+                  severity: alert.severity.toUpperCase(),
+                  time: alert.time,
+                }))}
                 pagination={false}
-                size="small"
               />
-            </Card>
+            </RCardWeb>
           </Col>
 
           <Col xs={24} lg={12}>
-            <Card title="Quick Actions">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Button type="primary" block onClick={() => {}}>
+            <RCardWeb title="Quick Actions" style={{ height: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${RodistaaSpacing.md}px` }}>
+                <RButtonWeb variant="primary" onClick={() => window.location.href = '/admin/kyc'}>
                   View Pending KYC
-                </Button>
-                <Button block onClick={() => {}}>
+                </RButtonWeb>
+                <RButtonWeb variant="secondary" onClick={() => window.location.href = '/admin/overrides'}>
                   Review Override Requests
-                </Button>
-                <Button block onClick={() => {}}>
+                </RButtonWeb>
+                <RButtonWeb variant="secondary" onClick={() => window.location.href = '/admin/trucks'}>
                   Truck Expiry Report
-                </Button>
+                </RButtonWeb>
               </div>
-            </Card>
+            </RCardWeb>
           </Col>
         </Row>
       </AdminLayout>
@@ -167,4 +155,3 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
-

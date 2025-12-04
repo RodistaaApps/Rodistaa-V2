@@ -5,25 +5,27 @@
 
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, Button } from '@rodistaa/mobile-shared';
+import { RCard, RButton } from '@rodistaa/design-system';
 import { Ionicons } from '@expo/vector-icons';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing, RNShadowStyles } from '@rodistaa/design-system';
 
 export default function HomeScreen() {
   const router = useRouter();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card style={styles.welcomeCard}>
+      <RCard style={styles.welcomeCard}>
         <Text style={styles.welcomeTitle}>Welcome to Rodistaa</Text>
         <Text style={styles.welcomeSubtitle}>Your logistics partner</Text>
-      </Card>
+      </RCard>
 
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => router.push('/bookings/create')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="add-circle" size={48} color="#C90D0D" />
+          <Ionicons name="add-circle" size={48} color={RodistaaColors.primary.main} />
           <Text style={styles.actionTitle}>Post New Load</Text>
           <Text style={styles.actionSubtitle}>Create a booking</Text>
         </TouchableOpacity>
@@ -31,17 +33,19 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => router.push('/(tabs)/bookings')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="list" size={48} color="#C90D0D" />
+          <Ionicons name="list" size={48} color={RodistaaColors.primary.main} />
           <Text style={styles.actionTitle}>My Bookings</Text>
           <Text style={styles.actionSubtitle}>View all bookings</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => router.push('/(tabs)/shipments')}
+          onPress={() => router.push('/(tabs)/bookings')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="car" size={48} color="#C90D0D" />
+          <Ionicons name="car" size={48} color={RodistaaColors.primary.main} />
           <Text style={styles.actionTitle}>Active Shipments</Text>
           <Text style={styles.actionSubtitle}>Track your shipments</Text>
         </TouchableOpacity>
@@ -53,55 +57,45 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   content: {
-    padding: 16,
+    padding: RodistaaSpacing.lg,
   },
   welcomeCard: {
-    marginBottom: 24,
-    backgroundColor: '#C90D0D',
-    padding: 24,
+    marginBottom: RodistaaSpacing.xl,
+    backgroundColor: RodistaaColors.primary.main,
+    padding: RodistaaSpacing.xl,
   },
   welcomeTitle: {
-    fontSize: 24,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.primary.contrast,
+    marginBottom: RodistaaSpacing.sm,
   },
   welcomeSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Times New Roman',
-    color: '#FFFFFF',
+    ...MobileTextStyles.body,
+    color: RodistaaColors.primary.contrast,
     opacity: 0.9,
   },
   actions: {
-    gap: 16,
+    gap: RodistaaSpacing.lg,
   },
   actionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: RodistaaColors.background.default,
+    borderRadius: RodistaaSpacing.borderRadius.lg,
+    padding: RodistaaSpacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...RNShadowStyles.md,
   },
   actionTitle: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    fontWeight: '600',
-    color: '#333333',
-    marginTop: 12,
+    ...MobileTextStyles.h4,
+    color: RodistaaColors.text.primary,
+    marginTop: RodistaaSpacing.md,
   },
   actionSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginTop: 4,
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
+    marginTop: RodistaaSpacing.xs,
   },
 });
 

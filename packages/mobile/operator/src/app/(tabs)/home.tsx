@@ -1,4 +1,9 @@
-import React from 'react';
+/**
+ * Operator Home Screen
+ * Dashboard with stats and quick actions - Uses design system
+ */
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +14,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { RCard, RLoader } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing, RNShadowStyles } from '@rodistaa/design-system';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -17,7 +23,6 @@ export default function HomeScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    // TODO: Fetch latest data
     setTimeout(() => setRefreshing(false), 1000);
   };
 
@@ -25,7 +30,11 @@ export default function HomeScreen() {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={RodistaaColors.primary.main}
+        />
       }
     >
       <View style={styles.header}>
@@ -35,37 +44,37 @@ export default function HomeScreen() {
 
       {/* Stats Cards */}
       <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
+        <RCard style={styles.statCard}>
           <View style={styles.statIcon}>
-            <Ionicons name="car" size={32} color="#C90D0D" />
+            <Ionicons name="car" size={32} color={RodistaaColors.primary.main} />
           </View>
           <Text style={styles.statValue}>5</Text>
           <Text style={styles.statLabel}>Active Trucks</Text>
-        </View>
+        </RCard>
 
-        <View style={styles.statCard}>
+        <RCard style={styles.statCard}>
           <View style={styles.statIcon}>
-            <Ionicons name="cube" size={32} color="#C90D0D" />
+            <Ionicons name="cube" size={32} color={RodistaaColors.primary.main} />
           </View>
           <Text style={styles.statValue}>8</Text>
           <Text style={styles.statLabel}>Active Shipments</Text>
-        </View>
+        </RCard>
 
-        <View style={styles.statCard}>
+        <RCard style={styles.statCard}>
           <View style={styles.statIcon}>
-            <Ionicons name="list" size={32} color="#C90D0D" />
+            <Ionicons name="list" size={32} color={RodistaaColors.primary.main} />
           </View>
           <Text style={styles.statValue}>12</Text>
           <Text style={styles.statLabel}>Active Bids</Text>
-        </View>
+        </RCard>
 
-        <View style={styles.statCard}>
+        <RCard style={styles.statCard}>
           <View style={styles.statIcon}>
-            <Ionicons name="checkmark-circle" size={32} color="#27AE60" />
+            <Ionicons name="checkmark-circle" size={32} color={RodistaaColors.success.main} />
           </View>
           <Text style={styles.statValue}>3</Text>
           <Text style={styles.statLabel}>Pending Inspections</Text>
-        </View>
+        </RCard>
       </View>
 
       {/* Quick Actions */}
@@ -74,37 +83,40 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => router.push('/fleet/add')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="add-circle" size={24} color="#C90D0D" />
+          <Ionicons name="add-circle" size={24} color={RodistaaColors.primary.main} />
           <Text style={styles.actionText}>Add New Truck</Text>
-          <Ionicons name="chevron-forward" size={24} color="#4F4F4F" />
+          <Ionicons name="chevron-forward" size={24} color={RodistaaColors.text.secondary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => router.push('/(tabs)/bookings')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="search" size={24} color="#C90D0D" />
+          <Ionicons name="search" size={24} color={RodistaaColors.primary.main} />
           <Text style={styles.actionText}>Browse Bookings</Text>
-          <Ionicons name="chevron-forward" size={24} color="#4F4F4F" />
+          <Ionicons name="chevron-forward" size={24} color={RodistaaColors.text.secondary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => router.push('/inspection/daily')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="camera" size={24} color="#C90D0D" />
+          <Ionicons name="camera" size={24} color={RodistaaColors.primary.main} />
           <Text style={styles.actionText}>Daily Inspection</Text>
-          <Ionicons name="chevron-forward" size={24} color="#4F4F4F" />
+          <Ionicons name="chevron-forward" size={24} color={RodistaaColors.text.secondary} />
         </TouchableOpacity>
       </View>
 
       {/* Recent Activity */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <View style={styles.activityCard}>
+        <RCard style={styles.activityCard}>
           <View style={styles.activityIcon}>
-            <Ionicons name="cube" size={20} color="#27AE60" />
+            <Ionicons name="cube" size={20} color={RodistaaColors.success.main} />
           </View>
           <View style={styles.activityContent}>
             <Text style={styles.activityTitle}>Shipment Started</Text>
@@ -113,11 +125,11 @@ export default function HomeScreen() {
             </Text>
             <Text style={styles.activityTime}>2 hours ago</Text>
           </View>
-        </View>
+        </RCard>
 
-        <View style={styles.activityCard}>
+        <RCard style={styles.activityCard}>
           <View style={styles.activityIcon}>
-            <Ionicons name="checkmark-circle" size={20} color="#2E86DE" />
+            <Ionicons name="checkmark-circle" size={20} color={RodistaaColors.info.main} />
           </View>
           <View style={styles.activityContent}>
             <Text style={styles.activityTitle}>Bid Accepted</Text>
@@ -126,11 +138,11 @@ export default function HomeScreen() {
             </Text>
             <Text style={styles.activityTime}>5 hours ago</Text>
           </View>
-        </View>
+        </RCard>
 
-        <View style={styles.activityCard}>
+        <RCard style={styles.activityCard}>
           <View style={styles.activityIcon}>
-            <Ionicons name="car" size={20} color="#C90D0D" />
+            <Ionicons name="car" size={20} color={RodistaaColors.primary.main} />
           </View>
           <View style={styles.activityContent}>
             <Text style={styles.activityTitle}>Inspection Completed</Text>
@@ -139,10 +151,10 @@ export default function HomeScreen() {
             </Text>
             <Text style={styles.activityTime}>1 day ago</Text>
           </View>
-        </View>
+        </RCard>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: RodistaaSpacing.xl }} />
     </ScrollView>
   );
 }
@@ -150,124 +162,104 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    padding: 24,
+    backgroundColor: RodistaaColors.background.default,
+    padding: RodistaaSpacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: RodistaaColors.border.light,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   date: {
-    fontSize: 14,
-    color: '#4F4F4F',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 12,
-    gap: 12,
+    padding: RodistaaSpacing.md,
+    gap: RodistaaSpacing.md,
   },
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
+    padding: RodistaaSpacing.lg,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...RNShadowStyles.sm,
   },
   statIcon: {
-    marginBottom: 12,
+    marginBottom: RodistaaSpacing.md,
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    ...MobileTextStyles.h1,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#4F4F4F',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.secondary,
     textAlign: 'center',
   },
   section: {
-    padding: 16,
+    padding: RodistaaSpacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 12,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.md,
   },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: RodistaaColors.background.default,
+    padding: RodistaaSpacing.lg,
+    borderRadius: RodistaaSpacing.borderRadius.lg,
+    marginBottom: RodistaaSpacing.md,
+    ...RNShadowStyles.sm,
   },
   actionText: {
     flex: 1,
-    fontSize: 16,
-    color: '#1A1A1A',
-    marginLeft: 12,
-    fontWeight: '500',
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.primary,
+    marginLeft: RodistaaSpacing.md,
+    fontWeight: '600',
   },
   activityCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: RodistaaSpacing.lg,
+    marginBottom: RodistaaSpacing.md,
+    ...RNShadowStyles.sm,
   },
   activityIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.paper,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: RodistaaSpacing.md,
   },
   activityContent: {
     flex: 1,
   },
   activityTitle: {
-    fontSize: 16,
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.primary,
     fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    marginBottom: RodistaaSpacing.xs,
   },
   activityDescription: {
-    fontSize: 14,
-    color: '#4F4F4F',
-    marginBottom: 4,
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.xs,
   },
   activityTime: {
-    fontSize: 12,
-    color: '#999999',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.disabled,
   },
 });
-

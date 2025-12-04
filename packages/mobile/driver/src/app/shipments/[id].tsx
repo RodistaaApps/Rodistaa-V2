@@ -1,3 +1,7 @@
+/**
+ * Shipment Detail Screen - Uses design system and Timeline component
+ */
+
 import React from 'react';
 import {
   View,
@@ -9,28 +13,29 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { RCard, RButton, Timeline, TimelineEvent } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing, RNShadowStyles } from '@rodistaa/design-system';
 
 export default function ShipmentDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
-  // Mock data - replace with API call
   const shipment = {
     id,
     bookingId: 'BKG-2024-001',
     route: 'Mumbai → Delhi',
-    status: 'IN_TRANSIT',
+    status: 'IN_TRANSIT' as const,
     pickup: {
       address: 'Mumbai Port, Gate 5',
       contact: 'Ramesh Kumar',
       phone: '+91 9876543210',
-      date: '2024-12-04 08:00 AM',
+      date: '2024-12-04T08:00:00Z',
     },
     drop: {
       address: 'Delhi Warehouse, Sector 18',
       contact: 'Suresh Patel',
       phone: '+91 9876543211',
-      date: '2024-12-05 06:00 PM',
+      date: '2024-12-05T18:00:00Z',
     },
     truck: 'TN-12-AB-1234',
     weight: '10 tons',
@@ -42,22 +47,36 @@ export default function ShipmentDetailScreen() {
     needsOTP: true,
   };
 
-  const getStatusConfig = () => {
-    switch (shipment.status) {
-      case 'ASSIGNED':
-        return { color: '#F39C12', label: 'Assigned', icon: 'time' };
-      case 'IN_TRANSIT':
-        return { color: '#2E86DE', label: 'In Transit', icon: 'navigate' };
-      case 'AT_DESTINATION':
-        return { color: '#9C27B0', label: 'At Destination', icon: 'location' };
-      case 'COMPLETED':
-        return { color: '#27AE60', label: 'Completed', icon: 'checkmark-circle' };
-      default:
-        return { color: '#4F4F4F', label: shipment.status, icon: 'cube' };
-    }
-  };
-
-  const statusConfig = getStatusConfig();
+  const timelineEvents: TimelineEvent[] = [
+    {
+      id: '1',
+      title: 'Shipment Assigned',
+      description: 'Assigned to driver',
+      timestamp: '2024-12-03T10:00:00Z',
+      status: 'completed',
+    },
+    {
+      id: '2',
+      title: 'Pickup Completed',
+      description: 'Photos uploaded',
+      timestamp: '2024-12-04T08:30:00Z',
+      status: 'completed',
+    },
+    {
+      id: '3',
+      title: 'In Transit',
+      description: 'On route to destination',
+      timestamp: '2024-12-04T09:00:00Z',
+      status: 'active',
+    },
+    {
+      id: '4',
+      title: 'Drop Off',
+      description: 'Expected arrival',
+      timestamp: shipment.drop.date,
+      status: 'pending',
+    },
+  ];
 
   const handleStartTrip = () => {
     Alert.alert(
@@ -68,7 +87,6 @@ export default function ShipmentDetailScreen() {
         {
           text: 'Start',
           onPress: () => {
-            // Start GPS tracking
             Alert.alert('Success', 'Trip started! GPS tracking enabled.');
           },
         },
@@ -79,17 +97,11 @@ export default function ShipmentDetailScreen() {
   return (
     <ScrollView style={styles.container}>
       {/* Header Card */}
-      <View style={styles.headerCard}>
+      <RCard style={styles.headerCard}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.shipmentId}>{shipment.id}</Text>
             <Text style={styles.bookingId}>Booking: {shipment.bookingId}</Text>
-          </View>
-          <View
-            style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}
-          >
-            <Ionicons name={statusConfig.icon as any} size={14} color="#FFFFFF" />
-            <Text style={styles.statusText}>{statusConfig.label}</Text>
           </View>
         </View>
 
@@ -107,32 +119,40 @@ export default function ShipmentDetailScreen() {
           </View>
           <Text style={styles.progressText}>{shipment.progress}%</Text>
         </View>
+      </RCard>
+
+      {/* Timeline */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Progress Timeline</Text>
+        <Timeline events={timelineEvents} />
       </View>
 
       {/* Pickup Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="location" size={24} color="#27AE60" />
+          <Ionicons name="location" size={24} color={RodistaaColors.success.main} />
           <Text style={styles.sectionTitle}>Pickup Location</Text>
         </View>
-        <View style={styles.locationCard}>
+        <RCard style={styles.locationCard}>
           <Text style={styles.address}>{shipment.pickup.address}</Text>
           <View style={styles.contactRow}>
-            <Ionicons name="person" size={16} color="#4F4F4F" />
+            <Ionicons name="person" size={16} color={RodistaaColors.text.secondary} />
             <Text style={styles.contactText}>{shipment.pickup.contact}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="call" size={16} color="#4F4F4F" />
+            <Ionicons name="call" size={16} color={RodistaaColors.text.secondary} />
             <Text style={styles.contactText}>{shipment.pickup.phone}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="time" size={16} color="#4F4F4F" />
-            <Text style={styles.contactText}>{shipment.pickup.date}</Text>
+            <Ionicons name="time" size={16} color={RodistaaColors.text.secondary} />
+            <Text style={styles.contactText}>
+              {new Date(shipment.pickup.date).toLocaleString('en-IN')}
+            </Text>
           </View>
-        </View>
+        </RCard>
         {!shipment.needsPickupPhotos && (
           <View style={styles.completedBadge}>
-            <Ionicons name="checkmark-circle" size={16} color="#27AE60" />
+            <Ionicons name="checkmark-circle" size={16} color={RodistaaColors.success.main} />
             <Text style={styles.completedText}>Pickup photos uploaded</Text>
           </View>
         )}
@@ -141,105 +161,104 @@ export default function ShipmentDetailScreen() {
       {/* Drop Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="location" size={24} color="#C90D0D" />
+          <Ionicons name="location" size={24} color={RodistaaColors.error.main} />
           <Text style={styles.sectionTitle}>Drop Location</Text>
         </View>
-        <View style={styles.locationCard}>
+        <RCard style={styles.locationCard}>
           <Text style={styles.address}>{shipment.drop.address}</Text>
           <View style={styles.contactRow}>
-            <Ionicons name="person" size={16} color="#4F4F4F" />
+            <Ionicons name="person" size={16} color={RodistaaColors.text.secondary} />
             <Text style={styles.contactText}>{shipment.drop.contact}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="call" size={16} color="#4F4F4F" />
+            <Ionicons name="call" size={16} color={RodistaaColors.text.secondary} />
             <Text style={styles.contactText}>{shipment.drop.phone}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="time" size={16} color="#4F4F4F" />
-            <Text style={styles.contactText}>{shipment.drop.date}</Text>
+            <Ionicons name="time" size={16} color={RodistaaColors.text.secondary} />
+            <Text style={styles.contactText}>
+              {new Date(shipment.drop.date).toLocaleString('en-IN')}
+            </Text>
           </View>
-        </View>
+        </RCard>
       </View>
 
       {/* Shipment Details */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Shipment Details</Text>
-        <View style={styles.detailsCard}>
+        <RCard style={styles.detailsCard}>
           <View style={styles.detailRow}>
-            <Ionicons name="car" size={20} color="#4F4F4F" />
+            <Ionicons name="car" size={20} color={RodistaaColors.text.secondary} />
             <Text style={styles.detailLabel}>Truck:</Text>
             <Text style={styles.detailValue}>{shipment.truck}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="cube" size={20} color="#4F4F4F" />
+            <Ionicons name="cube" size={20} color={RodistaaColors.text.secondary} />
             <Text style={styles.detailLabel}>Weight:</Text>
             <Text style={styles.detailValue}>{shipment.weight}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="navigate" size={20} color="#4F4F4F" />
+            <Ionicons name="navigate" size={20} color={RodistaaColors.text.secondary} />
             <Text style={styles.detailLabel}>Distance:</Text>
             <Text style={styles.detailValue}>{shipment.distance}</Text>
           </View>
-        </View>
+        </RCard>
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actionsContainer}>
         {shipment.status === 'ASSIGNED' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryButton]}
+          <RButton
+            title="Start Trip"
+            variant="primary"
             onPress={handleStartTrip}
-          >
-            <Ionicons name="play-circle" size={24} color="#FFFFFF" />
-            <Text style={styles.primaryButtonText}>Start Trip</Text>
-          </TouchableOpacity>
+            icon={<Ionicons name="play-circle" size={20} color={RodistaaColors.primary.contrast} />}
+          />
         )}
 
         {shipment.status === 'IN_TRANSIT' && (
           <>
             {shipment.needsDropPhotos && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
+              <RButton
+                title="Capture Drop Photos"
+                variant="secondary"
                 onPress={() => router.push(`/shipments/${id}/photos`)}
-              >
-                <Ionicons name="camera" size={24} color="#C90D0D" />
-                <Text style={styles.secondaryButtonText}>Capture Drop Photos</Text>
-              </TouchableOpacity>
+                icon={<Ionicons name="camera" size={20} color={RodistaaColors.primary.main} />}
+                style={styles.actionButton}
+              />
             )}
             {shipment.needsPOD && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.primaryButton]}
+              <RButton
+                title="Upload POD"
+                variant="primary"
                 onPress={() => router.push(`/shipments/${id}/pod`)}
-              >
-                <Ionicons name="document-text" size={24} color="#FFFFFF" />
-                <Text style={styles.primaryButtonText}>Upload POD</Text>
-              </TouchableOpacity>
+                icon={<Ionicons name="document-text" size={20} color={RodistaaColors.primary.contrast} />}
+                style={styles.actionButton}
+              />
             )}
           </>
         )}
 
         {shipment.needsOTP && !shipment.needsPOD && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successButton]}
+          <RButton
+            title="Complete Delivery"
+            variant="success"
             onPress={() => router.push(`/shipments/${id}/complete`)}
-          >
-            <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-            <Text style={styles.primaryButtonText}>Complete Delivery</Text>
-          </TouchableOpacity>
+            icon={<Ionicons name="checkmark-circle" size={20} color={RodistaaColors.success.contrast} />}
+            style={styles.actionButton}
+          />
         )}
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton]}
-          onPress={() => {
-            Alert.alert('Report Issue', 'Feature coming soon');
-          }}
-        >
-          <Ionicons name="warning" size={24} color="#C90D0D" />
-          <Text style={styles.secondaryButtonText}>Report Delay/Issue</Text>
-        </TouchableOpacity>
+        <RButton
+          title="Report Delay/Issue"
+          variant="secondary"
+          onPress={() => Alert.alert('Report Issue', 'Feature coming soon')}
+          icon={<Ionicons name="warning" size={20} color={RodistaaColors.error.main} />}
+          style={styles.actionButton}
+        />
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: RodistaaSpacing.xl }} />
     </ScrollView>
   );
 }
@@ -247,48 +266,32 @@ export default function ShipmentDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   headerCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+    padding: RodistaaSpacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: RodistaaColors.border.light,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: RodistaaSpacing.lg,
   },
   shipmentId: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   bookingId: {
-    fontSize: 12,
-    color: '#4F4F4F',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.secondary,
   },
   route: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#C90D0D',
-    marginBottom: 16,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.primary.main,
+    marginBottom: RodistaaSpacing.lg,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -297,135 +300,96 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 8,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 4,
+    backgroundColor: RodistaaColors.border.light,
+    borderRadius: RodistaaSpacing.borderRadius.sm,
     overflow: 'hidden',
-    marginRight: 12,
+    marginRight: RodistaaSpacing.md,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2E86DE',
-    borderRadius: 4,
+    backgroundColor: RodistaaColors.info.main,
+    borderRadius: RodistaaSpacing.borderRadius.sm,
   },
   progressText: {
-    fontSize: 16,
+    ...MobileTextStyles.body,
     fontWeight: '600',
-    color: '#2E86DE',
+    color: RodistaaColors.info.main,
     minWidth: 45,
   },
   section: {
-    padding: 16,
+    padding: RodistaaSpacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: RodistaaSpacing.md,
+    gap: RodistaaSpacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
   },
   locationCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: RodistaaSpacing.lg,
+    ...RNShadowStyles.sm,
   },
   address: {
-    fontSize: 16,
+    ...MobileTextStyles.body,
     fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 12,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.md,
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: RodistaaSpacing.sm,
+    gap: RodistaaSpacing.sm,
   },
   contactText: {
-    fontSize: 14,
-    color: '#4F4F4F',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F8F0',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 12,
-    gap: 6,
+    backgroundColor: RodistaaColors.success.light,
+    paddingHorizontal: RodistaaSpacing.md,
+    paddingVertical: RodistaaSpacing.sm,
+    borderRadius: RodistaaSpacing.borderRadius.md,
+    marginTop: RodistaaSpacing.md,
+    gap: RodistaaSpacing.xs,
   },
   completedText: {
-    fontSize: 14,
+    ...MobileTextStyles.bodySmall,
     fontWeight: '600',
-    color: '#27AE60',
+    color: RodistaaColors.success.main,
   },
   detailsCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: RodistaaSpacing.lg,
+    gap: RodistaaSpacing.md,
+    ...RNShadowStyles.sm,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: RodistaaSpacing.md,
   },
   detailLabel: {
-    fontSize: 14,
-    color: '#4F4F4F',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
     minWidth: 80,
   },
   detailValue: {
-    fontSize: 14,
+    ...MobileTextStyles.bodySmall,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: RodistaaColors.text.primary,
     flex: 1,
   },
   actionsContainer: {
-    padding: 16,
-    gap: 12,
+    padding: RodistaaSpacing.lg,
+    gap: RodistaaSpacing.md,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  primaryButton: {
-    backgroundColor: '#C90D0D',
-  },
-  secondaryButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#C90D0D',
-  },
-  successButton: {
-    backgroundColor: '#27AE60',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#C90D0D',
+    marginBottom: RodistaaSpacing.sm,
   },
 });

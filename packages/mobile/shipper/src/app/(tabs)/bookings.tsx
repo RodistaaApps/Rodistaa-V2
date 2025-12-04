@@ -1,11 +1,12 @@
 /**
  * Bookings List Screen
- * View all bookings and their bids
+ * View all bookings and their bids - Uses design system components
  */
 
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, LoadingSpinner } from '@rodistaa/mobile-shared';
+import { RLoader, LoadCard } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 import { useGetBookings } from '@rodistaa/mobile-shared';
 import { useState } from 'react';
 
@@ -21,33 +22,38 @@ export default function BookingsScreen() {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <RLoader />;
   }
 
-  const renderBooking = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/bookings/${item.id}`)}
-      style={styles.bookingCard}
-    >
-      <Card>
-        <View style={styles.bookingHeader}>
-          <Text style={styles.bookingId}>Booking #{item.id}</Text>
-          <Text style={styles.bookingStatus}>{item.status}</Text>
-        </View>
-        <Text style={styles.route}>
-          {item.pickupAddress} → {item.dropAddress}
-        </Text>
-        <View style={styles.bookingFooter}>
-          <Text style={styles.bidCount}>
-            {item.bidCount || 0} Bids
-          </Text>
-          <Text style={styles.price}>
-            ₹{item.expectedPriceRange?.min || 0} - ₹{item.expectedPriceRange?.max || 0}
-          </Text>
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
+  const parseAddress = (address: string) => {
+    const parts = address.split(',').map((p) => p.trim());
+    return {
+      address: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2] || '',
+    };
+  };
+
+  const renderBooking = ({ item }: { item: any }) => {
+    const pickup = parseAddress(item.pickupAddress || '');
+    const drop = parseAddress(item.dropAddress || '');
+
+    return (
+      <LoadCard
+        id={item.id}
+        pickup={pickup}
+        drop={drop}
+        tonnage={item.weightTons || 0}
+        priceRange={{
+          min: item.expectedPriceRange?.min || 0,
+          max: item.expectedPriceRange?.max || 0,
+        }}
+        status={item.status as any}
+        bidCount={item.bidCount || 0}
+        onPress={() => router.push(`/bookings/${item.id}`)}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -57,7 +63,11 @@ export default function BookingsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={RodistaaColors.primary.main}
+          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -73,67 +83,22 @@ export default function BookingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   list: {
-    padding: 16,
-  },
-  bookingCard: {
-    marginBottom: 16,
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  bookingId: {
-    fontSize: 16,
-    fontFamily: 'Times New Roman',
-    fontWeight: '600',
-    color: '#333333',
-  },
-  bookingStatus: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#C90D0D',
-    fontWeight: '500',
-  },
-  route: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 8,
-  },
-  bookingFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  bidCount: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-  },
-  price: {
-    fontSize: 16,
-    fontFamily: 'Times New Roman',
-    fontWeight: '600',
-    color: '#C90D0D',
+    padding: RodistaaSpacing.lg,
   },
   empty: {
     alignItems: 'center',
-    padding: 48,
+    padding: RodistaaSpacing.xxxl,
   },
   emptyText: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 8,
+    ...MobileTextStyles.h4,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#999999',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.disabled,
   },
 });
-
