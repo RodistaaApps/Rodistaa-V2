@@ -50,7 +50,7 @@ export const RButtonWeb: React.FC<RButtonWebProps> = ({
     border: 'none',
     borderRadius: `${RodistaaSpacing.borderRadius.lg}px`,
     cursor: isDisabled ? 'not-allowed' : 'pointer',
-    transition: RodistaaAnimations.web.default,
+    transition: 'all 120ms ease',
     fontFamily: WebTextStyles.button.fontFamily,
     fontSize: WebTextStyles.button.fontSize,
     fontWeight: WebTextStyles.button.fontWeight,

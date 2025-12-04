@@ -1,6 +1,6 @@
 // Export individual tokens
 export { colors, RodistaaColors } from "./colors";
-export { spacing, RodistaaSpacing, RNShadowStyles } from "./spacing";
+export { spacing, RodistaaSpacing, RNShadowStyles, WebShadowStyles } from "./spacing";
 export { radius } from "./radius";
 export { typography, MobileTextStyles, WebTextStyles } from "./typography";
 export { sizes } from "./sizes";

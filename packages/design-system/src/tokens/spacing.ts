@@ -14,6 +14,7 @@ export const spacing = {
 
 // React Native compatible spacing object
 export const RodistaaSpacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -30,6 +31,16 @@ export const RodistaaSpacing = {
     inputPaddingY: 12,
     cardPadding: 16,
     modalPadding: 24,
+    listItemHeight: 56,
+  },
+  // Touch target (minimum 44px for accessibility)
+  touchTarget: 44,
+  // Layout spacing
+  layout: {
+    pagePadding: 24,
+    sectionSpacing: 32,
+    cardSpacing: 16,
+    formFieldGap: 16,
   },
   // Border radius (moved here for RN compatibility)
   borderRadius: {
@@ -64,7 +75,24 @@ export const RNShadowStyles = {
     shadowRadius: 12,
     elevation: 8,
   },
+  xl: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+} as const;
+
+// Web shadow styles (CSS-compatible - returns strings)
+export const WebShadowStyles = {
+  none: 'none',
+  sm: '0px 1px 3px rgba(0, 0, 0, 0.08)',
+  md: '0px 3px 6px rgba(0, 0, 0, 0.1)',
+  lg: '0px 6px 12px rgba(0, 0, 0, 0.12)',
+  xl: '0px 8px 16px rgba(0, 0, 0, 0.15)',
 } as const;
 
 export type Spacing = typeof spacing;
 export type RodistaaSpacingType = typeof RodistaaSpacing;
+export type WebShadowStylesType = typeof WebShadowStyles;

@@ -25,6 +25,8 @@ export * from './components/mobile/RPDFViewer';
 export * from './components/mobile/RStatusChip';
 export * from './components/mobile/RTag';
 export * from './components/mobile/RStepper';
+export * from './components/mobile/RList';
+export * from './components/mobile/RNavBar';
 
 // Export web components
 export * from './components/web/RButtonWeb';
@@ -40,6 +42,8 @@ export * from './components/web/RAppHeader';
 export * from './components/web/RSearchBar';
 export * from './components/web/RTabs';
 export * from './components/web/RMetricsCard';
+export * from './components/web/RTagWeb';
+export * from './components/web/RStepperWeb';
 
 export { RodistaaTheme as default } from './tokens';
 

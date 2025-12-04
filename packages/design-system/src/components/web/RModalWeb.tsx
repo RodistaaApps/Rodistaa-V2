@@ -63,7 +63,7 @@ export const RModalWeb: React.FC<RModalWebProps> = ({
   const modalStyles: CSSProperties = {
     backgroundColor: RodistaaColors.background.default,
     borderRadius: `${RodistaaSpacing.borderRadius.lg}px`,
-    boxShadow: WebShadowStyles.xl,
+    boxShadow: WebShadowStyles.lg,
     maxHeight: '90vh',
     display: 'flex',
     flexDirection: 'column',
