@@ -234,6 +234,9 @@ importers:
       '@rodistaa/app-shared':
         specifier: workspace:*
         version: link:../app-shared
+      '@rodistaa/utils':
+        specifier: workspace:*
+        version: link:../utils
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
