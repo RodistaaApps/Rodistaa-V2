@@ -80,6 +80,12 @@ export class BookingsController {
   async getBookings(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const query = req.query as any;
 
       const filters: any = {
