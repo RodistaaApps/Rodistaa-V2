@@ -1,88 +1,111 @@
-/**
- * Complete Shipment Screen
- * Driver completes delivery with OTP verification
- */
-
-import { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Card, Button, Input } from '@rodistaa/mobile-shared';
 
-export default function CompleteShipmentScreen() {
+export default function CompleteDeliveryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [otp, setOtp] = useState('');
   const [completing, setCompleting] = useState(false);
 
   const handleComplete = async () => {
-    if (!otp || otp.length !== 6) {
-      Alert.alert('Error', 'Please enter valid 6-digit OTP from shipper');
+    if (otp.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit OTP');
       return;
     }
 
     setCompleting(true);
-    try {
-      // API call: await completeShipment(id, otp);
+    // Simulate API call
+    setTimeout(() => {
+      setCompleting(false);
       Alert.alert(
-        'Success',
-        'Shipment completed successfully!',
+        'Success!',
+        'Delivery completed successfully',
         [
           {
             text: 'OK',
-            onPress: () => {
-              router.replace('/(tabs)/home');
-            },
+            onPress: () => router.replace('/(tabs)/home'),
           },
         ]
       );
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Invalid OTP or completion failed');
-    } finally {
-      setCompleting(false);
-    }
+    }, 1500);
   };
 
   return (
-    <View style={styles.container}>
-      <Card style={styles.card}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="checkmark-circle" size={80} color="#27AE60" />
+        </View>
+
         <Text style={styles.title}>Complete Delivery</Text>
         <Text style={styles.subtitle}>Shipment: {id}</Text>
 
-        <View style={styles.instructions}>
-          <Text style={styles.instructionTitle}>Completion Steps:</Text>
-          <Text style={styles.instructionText}>1. Ensure POD has been uploaded</Text>
-          <Text style={styles.instructionText}>2. Get OTP from shipper/receiver</Text>
-          <Text style={styles.instructionText}>3. Enter OTP below to complete</Text>
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle" size={24} color="#2E86DE" />
+          <Text style={styles.infoText}>
+            Enter the OTP provided by the receiver to complete this delivery
+          </Text>
         </View>
 
-        <Input
-          label="Shipper OTP *"
-          placeholder="Enter 6-digit OTP"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={6}
-        />
+        <View style={styles.form}>
+          <Text style={styles.label}>Delivery OTP</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter 6-digit OTP"
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+            maxLength={6}
+            autoFocus
+          />
 
-        <Text style={styles.note}>
-          ⚠️ The OTP was sent to the shipper's registered mobile number. Ask them to share it with you.
-        </Text>
+          <TouchableOpacity
+            style={[
+              styles.completeButton,
+              otp.length !== 6 && styles.completeButtonDisabled,
+            ]}
+            onPress={handleComplete}
+            disabled={otp.length !== 6 || completing}
+          >
+            {completing ? (
+              <Text style={styles.completeButtonText}>Completing...</Text>
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+                <Text style={styles.completeButtonText}>Complete Delivery</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <Button
-          title="Complete Shipment"
-          onPress={handleComplete}
-          loading={completing}
-          style={styles.completeButton}
-        />
-
-        <Button
-          title="Cancel"
-          onPress={() => router.back()}
-          variant="outline"
-          style={styles.cancelButton}
-        />
-      </Card>
-    </View>
+        <View style={styles.noteCard}>
+          <Text style={styles.noteTitle}>Note:</Text>
+          <Text style={styles.noteText}>
+            • Ensure all items have been delivered
+          </Text>
+          <Text style={styles.noteText}>
+            • POD should be uploaded before completion
+          </Text>
+          <Text style={styles.noteText}>
+            • OTP is valid for 10 minutes
+          </Text>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -90,56 +113,93 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    padding: 16,
   },
-  card: {
+  content: {
+    flex: 1,
     padding: 24,
   },
+  iconContainer: {
+    alignItems: 'center',
+    marginVertical: 32,
+  },
   title: {
-    fontSize: 24,
-    fontFamily: 'Times New Roman',
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#1A1A1A',
+    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 24,
-  },
-  instructions: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: '#E3F2FD',
-    borderRadius: 8,
-  },
-  instructionTitle: {
     fontSize: 16,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 12,
-  },
-  instructionText: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 6,
-  },
-  note: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#FF9800',
-    fontStyle: 'italic',
-    marginTop: 12,
+    color: '#4F4F4F',
+    textAlign: 'center',
     marginBottom: 24,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: '#E3F2FD',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 12,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4F4F4F',
+    lineHeight: 20,
+  },
+  form: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#C90D0D',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 24,
+    textAlign: 'center',
+    letterSpacing: 8,
+    marginBottom: 16,
   },
   completeButton: {
-    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#27AE60',
+    padding: 18,
+    borderRadius: 12,
+    gap: 8,
   },
-  cancelButton: {
-    marginTop: 8,
+  completeButtonDisabled: {
+    backgroundColor: '#D0D0D0',
+  },
+  completeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  noteCard: {
+    backgroundColor: '#FFF3E0',
+    padding: 16,
+    borderRadius: 12,
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  noteText: {
+    fontSize: 14,
+    color: '#4F4F4F',
+    marginBottom: 4,
   },
 });
-
