@@ -48,6 +48,10 @@ export * from './components/web/RTabs';
 export * from './components/web/RMetricsCard';
 export * from './components/web/RTagWeb';
 export * from './components/web/RStepperWeb';
+export * from './components/web/LoadCardWeb';
+export * from './components/web/TruckCardWeb';
+export * from './components/web/BidCardWeb';
+export * from './components/web/TimelineWeb';
 
 export { RodistaaTheme as default } from './tokens';
 
