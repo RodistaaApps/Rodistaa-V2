@@ -151,20 +151,24 @@ packages/portal/
 ## 🚀 TECHNOLOGY STACK
 
 ### **Frontend**:
+
 - **Next.js**: 14.2.33 (React framework)
 - **React**: 18.2.0
 - **Ant Design**: 5.22.6 (UI library)
 - **TypeScript**: 5.9.3
 
 ### **State Management**:
+
 - **@tanstack/react-query**: 5.90.11 (API state)
 - **React Context**: Authentication
 
 ### **API Integration**:
+
 - **Axios**: HTTP client
 - **OpenAPI**: Generated types
 
 ### **Testing**:
+
 - **Playwright**: E2E tests (15+ tests)
 - **Jest**: Unit tests
 
@@ -175,6 +179,7 @@ packages/portal/
 ### **Deleted**: `packages/frontend-portal/`
 
 **Reason**:
+
 - ❌ Empty directory (0 files)
 - ❌ No functionality
 - ❌ No package.json
@@ -188,6 +193,7 @@ packages/portal/
 ## ✅ CONSOLIDATION RESULTS
 
 ### **BEFORE Consolidation**:
+
 ```
 packages/
 ├── portal/               (12+ pages, complete)
@@ -195,6 +201,7 @@ packages/
 ```
 
 ### **AFTER Consolidation**:
+
 ```
 packages/
 └── portal/               ← SINGLE PORTAL (all features)
@@ -209,31 +216,32 @@ packages/
 
 ### **Admin Portal Features**: ✅ **100% COMPLETE**
 
-| Feature | Page | Status |
-|---------|------|--------|
-| Dashboard | /admin/dashboard | ✅ Complete |
-| KYC Management | /admin/kyc | ✅ Complete |
-| Truck Management | /admin/trucks | ✅ Complete |
-| Bookings | /admin/bookings | ✅ Complete |
-| Shipments | /admin/shipments | ✅ Complete |
-| Override Queue | /admin/overrides | ✅ Complete |
-| Reports | /admin/reports | ✅ Complete |
-| Login | /login | ✅ Complete |
+| Feature          | Page             | Status      |
+| ---------------- | ---------------- | ----------- |
+| Dashboard        | /admin/dashboard | ✅ Complete |
+| KYC Management   | /admin/kyc       | ✅ Complete |
+| Truck Management | /admin/trucks    | ✅ Complete |
+| Bookings         | /admin/bookings  | ✅ Complete |
+| Shipments        | /admin/shipments | ✅ Complete |
+| Override Queue   | /admin/overrides | ✅ Complete |
+| Reports          | /admin/reports   | ✅ Complete |
+| Login            | /login           | ✅ Complete |
 
 ### **Franchise Portal Features**: ✅ **100% COMPLETE**
 
-| Feature | Page | Status |
-|---------|------|--------|
-| Dashboard | /franchise/dashboard | ✅ Complete |
-| Inspections | /franchise/inspections | ✅ Complete |
-| Targets | /franchise/targets | ✅ Complete |
-| Login | /login | ✅ Complete (shared) |
+| Feature     | Page                   | Status               |
+| ----------- | ---------------------- | -------------------- |
+| Dashboard   | /franchise/dashboard   | ✅ Complete          |
+| Inspections | /franchise/inspections | ✅ Complete          |
+| Targets     | /franchise/targets     | ✅ Complete          |
+| Login       | /login                 | ✅ Complete (shared) |
 
 ---
 
 ## 🎨 UI/UX CONSISTENCY
 
 ### **Branding** (Rodistaa Theme):
+
 - ✅ Primary Red: #C90D0D
 - ✅ Typography: Times New Roman (body), Baloo Bhai (headings)
 - ✅ Ant Design theme overrides applied
@@ -242,6 +250,7 @@ packages/
 - ✅ Shadows: rgba(0,0,0,0.08)
 
 ### **Components**:
+
 - ✅ Shared layout components
 - ✅ Reusable UI elements
 - ✅ Consistent button styles
@@ -255,17 +264,20 @@ packages/
 ### **E2E Tests**: ✅ **15+ TESTS PASSED**
 
 **Admin Portal Tests**:
+
 - ✅ Login flow (phone + OTP)
 - ✅ Dashboard displays
 - ✅ Protected route access
 - ✅ Navigation between pages
 
 **Franchise Portal Tests**:
+
 - ✅ Dashboard loads
 - ✅ Distinct branding
 - ✅ Navigation works
 
 **Complete Portal Tests**:
+
 - ✅ Full workflow validation
 - ✅ Page structure verification
 
@@ -274,12 +286,14 @@ packages/
 ## 📦 DEPLOYMENT CONFIGURATION
 
 ### **Development**:
+
 ```bash
 cd packages/portal
 pnpm dev              # Runs on http://localhost:3001
 ```
 
 ### **Production**:
+
 ```bash
 cd packages/portal
 pnpm build            # Creates optimized build
@@ -287,6 +301,7 @@ pnpm start            # Starts production server
 ```
 
 ### **Docker**:
+
 - Dockerfile: `docker/Dockerfile.admin-portal`
 - Dockerfile: `docker/Dockerfile.franchise-portal`
 
@@ -315,6 +330,7 @@ pnpm start            # Starts production server
 ### **Single Portal Package**: `packages/portal/`
 
 **Serves**:
+
 1. ✅ **Admin Portal** - Full HQ features
 2. ✅ **Franchise Portal** - District & Unit features
 3. ✅ **Shared Login** - Unified authentication
@@ -322,6 +338,7 @@ pnpm start            # Starts production server
 5. ✅ **API Integration** - Backend connectivity
 
 **Benefits**:
+
 - ✅ Single codebase
 - ✅ Shared components
 - ✅ Single build process
@@ -350,6 +367,7 @@ Production Ready:       ✅ YES
 ## 📝 NEXT STEPS
 
 **Portal is ready for:**
+
 1. ✅ Testing (login at http://localhost:3001/login)
 2. ✅ Production deployment
 3. ✅ User acceptance testing
@@ -359,7 +377,6 @@ Production Ready:       ✅ YES
 
 ---
 
-*Final Portal Architecture v1.0*  
-*AI CTO - Rodistaa Platform*  
-*December 3, 2025*
-
+_Final Portal Architecture v1.0_  
+_AI CTO - Rodistaa Platform_  
+_December 3, 2025_
