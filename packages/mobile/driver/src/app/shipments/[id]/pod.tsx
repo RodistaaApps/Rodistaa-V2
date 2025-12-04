@@ -1,110 +1,83 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+/**
+ * POD Upload Screen
+ * Upload Proof of Delivery document
+ */
+
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { RPDFViewer, RButton, RCard } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { useState } from 'react';
+import { queueUpload } from '@rodistaa/mobile-shared';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function PODUploadScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
-  const [podImage, setPodImage] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [podUri, setPodUri] = useState<string | null>(null);
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
 
-    if (!result.canceled) {
-      setPodImage(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        setPodUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick document');
     }
   };
 
-  const handleUpload = async () => {
-    if (!podImage) {
-      Alert.alert('Error', 'Please capture POD document');
+  const handleSubmit = async () => {
+    if (!podUri) {
+      Alert.alert('Error', 'Please select a POD document');
       return;
     }
 
-    setUploading(true);
-    // Simulate upload
-    setTimeout(() => {
-      setUploading(false);
-      Alert.alert('Success', 'POD uploaded successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
+    try {
+      await queueUpload({
+        type: 'pod',
+        data: {
+          shipmentId: id,
+          podUri,
         },
-      ]);
-    }, 1500);
+        maxRetries: 5,
+      });
+
+      router.push(`/shipments/${id}/complete`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to upload POD');
+    }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <RCard style={styles.card}>
         <Text style={styles.title}>Upload Proof of Delivery</Text>
-        <Text style={styles.subtitle}>Shipment: {id}</Text>
-      </View>
+        <Text style={styles.subtitle}>Please upload the POD document received at drop location</Text>
+      </RCard>
 
-      <View style={styles.instructionsCard}>
-        <Ionicons name="information-circle" size={24} color="#2E86DE" />
-        <View style={styles.instructionsText}>
-          <Text style={styles.instructionsTitle}>Instructions:</Text>
-          <Text style={styles.instructionItem}>
-            • Capture clear image of signed POD
-          </Text>
-          <Text style={styles.instructionItem}>
-            • Ensure signature is visible
-          </Text>
-          <Text style={styles.instructionItem}>
-            • Document should be readable
-          </Text>
-        </View>
-      </View>
-
-      {podImage ? (
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: podImage }} style={styles.image} />
-          <TouchableOpacity style={styles.retakeButton} onPress={pickImage}>
-            <Ionicons name="camera" size={20} color="#FFFFFF" />
-            <Text style={styles.retakeText}>Retake</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity style={styles.captureButton} onPress={pickImage}>
-          <Ionicons name="camera" size={48} color="#FFFFFF" />
-          <Text style={styles.captureText}>Capture POD</Text>
-        </TouchableOpacity>
+      {podUri && (
+        <RPDFViewer uri={podUri} style={styles.pdfViewer} />
       )}
 
-      <TouchableOpacity
-        style={[
-          styles.uploadButton,
-          !podImage && styles.uploadButtonDisabled,
-        ]}
-        onPress={handleUpload}
-        disabled={!podImage || uploading}
-      >
-        {uploading ? (
-          <Text style={styles.uploadButtonText}>Uploading...</Text>
-        ) : (
-          <>
-            <Ionicons name="cloud-upload" size={24} color="#FFFFFF" />
-            <Text style={styles.uploadButtonText}>Upload POD</Text>
-          </>
-        )}
-      </TouchableOpacity>
+      <RButton
+        title={podUri ? 'Change Document' : 'Select POD Document'}
+        variant="secondary"
+        onPress={handlePickDocument}
+        style={styles.button}
+      />
+
+      <RButton
+        title="Continue to OTP Verification"
+        variant="primary"
+        onPress={handleSubmit}
+        disabled={!podUri}
+        style={styles.button}
+      />
     </ScrollView>
   );
 }
@@ -112,100 +85,29 @@ export default function PODUploadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    padding: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+  content: {
+    padding: RodistaaSpacing.lg,
+  },
+  card: {
+    marginBottom: RodistaaSpacing.lg,
+    padding: RodistaaSpacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#4F4F4F',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
-  instructionsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-  },
-  instructionsText: {
-    flex: 1,
-  },
-  instructionsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  instructionItem: {
-    fontSize: 14,
-    color: '#4F4F4F',
-    marginBottom: 4,
-  },
-  captureButton: {
-    backgroundColor: '#C90D0D',
-    margin: 16,
-    padding: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 12,
-  },
-  imageContainer: {
-    margin: 16,
-  },
-  image: {
-    width: '100%',
+  pdfViewer: {
     height: 400,
-    borderRadius: 12,
-    backgroundColor: '#E0E0E0',
+    marginBottom: RodistaaSpacing.lg,
   },
-  retakeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4F4F4F',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-    gap: 8,
-  },
-  retakeText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#27AE60',
-    margin: 16,
-    padding: 18,
-    borderRadius: 12,
-    gap: 8,
-  },
-  uploadButtonDisabled: {
-    backgroundColor: '#D0D0D0',
-  },
-  uploadButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  button: {
+    marginTop: RodistaaSpacing.md,
   },
 });

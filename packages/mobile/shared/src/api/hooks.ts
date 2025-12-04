@@ -135,6 +135,14 @@ export function useStartShipment(shipmentId: string) {
   });
 }
 
+export function useStartTrip() {
+  return useMutation({
+    mutationFn: async (shipmentId: string) => {
+      return apiClient.post(`/shipments/${shipmentId}/start`, {});
+    },
+  });
+}
+
 export function usePingGps(shipmentId: string) {
   return useMutation({
     mutationFn: async (data: {
@@ -167,6 +175,16 @@ export function useCompleteShipment(shipmentId: string) {
   });
 }
 
+export function useCompleteDelivery() {
+  return useMutation({
+    mutationFn: async (data: { shipmentId: string; otp: string }) => {
+      return apiClient.post(`/shipments/${data.shipmentId}/complete`, {
+        otp: data.otp,
+      });
+    },
+  });
+}
+
 // Truck Hooks
 export function useCreateTruck() {
   return useMutation({
@@ -192,6 +210,14 @@ export function useInspectTruck(truckId: string) {
   });
 }
 
+export function useGetTruckInspections(truckId: string) {
+  return useQuery({
+    queryKey: ['truck-inspections', truckId],
+    queryFn: () => apiClient.get(`/trucks/${truckId}/inspections`),
+    enabled: !!truckId,
+  });
+}
+
 // Driver Hooks
 export function useCreateDriver() {
   return useMutation({
@@ -206,6 +232,52 @@ export function useLinkDriver(driverId: string) {
     mutationFn: async (data: { truckId: string }) => {
       return apiClient.post(`/drivers/${driverId}/link-truck`, data);
     },
+  });
+}
+
+// Additional hooks for navigation screens
+export function useFinalizeBid() {
+  return useMutation({
+    mutationFn: async (bidId: string) => {
+      return apiClient.post(`/bids/${bidId}/finalize`, {});
+    },
+  });
+}
+
+export function useSubmitBid() {
+  return useMutation({
+    mutationFn: async (data: { bookingId: string; amount: number; notes?: string }) => {
+      return apiClient.post(`/bookings/${data.bookingId}/bids`, {
+        amount: data.amount,
+        notes: data.notes,
+      });
+    },
+  });
+}
+
+export function useStartTrip() {
+  return useMutation({
+    mutationFn: async (shipmentId: string) => {
+      return apiClient.post(`/shipments/${shipmentId}/start`, {});
+    },
+  });
+}
+
+export function useCompleteDelivery() {
+  return useMutation({
+    mutationFn: async (data: { shipmentId: string; otp: string }) => {
+      return apiClient.post(`/shipments/${data.shipmentId}/complete`, {
+        otp: data.otp,
+      });
+    },
+  });
+}
+
+export function useGetTruckInspections(truckId: string) {
+  return useQuery({
+    queryKey: ['truck-inspections', truckId],
+    queryFn: () => apiClient.get(`/trucks/${truckId}/inspections`),
+    enabled: !!truckId,
   });
 }
 
