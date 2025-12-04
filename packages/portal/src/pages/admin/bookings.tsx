@@ -1,503 +1,394 @@
 /**
- * Bookings Management - Redesigned to match reference UI
- * Dark theme with status filters and modern table
+ * Bookings Management - Full functionality, theme-aware
  */
 
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { Table, Button, Modal, Select, Input, Badge } from 'antd';
-import { SearchOutlined, DownloadOutlined, PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Tag, Space, Modal, Select, Input, DatePicker, Statistic, Row, Col, Timeline } from 'antd';
+import { EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, DownloadOutlined, SearchOutlined, BookOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
 
-const { Search } = Input;
+const { RangePicker } = DatePicker;
 
-function BookingsManagementPage() {
+interface BookingsPageProps {
+  theme?: 'light' | 'dark';
+  toggleTheme?: () => void;
+}
+
+function BookingsManagementPage({ theme = 'dark', toggleTheme }: BookingsPageProps) {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [activeStatus, setActiveStatus] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const isDark = theme === 'dark';
+  const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
+  const bgCard = isDark ? '#151922' : '#FFFFFF';
+  const textPrimary = isDark ? '#FFFFFF' : '#0A0E14';
+  const textSecondary = isDark ? '#B4B9C5' : '#6B7280';
 
   const mockBookings = [
     {
       id: 'BKG-001',
-      customer: 'Ramesh Enterprises',
-      phone: '+91 98765 43210',
-      route: 'Mumbai → Pune',
-      loadType: 'Full Load',
-      truckType: '32 FT FTL',
-      scheduled: '2024-02-20',
-      quotes: 3,
-      status: 'ACCEPTED',
-      distance: '150 km',
-      pickupAddress: 'Bandra East, Mumbai, Maharashtra 400051',
-      dropAddress: 'Hinjewadi, Pune, Maharashtra 411057',
-      scheduledTime: '09:00',
-      quantity: '10 Tons',
-      goodsType: 'Electronics',
-      notes: 'Handle with care. Fragile items. Need temperature controlled truck.',
+      shipperId: 'SH-001',
+      shipperName: 'Krishna Enterprises',
+      route: 'Kurnool → Vijayawada',
+      pickupDate: '2025-12-05',
+      deliveryDate: '2025-12-06',
+      cargoType: 'Electronics',
+      weight: '5000 kg',
+      bidsReceived: 8,
+      status: 'OPEN',
+      createdAt: '2025-12-04 10:30',
+      estimatedValue: 25000,
     },
     {
       id: 'BKG-002',
-      customer: 'Amit Logistics Pvt Ltd',
-      phone: '+91 98765 54321',
-      route: 'Pune → Bangalore',
-      loadType: 'Partial Load',
-      truckType: '20 FT PTL',
-      scheduled: '2024-02-22',
-      quotes: 5,
-      status: 'QUOTED',
+      shipperId: 'SH-002',
+      shipperName: 'Suresh Logistics',
+      route: 'Guntur → Nandyal',
+      pickupDate: '2025-12-06',
+      deliveryDate: '2025-12-07',
+      cargoType: 'Agricultural',
+      weight: '8000 kg',
+      bidsReceived: 12,
+      status: 'BIDDING_CLOSED',
+      createdAt: '2025-12-03 14:20',
+      estimatedValue: 18000,
     },
     {
       id: 'BKG-003',
-      customer: 'Delhi Traders',
-      phone: '+91 98765 11111',
-      route: 'Delhi → Jaipur',
-      loadType: 'Full Load',
-      truckType: 'CONTAINER',
-      scheduled: '2024-02-19',
-      quotes: 2,
+      shipperId: 'SH-003',
+      shipperName: 'Ramesh Transport',
+      route: 'Vijayawada → Kurnool',
+      pickupDate: '2025-12-04',
+      deliveryDate: '2025-12-05',
+      cargoType: 'FMCG',
+      weight: '3000 kg',
+      bidsReceived: 15,
       status: 'ASSIGNED',
+      createdAt: '2025-12-02 09:15',
+      estimatedValue: 15000,
+      assignedOperator: 'Rajesh Kumar Transport',
+      winningBid: 14500,
     },
     {
       id: 'BKG-004',
-      customer: 'Mumbai Mart',
-      phone: '+91 98765 22222',
-      route: 'Mumbai → Surat',
-      loadType: 'Full Load',
-      truckType: '32 FT FTL',
-      scheduled: '2024-02-25',
-      quotes: 0,
-      status: 'NEW',
-    },
-    {
-      id: 'BKG-005',
-      customer: 'Bangalore Tech Solutions',
-      phone: '+91 98765 33333',
-      route: 'Bangalore → Chennai',
-      loadType: 'Partial Load',
-      truckType: '20 FT PTL',
-      scheduled: '2024-02-10',
-      quotes: 4,
+      shipperId: 'SH-001',
+      shipperName: 'Krishna Enterprises',
+      route: 'Nandyal → Guntur',
+      pickupDate: '2025-12-03',
+      deliveryDate: '2025-12-04',
+      cargoType: 'Construction Materials',
+      weight: '12000 kg',
+      bidsReceived: 6,
       status: 'COMPLETED',
-    },
-    {
-      id: 'BKG-006',
-      customer: 'Hyderabad Warehousing',
-      phone: '+91 98765 44444',
-      route: 'Hyderabad → Mumbai',
-      loadType: 'Full Load',
-      truckType: '32 FT FTL',
-      scheduled: '2024-02-16',
-      quotes: 1,
-      status: 'CANCELLED',
+      createdAt: '2025-12-01 11:00',
+      estimatedValue: 32000,
+      assignedOperator: 'Suresh Logistics',
+      winningBid: 30000,
+      completedAt: '2025-12-04 18:45',
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'NEW': '#3B82F6',
-      'ACCEPTED': '#10B981',
-      'QUOTED': '#F59E0B',
-      'ASSIGNED': '#8B5CF6',
-      'COMPLETED': '#10B981',
-      'CANCELLED': '#EF4444',
-    };
-    return colors[status] || '#6B7280';
-  };
+  const filteredBookings = statusFilter === 'all' 
+    ? mockBookings 
+    : mockBookings.filter(b => b.status === statusFilter);
 
-  const statusCounts = {
-    all: mockBookings.length,
-    new: mockBookings.filter(b => b.status === 'NEW').length,
-    accepted: mockBookings.filter(b => b.status === 'ACCEPTED').length,
-    quoted: mockBookings.filter(b => b.status === 'QUOTED').length,
+  const stats = {
+    total: mockBookings.length,
+    open: mockBookings.filter(b => b.status === 'OPEN').length,
     assigned: mockBookings.filter(b => b.status === 'ASSIGNED').length,
     completed: mockBookings.filter(b => b.status === 'COMPLETED').length,
-    cancelled: mockBookings.filter(b => b.status === 'CANCELLED').length,
   };
 
-  const filteredBookings = activeStatus === 'all' 
-    ? mockBookings 
-    : mockBookings.filter(b => b.status === activeStatus.toUpperCase());
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      OPEN: 'blue',
+      BIDDING_CLOSED: 'orange',
+      ASSIGNED: 'purple',
+      COMPLETED: 'green',
+      CANCELLED: 'red',
+    };
+    return colors[status] || 'default';
+  };
 
   const columns = [
     {
-      title: 'BOOKING ID',
+      title: 'Booking ID',
       dataIndex: 'id',
       key: 'id',
-      render: (id: string) => <span style={{ fontWeight: 600, color: '#FFFFFF' }}>{id}</span>,
+      render: (id: string) => (
+        <span style={{ fontWeight: 600, color: textPrimary }}>{id}</span>
+      ),
     },
     {
-      title: 'CUSTOMER',
-      key: 'customer',
-      render: (_: any, record: any) => (
+      title: 'Shipper',
+      dataIndex: 'shipperName',
+      key: 'shipperName',
+      render: (name: string, record: any) => (
         <div>
-          <div style={{ fontWeight: 500, color: '#FFFFFF' }}>{record.customer}</div>
-          <div style={{ fontSize: '12px', color: '#6B7280' }}>{record.phone}</div>
+          <div style={{ fontWeight: 500, color: textPrimary }}>{name}</div>
+          <div style={{ fontSize: '12px', color: textSecondary }}>{record.shipperId}</div>
         </div>
       ),
     },
     {
-      title: 'ROUTE',
+      title: 'Route',
       dataIndex: 'route',
       key: 'route',
-      render: (route: string) => <span style={{ color: '#FFFFFF' }}>{route}</span>,
-    },
-    {
-      title: 'LOAD TYPE',
-      dataIndex: 'loadType',
-      key: 'loadType',
-      render: (type: string) => <span style={{ color: '#B4B9C5' }}>{type}</span>,
-    },
-    {
-      title: 'TRUCK TYPE',
-      dataIndex: 'truckType',
-      key: 'truckType',
-      render: (type: string) => <span style={{ color: '#B4B9C5' }}>{type}</span>,
-    },
-    {
-      title: 'SCHEDULED',
-      dataIndex: 'scheduled',
-      key: 'scheduled',
-      render: (date: string) => <span style={{ color: '#B4B9C5' }}>{date}</span>,
-    },
-    {
-      title: 'QUOTES',
-      dataIndex: 'quotes',
-      key: 'quotes',
-      render: (quotes: number) => (
-        <span style={{ color: '#C90D0D', fontWeight: 600 }}>{quotes}</span>
+      render: (route: string) => (
+        <span style={{ color: textPrimary }}>{route}</span>
       ),
     },
     {
-      title: 'STATUS',
+      title: 'Cargo',
+      dataIndex: 'cargoType',
+      key: 'cargoType',
+      render: (cargo: string, record: any) => (
+        <div>
+          <div style={{ color: textPrimary }}>{cargo}</div>
+          <div style={{ fontSize: '12px', color: textSecondary }}>{record.weight}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Bids',
+      dataIndex: 'bidsReceived',
+      key: 'bidsReceived',
+      render: (bids: number) => (
+        <span style={{ color: textPrimary, fontWeight: 600 }}>{bids}</span>
+      ),
+    },
+    {
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <span style={{
-          padding: '4px 12px',
-          borderRadius: '12px',
-          fontSize: '12px',
-          fontWeight: 600,
-          background: `${getStatusColor(status)}20`,
-          color: getStatusColor(status),
-          border: `1px solid ${getStatusColor(status)}`,
-        }}>
-          {status}
-        </span>
+        <Tag color={getStatusColor(status)}>{status.replace(/_/g, ' ')}</Tag>
       ),
     },
     {
-      title: 'ACTIONS',
-      key: 'actions',
-      render: (_: any, record: any) => (
-        <Button
-          size="small"
-          style={{ 
-            background: '#1E2430', 
-            color: '#FFFFFF', 
-            border: '1px solid #2D3748' 
-          }}
-          onClick={() => {
-            setSelectedBooking(record);
-            setModalVisible(true);
-          }}
-        >
-          View Details
-        </Button>
+      title: 'Est. Value',
+      dataIndex: 'estimatedValue',
+      key: 'estimatedValue',
+      render: (value: number) => (
+        <span style={{ color: textPrimary }}>₹{value.toLocaleString()}</span>
       ),
     },
-  ];
-
-  const statusTabs = [
-    { key: 'all', label: `All (${statusCounts.all})` },
-    { key: 'new', label: `New (${statusCounts.new})` },
-    { key: 'accepted', label: `Accepted (${statusCounts.accepted})` },
-    { key: 'quoted', label: `Quoted (${statusCounts.quoted})` },
-    { key: 'assigned', label: `Assigned (${statusCounts.assigned})` },
-    { key: 'completed', label: `Completed (${statusCounts.completed})` },
-    { key: 'cancelled', label: `Cancelled (${statusCounts.cancelled})` },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: any) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setSelectedBooking(record);
+              setModalVisible(true);
+            }}
+          >
+            View
+          </Button>
+          {record.status === 'OPEN' && (
+            <Button
+              danger
+              size="small"
+              icon={<CloseCircleOutlined />}
+              onClick={() => alert(`Cancel booking ${record.id}`)}
+            >
+              Cancel
+            </Button>
+          )}
+        </Space>
+      ),
+    },
   ];
 
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-      <AdminLayout>
-        <div style={{ padding: '24px', background: '#0A0E14', minHeight: '100vh' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFFFFF', marginBottom: '8px' }}>
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, margin: 0 }}>
               Booking Management
             </h1>
-            <div style={{ fontSize: '14px', color: '#6B7280' }}>
-              Manage bookings, quotes, and assignments
-            </div>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              style={{ background: '#C90D0D', borderColor: '#C90D0D' }}
+              onClick={() => alert('Export CSV')}
+            >
+              Export CSV
+            </Button>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {statusTabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveStatus(tab.key)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  border: activeStatus === tab.key ? '2px solid #C90D0D' : '1px solid #2D3748',
-                  background: activeStatus === tab.key ? '#C90D0D20' : '#151922',
-                  color: activeStatus === tab.key ? '#C90D0D' : '#B4B9C5',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  transition: 'all 0.3s',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Bookings"
+                  value={stats.total}
+                  prefix={<BookOutlined />}
+                  valueStyle={{ color: textPrimary }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Open"
+                  value={stats.open}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Assigned"
+                  value={stats.assigned}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Completed"
+                  value={stats.completed}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
+          </Row>
 
-          {/* Filters and Actions */}
-          <div style={{
-            background: '#151922',
-            border: '1px solid #2D3748',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}>
-            <div style={{ display: 'flex', gap: '12px', flex: 1, flexWrap: 'wrap' }}>
-              <Search
-                placeholder="Search..."
-                style={{ width: 250 }}
-                prefix={<SearchOutlined style={{ color: '#6B7280' }} />}
+          <Card>
+            <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <Input
+                placeholder="Search bookings..."
+                prefix={<SearchOutlined />}
+                style={{ width: '300px' }}
               />
-              <Select defaultValue="all" style={{ width: 120 }}>
-                <Select.Option value="all">All Pickup</Select.Option>
-              </Select>
-              <Select defaultValue="all" style={{ width: 120 }}>
-                <Select.Option value="all">All Drop</Select.Option>
-              </Select>
-              <Select defaultValue="all" style={{ width: 120 }}>
-                <Select.Option value="all">All Trucks</Select.Option>
-              </Select>
-              <Button style={{ color: '#6B7280' }}>Clear</Button>
+              <Select
+                value={statusFilter}
+                onChange={setStatusFilter}
+                style={{ width: '200px' }}
+                options={[
+                  { label: 'All Statuses', value: 'all' },
+                  { label: 'Open', value: 'OPEN' },
+                  { label: 'Bidding Closed', value: 'BIDDING_CLOSED' },
+                  { label: 'Assigned', value: 'ASSIGNED' },
+                  { label: 'Completed', value: 'COMPLETED' },
+                  { label: 'Cancelled', value: 'CANCELLED' },
+                ]}
+              />
+              <RangePicker style={{ width: '300px' }} />
             </div>
-            
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <span style={{ color: '#B4B9C5' }}>{filteredBookings.length} bookings</span>
-              <Button icon={<DownloadOutlined />} style={{ background: '#1E2430', color: '#FFFFFF', border: '1px solid #2D3748' }}>
-                Export
-              </Button>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                style={{ background: '#C90D0D', borderColor: '#C90D0D' }}
-              >
-                Add Booking
-              </Button>
-            </div>
-          </div>
 
-          {/* Bookings Table */}
-          <div style={{
-            background: '#151922',
-            border: '1px solid #2D3748',
-            borderRadius: '12px',
-            overflow: 'hidden',
-          }}>
             <Table
               columns={columns}
               dataSource={filteredBookings}
               rowKey="id"
-              pagination={{ 
-                pageSize: 20,
-                style: { 
-                  padding: '16px',
-                },
-              }}
+              pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `Total ${total} bookings` }}
             />
-          </div>
+          </Card>
 
-          {/* Booking Detail Modal */}
           <Modal
-            title={null}
+            title={`Booking Details: ${selectedBooking?.id || ''}`}
             open={modalVisible}
-            onCancel={() => setModalVisible(false)}
+            onCancel={() => {
+              setModalVisible(false);
+              setSelectedBooking(null);
+            }}
             footer={null}
-            width={900}
-            style={{ top: 20 }}
+            width={800}
           >
             {selectedBooking && (
-              <div style={{ background: '#151922', color: '#FFFFFF' }}>
-                {/* Modal Header */}
-                <div style={{ 
-                  padding: '24px', 
-                  borderBottom: '1px solid #2D3748',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '8px',
-                    background: '#C90D0D20',
-                    border: '1px solid #C90D0D',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '24px',
-                    color: '#C90D0D',
-                  }}>
-                    📦
+              <div style={{ color: textPrimary }}>
+                <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+                  <Col span={12}>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Shipper:</strong> {selectedBooking.shipperName}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Route:</strong> {selectedBooking.route}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Cargo Type:</strong> {selectedBooking.cargoType}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Weight:</strong> {selectedBooking.weight}
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Pickup Date:</strong> {selectedBooking.pickupDate}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Delivery Date:</strong> {selectedBooking.deliveryDate}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Estimated Value:</strong> ₹{selectedBooking.estimatedValue.toLocaleString()}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Bids Received:</strong> {selectedBooking.bidsReceived}
+                    </div>
+                  </Col>
+                </Row>
+
+                {selectedBooking.assignedOperator && (
+                  <div style={{ marginBottom: '24px', padding: '16px', background: isDark ? '#1E2430' : '#F3F4F6', borderRadius: '8px' }}>
+                    <h3 style={{ marginTop: 0, color: textPrimary }}>Assignment Details</h3>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Operator:</strong> {selectedBooking.assignedOperator}
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Winning Bid:</strong> ₹{selectedBooking.winningBid?.toLocaleString()}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{selectedBooking.id}</h2>
-                    <div style={{ color: '#6B7280' }}>{selectedBooking.customer}</div>
-                  </div>
+                )}
+
+                <div>
+                  <h3 style={{ color: textPrimary }}>Timeline</h3>
+                  <Timeline
+                    items={[
+                      {
+                        color: 'green',
+                        children: `Created: ${selectedBooking.createdAt}`,
+                      },
+                      selectedBooking.status === 'ASSIGNED' || selectedBooking.status === 'COMPLETED'
+                        ? {
+                            color: 'purple',
+                            children: 'Assigned to operator',
+                          }
+                        : null,
+                      selectedBooking.status === 'COMPLETED'
+                        ? {
+                            color: 'green',
+                            children: `Completed: ${selectedBooking.completedAt}`,
+                          }
+                        : null,
+                    ].filter(Boolean)}
+                  />
                 </div>
 
-                {/* Tabs */}
-                <Tabs 
-                  defaultActiveKey="details" 
-                  style={{ padding: '0 24px' }}
-                  items={[
-                    {
-                      key: 'details',
-                      label: 'Details',
-                      children: (
-                        <div style={{ paddingBottom: '24px' }}>
-                          {/* Route Details */}
-                          <div style={{ marginBottom: '24px' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#B4B9C5', textTransform: 'uppercase' }}>
-                              Route Details
-                            </h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '24px', alignItems: 'center' }}>
-                              <div>
-                                <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-                                  {selectedBooking.route.split(' → ')[0]}
-                                </div>
-                                <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                                  {selectedBooking.pickupAddress}
-                                </div>
-                              </div>
-                              <div style={{ color: '#C90D0D', fontSize: '24px' }}>
-                                <ArrowRightOutlined />
-                              </div>
-                              <div>
-                                <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-                                  {selectedBooking.route.split(' → ')[1]}
-                                </div>
-                                <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                                  {selectedBooking.dropAddress}
-                                </div>
-                              </div>
-                            </div>
-                            {selectedBooking.distance && (
-                              <div style={{ marginTop: '16px', fontSize: '16px', fontWeight: 600, color: '#FFFFFF' }}>
-                                Distance: {selectedBooking.distance}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Schedule */}
-                          {selectedBooking.scheduledTime && (
-                            <div style={{ marginBottom: '24px' }}>
-                              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#B4B9C5', textTransform: 'uppercase' }}>
-                                Schedule
-                              </h3>
-                              <div style={{ display: 'flex', gap: '32px' }}>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Scheduled Date</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{selectedBooking.scheduled}</div>
-                                </div>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Scheduled Time</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600' }}>{selectedBooking.scheduledTime}</div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Requirements */}
-                          {selectedBooking.quantity && (
-                            <div style={{ marginBottom: '24px' }}>
-                              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#B4B9C5', textTransform: 'uppercase' }}>
-                                Requirements
-                              </h3>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Truck Type</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{selectedBooking.truckType}</div>
-                                </div>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Load Type</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{selectedBooking.loadType}</div>
-                                </div>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Quantity</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{selectedBooking.quantity}</div>
-                                </div>
-                                <div>
-                                  <div style={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}>Goods Type</div>
-                                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{selectedBooking.goodsType}</div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Notes */}
-                          {selectedBooking.notes && (
-                            <div>
-                              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#B4B9C5', textTransform: 'uppercase' }}>
-                                Notes
-                              </h3>
-                              <div style={{ 
-                                padding: '16px', 
-                                background: '#1E2430', 
-                                borderRadius: '8px', 
-                                color: '#B4B9C5',
-                                fontSize: '14px',
-                                lineHeight: '1.6',
-                              }}>
-                                {selectedBooking.notes}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ),
-                    },
-                    {
-                      key: 'quotes',
-                      label: (
-                        <Badge count={selectedBooking.quotes} offset={[10, 0]}>
-                          <span>Quotes</span>
-                        </Badge>
-                      ),
-                      children: <div style={{ padding: '24px', color: '#6B7280' }}>Quotes list would be displayed here</div>,
-                    },
-                    {
-                      key: 'assigned',
-                      label: 'Assigned',
-                      children: <div style={{ padding: '24px', color: '#6B7280' }}>Assignment details would be displayed here</div>,
-                    },
-                    {
-                      key: 'documents',
-                      label: 'Documents',
-                      children: <div style={{ padding: '24px', color: '#6B7280' }}>Documents would be displayed here</div>,
-                    },
-                    {
-                      key: 'activity',
-                      label: (
-                        <Badge count={3} offset={[10, 0]}>
-                          <span>Activity</span>
-                        </Badge>
-                      ),
-                      children: <div style={{ padding: '24px', color: '#6B7280' }}>Activity log would be displayed here</div>,
-                    },
-                  ]}
-                />
+                <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  {selectedBooking.status === 'OPEN' && (
+                    <>
+                      <Button onClick={() => alert('View bids')}>View All Bids</Button>
+                      <Button danger onClick={() => alert('Cancel booking')}>Cancel Booking</Button>
+                    </>
+                  )}
+                  {selectedBooking.status === 'ASSIGNED' && (
+                    <Button type="primary" style={{ background: '#C90D0D', borderColor: '#C90D0D' }}>
+                      Track Shipment
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </Modal>
