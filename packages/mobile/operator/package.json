@@ -2,7 +2,7 @@
   "name": "@rodistaa/mobile-operator",
   "version": "1.0.0",
   "description": "Rodistaa Operator Mobile App",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -26,6 +26,7 @@
     "expo-keep-awake": "^15.0.7",
     "expo-location": "~16.1.0",
     "expo-modules-core": "~1.5.0",
+    "expo-router": "~2.0.15",
     "expo-secure-store": "~12.3.1",
     "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",

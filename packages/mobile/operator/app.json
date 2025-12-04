@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#C90D0D"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -21,12 +21,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#C90D0D"
       },
       "package": "com.rodistaa.operator",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
@@ -36,21 +35,11 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow Rodistaa Operator to use your location for fleet management."
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow Rodistaa Operator to access your photos to upload truck inspection images.",
-          "cameraPermission": "Allow Rodistaa Operator to access your camera to take truck inspection photos."
-        }
-      ]
+      "expo-router",
+      "expo-secure-store",
+      "expo-location",
+      "expo-image-picker"
     ],
     "scheme": "rodistaa-operator"
   }
 }
-
