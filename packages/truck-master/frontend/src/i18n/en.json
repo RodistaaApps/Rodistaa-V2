@@ -1,0 +1,64 @@
+{
+  "truck": {
+    "status": {
+      "PENDING_VERIFICATION": "Pending Verification",
+      "ACTIVE": "Active",
+      "BLOCKED": "Blocked",
+      "PENDING_TRACTOR_PAIRING": "Pending Tractor Pairing"
+    },
+    "compliance": {
+      "ALLOWED": "Allowed",
+      "BLOCKED": "Blocked",
+      "PENDING": "Pending Verification"
+    },
+    "classification": {
+      "SXL": "Small Extra Large",
+      "DXL": "Double Extra Large",
+      "TXL": "Triple Extra Large",
+      "QXL": "Quad Extra Large",
+      "PXL": "Penta Extra Large",
+      "HX": "Hexa Extra Large",
+      "TRL": "Trailer"
+    },
+    "bodyType": {
+      "OPEN_BODY": "Open Body",
+      "CONTAINER": "Container",
+      "FLATBED": "Flatbed",
+      "LOWBED": "Lowbed",
+      "SKELETAL": "Skeletal"
+    },
+    "tooltips": {
+      "pendingVerification": "Truck is pending VAHAN verification. This will be completed within 24 hours.",
+      "blocked": "Truck is blocked from bidding. See reasons below.",
+      "allowed": "Truck is verified and allowed to bid.",
+      "gpsStale": "GPS tracking is stale. Truck cannot bid until GPS is active.",
+      "permitExpiring": "Permit is expiring soon. Please renew.",
+      "duplicateChassis": "Chassis number matches another truck. This is a duplicate.",
+      "invalidBody": "Body type is not allowed (Tipper, Tanker, etc.)",
+      "trailerNoTractor": "Trailer must be linked to a tractor before bidding."
+    }
+  },
+  "ticket": {
+    "type": {
+      "PROVIDER_MISMATCH": "Provider Mismatch",
+      "DUPLICATE_CHASSIS": "Duplicate Chassis",
+      "PERMIT_DISCREPANCY": "Permit Discrepancy",
+      "LOW_TRUST": "Low Trust",
+      "COMPLIANCE_BLOCK": "Compliance Block",
+      "INVALID_LENGTH_FOR_CLASS": "Invalid Length for Class"
+    },
+    "priority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In Progress",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed"
+    }
+  }
+}
+
