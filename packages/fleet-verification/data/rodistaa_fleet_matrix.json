@@ -1,0 +1,286 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-04",
+  "classifications": {
+    "SXL": {
+      "label": "Small Extra Large",
+      "axles": 2,
+      "tyres": 6,
+      "length_range_ft": {
+        "min": 17,
+        "max": 20
+      },
+      "payload_range_t": {
+        "min": 7,
+        "max": 12
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "407",
+          "variant": "Pickup"
+        },
+        {
+          "oem": "Mahindra",
+          "model": "Bolero Pickup"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "Dost"
+        }
+      ]
+    },
+    "DXL": {
+      "label": "Double Extra Large / Tandem",
+      "axles": 3,
+      "tyres": 10,
+      "length_range_ft": {
+        "min": 20,
+        "max": 24
+      },
+      "payload_range_t": {
+        "min": 12,
+        "max": 18
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER", "FLATBED"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "LPT 1613",
+          "variant": "Truck"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "Dost Plus"
+        },
+        {
+          "oem": "BharatBenz",
+          "model": "1214"
+        },
+        {
+          "oem": "Eicher",
+          "model": "Pro 3015"
+        }
+      ]
+    },
+    "TXL": {
+      "label": "Triple Extra Large",
+      "axles": 4,
+      "tyres": 12,
+      "length_range_ft": {
+        "min": 24,
+        "max": 28
+      },
+      "payload_range_t": {
+        "min": 18,
+        "max": 25
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER", "FLATBED"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "LPT 2518",
+          "variant": "Truck"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "U-Truck 2516"
+        },
+        {
+          "oem": "BharatBenz",
+          "model": "1617"
+        },
+        {
+          "oem": "Eicher",
+          "model": "Pro 3015"
+        },
+        {
+          "oem": "Volvo",
+          "model": "FM 440"
+        }
+      ]
+    },
+    "QXL": {
+      "label": "Quad Extra Large",
+      "axles": 5,
+      "tyres": 14,
+      "length_range_ft": {
+        "min": 28,
+        "max": 32
+      },
+      "payload_range_t": {
+        "min": 25,
+        "max": 35
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER", "FLATBED"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "LPT 3523",
+          "variant": "Truck"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "U-Truck 3523"
+        },
+        {
+          "oem": "BharatBenz",
+          "model": "2523"
+        }
+      ]
+    },
+    "PXL": {
+      "label": "Penta Extra Large",
+      "axles": 5,
+      "tyres": 16,
+      "length_range_ft": {
+        "min": 32,
+        "max": 40
+      },
+      "payload_range_t": {
+        "min": 35,
+        "max": 50
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER", "FLATBED"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "LPT 3523",
+          "variant": "Heavy Truck"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "U-Truck 4023"
+        },
+        {
+          "oem": "BharatBenz",
+          "model": "3123"
+        }
+      ]
+    },
+    "HX": {
+      "label": "Hexa Extra Large",
+      "axles": 6,
+      "tyres": 18,
+      "length_range_ft": {
+        "min": 38,
+        "max": 42
+      },
+      "payload_range_t": {
+        "min": 50,
+        "max": 70
+      },
+      "allowed_body_types": ["OPEN_BODY", "CONTAINER", "FLATBED"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "LPT 4023",
+          "variant": "Heavy Truck"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "U-Truck 4023"
+        },
+        {
+          "oem": "BharatBenz",
+          "model": "4023"
+        },
+        {
+          "oem": "Volvo",
+          "model": "FH 540"
+        }
+      ]
+    },
+    "TRL": {
+      "label": "Trailer",
+      "axles": null,
+      "tyres": {
+        "min": 18,
+        "max": 22
+      },
+      "length_range_ft": {
+        "min": 28,
+        "max": 60
+      },
+      "payload_range_t": {
+        "min": 20,
+        "max": 100
+      },
+      "allowed_body_types": ["CONTAINER", "FLATBED", "LOWBED", "SKELETAL"],
+      "allowed_emission_codes": ["BS4", "BS6"],
+      "trailer_subtypes": {
+        "CONTAINER": {
+          "description": "Container Trailer",
+          "typical_length_ft": 40,
+          "typical_tyres": 16
+        },
+        "FLATBED": {
+          "description": "Flatbed Trailer",
+          "typical_length_ft": 40,
+          "typical_tyres": 18
+        },
+        "LOWBED": {
+          "description": "Lowbed Trailer (Heavy Haulage)",
+          "typical_length_ft": 45,
+          "typical_tyres": 20
+        },
+        "SKELETAL": {
+          "description": "Skeletal Trailer",
+          "typical_length_ft": 40,
+          "typical_tyres": 16
+        }
+      },
+      "sample_models": [
+        {
+          "oem": "Tata",
+          "model": "Trailer",
+          "variant": "Container"
+        },
+        {
+          "oem": "Ashok Leyland",
+          "model": "Trailer",
+          "variant": "Flatbed"
+        }
+      ]
+    }
+  },
+  "blocked_patterns": {
+    "body_type_keywords": [
+      "TIPPER",
+      "DUMPER",
+      "TANKER",
+      "COWL",
+      "CHASSIS",
+      "CAB-CHASSIS",
+      "CABCHASSIS"
+    ],
+    "body_code_blocked": [],
+    "emission_codes_blocked": ["BS1", "BS2", "BS3"],
+    "permit_types_blocked": ["TEMPORARY", "PRIVATE", "NON-TRANSPORT"]
+  },
+  "validation_rules": {
+    "gps_heartbeat_minutes": 15,
+    "gps_stale_threshold_minutes": 60,
+    "permit_expiry_warning_days": 7,
+    "verification_cache_ttl_days": 7,
+    "grace_period_hours": 48,
+    "max_trucks_per_operator": 10,
+    "gvw_tyre_sanity_ranges": {
+      "SXL": { "gvw_min_kg": 7500, "gvw_max_kg": 12000, "tyres": 6 },
+      "DXL": { "gvw_min_kg": 12000, "gvw_max_kg": 18000, "tyres": 10 },
+      "TXL": { "gvw_min_kg": 18000, "gvw_max_kg": 25000, "tyres": 12 },
+      "QXL": { "gvw_min_kg": 25000, "gvw_max_kg": 35000, "tyres": 14 },
+      "PXL": { "gvw_min_kg": 35000, "gvw_max_kg": 50000, "tyres": 16 },
+      "HX": { "gvw_min_kg": 50000, "gvw_max_kg": 70000, "tyres": 18 },
+      "TRL": { "gvw_min_kg": 20000, "gvw_max_kg": 100000, "tyres_min": 18, "tyres_max": 22 }
+    }
+  }
+}
+
