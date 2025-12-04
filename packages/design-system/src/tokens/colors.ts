@@ -74,6 +74,7 @@ export const RodistaaColors = {
   text: {
     primary: "#1A1A1A",
     secondary: "#4F4F4F",
+    tertiary: "#999999",
     disabled: "#CCCCCC",
     hint: "#999999",
     inverse: "#FFFFFF",
