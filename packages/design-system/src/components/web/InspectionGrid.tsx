@@ -105,8 +105,8 @@ export const InspectionGrid: React.FC<InspectionGridProps> = ({
                 right: 0,
                 padding: `${RodistaaSpacing.xs}px`,
                 backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                color: RodistaaColors.text.inverse,
                 ...WebTextStyles.caption,
+                color: RodistaaColors.text.inverse,
                 textAlign: 'center',
               }}
             >
