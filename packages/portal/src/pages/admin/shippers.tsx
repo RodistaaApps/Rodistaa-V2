@@ -1,12 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { AdminLayout } from "@/components/Layout/AdminLayout";
 import { ShippersList } from "@/modules/shippers/ShippersList";
+import { ShipperDetailPanel } from "@/modules/shippers/ShipperDetailPanel";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const ShippersPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const [selectedShipperId, setSelectedShipperId] = useState<string | null>(
+    null,
+  );
+
+  const handleViewShipper = (shipperId: string) => {
+    setSelectedShipperId(shipperId);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedShipperId(null);
+  };
 
   return (
     <>
@@ -18,7 +30,15 @@ const ShippersPage: React.FC = () => {
         />
       </Head>
       <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-        <ShippersList theme={theme} />
+        <ShippersList theme={theme} onViewShipper={handleViewShipper} />
+        {selectedShipperId && (
+          <ShipperDetailPanel
+            shipperId={selectedShipperId}
+            visible={!!selectedShipperId}
+            onClose={handleCloseDetail}
+            theme={theme}
+          />
+        )}
       </AdminLayout>
     </>
   );
