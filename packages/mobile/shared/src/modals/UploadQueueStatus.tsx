@@ -3,7 +3,7 @@
  * Shows pending uploads and queue status
  */
 
-import { View, StyleSheet, FlatList, Text } from 'react-native';
+import { View, StyleSheet, FlatList, Text, Alert } from 'react-native';
 import { RModal, RButton, RTag } from '@rodistaa/design-system';
 import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 import { getUploadQueue, processUploadQueue, QueuedUpload } from '../offline/uploadQueue';

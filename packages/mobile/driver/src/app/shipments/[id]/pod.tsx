@@ -3,7 +3,7 @@
  * Upload Proof of Delivery document
  */
 
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { RPDFViewer, RButton, RCard } from '@rodistaa/design-system';
 import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';

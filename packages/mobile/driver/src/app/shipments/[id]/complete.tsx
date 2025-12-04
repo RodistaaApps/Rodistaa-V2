@@ -3,7 +3,7 @@
  * Final step: Enter OTP to complete delivery
  */
 
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { RInput, RButton, RCard } from '@rodistaa/design-system';
 import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';

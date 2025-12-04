@@ -3,7 +3,7 @@
  * Driver accepts and starts a trip
  */
 
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { RButton, RCard, LoadCard, Timeline } from '@rodistaa/design-system';
 import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';

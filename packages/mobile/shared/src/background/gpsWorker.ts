@@ -171,7 +171,7 @@ TaskManager.defineTask(GPS_TASK_NAME, async ({ data, error }) => {
       };
 
       try {
-        await apiClient.postGPSPing(shipmentId, ping);
+        await apiClient.post(`/shipments/${shipmentId}/ping`, ping);
       } catch (error) {
         // Cache for offline retry
         await cacheGPSPing({

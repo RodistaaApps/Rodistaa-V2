@@ -3,7 +3,7 @@
  * View all inspections for a truck
  */
 
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { RCard, RLoader, Timeline } from '@rodistaa/design-system';
 import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';

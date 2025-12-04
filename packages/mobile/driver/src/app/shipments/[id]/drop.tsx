@@ -3,7 +3,7 @@
  * Capture geotagged photos at drop location
  */
 
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { RPhotoCapture, RButton } from '@rodistaa/design-system';
 import { RodistaaColors, RodistaaSpacing } from '@rodistaa/design-system';
