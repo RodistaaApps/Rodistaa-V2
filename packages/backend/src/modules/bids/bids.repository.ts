@@ -182,6 +182,36 @@ export async function getValidBids(bookingId: string): Promise<Bid[]> {
 }
 
 /**
+ * Get active bid by operator and booking
+ * BUSINESS RULE: Operator can have only ONE active bid per booking
+ */
+export async function getActiveBidByOperatorAndBooking(
+  operatorId: string,
+  bookingId: string
+): Promise<Bid | null> {
+  try {
+    const result = await query(
+      `SELECT * FROM bids 
+       WHERE operator_id = $1 
+         AND booking_id = $2 
+         AND status IN ('PENDING', 'ACTIVE')
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [operatorId, bookingId]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return mapRowToBid(result.rows[0]);
+  } catch (error: any) {
+    log.error({ error, operatorId, bookingId }, 'Failed to get active bid by operator');
+    throw error;
+  }
+}
+
+/**
  * Map database row to Bid object
  */
 function mapRowToBid(row: any): Bid {

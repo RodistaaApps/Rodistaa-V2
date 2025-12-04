@@ -215,11 +215,11 @@ export class MockFileUploadService {
     return `http://localhost:3000/mock-download/${fileKey}`;
   }
 
-  validateFile(fileName: string, fileSize: number, contentType: string) {
+  validateFile(_fileName: string, _fileSize: number, _contentType: string) {
     return { valid: true };
   }
 
-  calculateFileHash(buffer: Buffer): string {
+  calculateFileHash(_buffer: Buffer): string {
     return 'mock-hash-' + Date.now();
   }
 }

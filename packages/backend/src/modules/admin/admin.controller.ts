@@ -54,7 +54,13 @@ export class AdminController {
    */
   async approveOverride(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { overrideId } = req.params as { overrideId: string };
       const { notes } = req.body as { notes?: string };
 
@@ -76,7 +82,13 @@ export class AdminController {
    */
   async rejectOverride(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { overrideId } = req.params as { overrideId: string };
       const { reason } = req.body as { reason: string };
 
@@ -131,7 +143,13 @@ export class AdminController {
    */
   async decryptKyc(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { kycId } = req.params as { kycId: string };
 
       const decrypted = await kycService.decryptKycRecord(kycId, user.id);

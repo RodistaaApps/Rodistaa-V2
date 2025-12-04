@@ -60,10 +60,14 @@ export function calculateBiddingFee(params: CalculateBiddingFeeParams): BiddingF
 /**
  * Bidding Fee Distribution Service
  * 
- * BUSINESS RULE:
- * - 25% to operator (operator commission)
- * - 5% to district franchise
- * - 70% to HQ
+ * BUSINESS RULE: Zero-commission marketplace
+ * This is bidding fee distribution (NOT transaction commission):
+ * - 25% to operator (operator share of bidding fee)
+ * - 5% to district franchise (franchise share of bidding fee)
+ * - 70% to HQ (HQ share of bidding fee)
+ * 
+ * NOTE: Rodistaa charges NO commission on transactions (cash-only, zero-commission model).
+ * This distribution applies only to bidding fees, not transaction amounts.
  */
 export interface BiddingFeeDistribution {
   operatorShare: number; // 25%

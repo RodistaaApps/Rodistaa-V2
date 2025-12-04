@@ -1,9 +1,15 @@
 /**
  * OTP Service
- * Handles OTP generation and sending via SMS providers
+ * Handles OTP generation and delivery
+ * 
+ * NOTE: Login OTP is sent via SMS. All other OTPs (shipment completion, etc.) use in-app notifications.
  */
 
 import crypto from 'crypto';
+import { smsService } from './sms.service';
+import logger from 'pino';
+
+const log = logger({ name: 'otp-service' });
 
 interface OTPRecord {
   phone: string;
@@ -27,40 +33,11 @@ export class OTPService {
   }
 
   /**
-   * Send OTP via SMS (AWS SNS)
+   * Generate and send login OTP via SMS
+   * 
+   * NOTE: Login OTP is sent via SMS. Other OTPs (shipment completion, etc.) use in-app notifications.
    */
-  async sendOTPViaSNS(phone: string, otp: string): Promise<boolean> {
-    // TODO: Implement AWS SNS when credentials provided
-    // const sns = new SNSClient({ region: 'ap-south-1' });
-    // await sns.send(new PublishCommand({
-    //   PhoneNumber: `+91${phone}`,
-    //   Message: `Your Rodistaa OTP is: ${otp}. Valid for 5 minutes.`,
-    // }));
-
-    console.log(`[OTP] Would send to ${phone}: ${otp}`);
-    return true;
-  }
-
-  /**
-   * Send OTP via Twilio
-   */
-  async sendOTPViaTwilio(phone: string, otp: string): Promise<boolean> {
-    // TODO: Implement Twilio when credentials provided
-    // const twilio = require('twilio')(accountSid, authToken);
-    // await twilio.messages.create({
-    //   body: `Your Rodistaa OTP is: ${otp}. Valid for 5 minutes.`,
-    //   from: twilioPhone,
-    //   to: `+91${phone}`,
-    // });
-
-    console.log(`[OTP] Would send to ${phone}: ${otp}`);
-    return true;
-  }
-
-  /**
-   * Send OTP (mock mode for development)
-   */
-  async sendOTP(phone: string): Promise<{ success: boolean; message: string }> {
+  async generateAndSendLoginOTP(phone: string): Promise<{ success: boolean; message: string; otp?: string }> {
     // Check rate limiting (max 3 OTPs per hour)
     const recentOTPs = this.getRecentOTPCount(phone);
     if (recentOTPs >= 3) {
@@ -81,27 +58,92 @@ export class OTPService {
       attempts: 0,
     });
 
-    // Send via SMS provider
-    const useMock = process.env.USE_MOCK_OTP !== 'false';
-    if (useMock) {
-      // Mock mode for development
-      console.log(`[MOCK OTP] Phone: ${phone}, OTP: ${otp}`);
-      return {
-        success: true,
-        message: `OTP sent to ${phone}. Mock OTP: ${otp}`,
-      };
-    } else {
-      // Production: Use real SMS provider
-      const provider = process.env.SMS_PROVIDER || 'sns';
-      const sent = provider === 'twilio'
-        ? await this.sendOTPViaTwilio(phone, otp)
-        : await this.sendOTPViaSNS(phone, otp);
+    // Send OTP via SMS
+    const smsResult = await smsService.sendLoginOTP(phone, otp);
 
+    if (!smsResult.success) {
+      log.warn({ phone: this.maskPhone(phone), error: smsResult.error }, 'Failed to send OTP via SMS');
+      // In development, still return OTP even if SMS fails
+      if (process.env.NODE_ENV === 'development') {
+        return {
+          success: true,
+          message: `OTP generated. SMS sending failed: ${smsResult.error}. (DEV OTP: ${otp})`,
+          otp,
+        };
+      }
       return {
-        success: sent,
-        message: sent ? `OTP sent to ${phone}` : 'Failed to send OTP',
+        success: false,
+        message: `Failed to send OTP. Please try again.`,
       };
     }
+
+    // In development, also return OTP for testing
+    if (process.env.NODE_ENV === 'development') {
+      log.info({ phone: this.maskPhone(phone), otp }, 'Login OTP sent via SMS (DEV mode - OTP visible)');
+      return {
+        success: true,
+        message: `OTP sent to your phone. (DEV: ${otp})`,
+        otp, // Only in development
+      };
+    }
+
+    log.info({ phone: this.maskPhone(phone) }, 'Login OTP sent via SMS');
+    return {
+      success: true,
+      message: 'OTP sent to your phone. Please check your SMS.',
+    };
+  }
+
+  /**
+   * Generate and store OTP for in-app notification delivery (non-login OTPs)
+   * Used for shipment completion OTP, etc.
+   */
+  async generateAndStoreOTP(phone: string): Promise<{ success: boolean; message: string; otp?: string }> {
+    // Check rate limiting (max 3 OTPs per hour)
+    const recentOTPs = this.getRecentOTPCount(phone);
+    if (recentOTPs >= 3) {
+      return {
+        success: false,
+        message: 'Too many OTP requests. Please check your in-app notifications and try after 1 hour.',
+      };
+    }
+
+    const otp = this.generateOTP();
+    const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP for in-app notification delivery
+    this.otpStore.set(phone, {
+      phone,
+      otp,
+      expiresAt,
+      attempts: 0,
+    });
+
+    // In development, return OTP for testing purposes
+    if (process.env.NODE_ENV === 'development') {
+      log.info({ phone: this.maskPhone(phone), otp }, '[DEV OTP] Generated for in-app notification (DEV: OTP visible)');
+      return {
+        success: true,
+        message: `OTP generated. Check your in-app notifications. (DEV: ${otp})`,
+        otp, // Only in development
+      };
+    }
+
+    // Production: OTP delivered via in-app notification (handled by notification service)
+    log.info({ phone: this.maskPhone(phone) }, 'OTP generated for in-app notification');
+    return {
+      success: true,
+      message: 'OTP generated. Please check your in-app notifications.',
+    };
+  }
+
+  /**
+   * Mask phone number for logging
+   */
+  private maskPhone(phone: string): string {
+    if (phone.length < 4) return phone;
+    const visible = phone.slice(-4);
+    return `${phone.slice(0, -4).replace(/\d/g, 'X')}${visible}`;
   }
 
   /**
@@ -139,7 +181,7 @@ export class OTPService {
   /**
    * Get recent OTP count for rate limiting
    */
-  private getRecentOTPCount(phone: string): number {
+  private getRecentOTPCount(_phone: string): number {
     // TODO: Implement with Redis for distributed rate limiting
     // For now, simple in-memory check
     return 0;

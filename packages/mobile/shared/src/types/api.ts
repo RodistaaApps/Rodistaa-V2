@@ -347,7 +347,8 @@ export type PaymentStatus =
   | 'failed'
   | 'refunded';
 
-export type PaymentMethod = 'credit_card' | 'debit_card' | 'upi' | 'wallet' | 'cod';
+// BUSINESS RULE: Cash-only payments - No digital payment methods
+export type PaymentMethod = 'cod'; // Cash on Delivery only
 
 export interface Payment {
   id: string;

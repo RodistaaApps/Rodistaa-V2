@@ -42,7 +42,13 @@ export class ShipmentsController {
    */
   async startShipment(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { shipmentId } = req.params as { shipmentId: string };
 
       const shipment = await shipmentsService.startShipment(shipmentId, user.id);
@@ -77,7 +83,13 @@ export class ShipmentsController {
    */
   async recordGpsPing(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { shipmentId } = req.params as { shipmentId: string };
       const payload = req.body as any;
 
@@ -136,7 +148,13 @@ export class ShipmentsController {
    */
   async uploadPOD(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { shipmentId } = req.params as { shipmentId: string };
       const payload = req.body as any;
 
@@ -194,7 +212,13 @@ export class ShipmentsController {
    */
   async completeShipment(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { shipmentId } = req.params as { shipmentId: string };
       const { otp } = req.body as { otp: string };
 

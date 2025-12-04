@@ -10,7 +10,7 @@
  * BUSINESS RULE: 6-digit OTP, 24-hour expiry, shipper provides to driver.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 export interface GenerateOTPParams {
   shipmentId: string;
@@ -200,7 +200,7 @@ export class TripOTPService {
     }
 
     // BUSINESS RULE: Mark OTP as verified and complete shipment
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update OTP record
       await tx.tripOTP.update({
         where: {

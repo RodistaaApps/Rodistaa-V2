@@ -15,7 +15,7 @@ export class UsersController {
    */
   async getCurrentUser(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       
       if (!user) {
         return reply.code(401).send({
@@ -48,7 +48,13 @@ export class UsersController {
    */
   async getUser(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const requestingUser = (req as any).user;
+      const requestingUser = req.user;
+      if (!requestingUser) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { userId } = req.params as { userId: string };
 
       const user = await usersService.getUserById(

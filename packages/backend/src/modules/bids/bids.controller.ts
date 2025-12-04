@@ -15,7 +15,13 @@ export class BidsController {
    */
   async createBid(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { bookingId } = req.params as { bookingId: string };
       const payload = req.body as any;
 
@@ -132,7 +138,13 @@ export class BidsController {
    */
   async updateBid(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { bidId } = req.params as { bidId: string };
       const payload = req.body as any;
 
@@ -176,7 +188,13 @@ export class BidsController {
    */
   async finalizeBid(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { bidId } = req.params as { bidId: string };
 
       if (user.role !== 'ADMIN' && user.role !== 'AD') {

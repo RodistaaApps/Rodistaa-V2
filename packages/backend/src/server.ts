@@ -3,6 +3,7 @@
  */
 
 import Fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
 import { registerRoutes } from './routes';
 import { registerAcsMiddleware } from './middleware/acsMiddleware';
 import { registerAuthMiddleware } from './middleware/authMiddleware';
@@ -18,7 +19,7 @@ export async function createServer(): Promise<FastifyInstance> {
   });
 
   // Enable CORS for portal
-  await server.register(require('@fastify/cors'), {
+  await server.register(cors, {
     origin: true, // Allow all origins in development
     credentials: true,
   });

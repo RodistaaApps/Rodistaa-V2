@@ -15,7 +15,13 @@ export class TrucksController {
    */
   async createTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const payload = req.body as any;
 
       if (!payload.registrationNumber) {
@@ -81,7 +87,13 @@ export class TrucksController {
    */
   async listTrucks(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const query = req.query as any;
 
       const filters: any = {
@@ -122,7 +134,13 @@ export class TrucksController {
    */
   async blockTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { truckId } = req.params as { truckId: string };
       const { reason } = req.body as { reason?: string };
 
@@ -158,7 +176,13 @@ export class TrucksController {
    */
   async unblockTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { truckId } = req.params as { truckId: string };
 
       if (user.role !== 'ADMIN' && user.role !== 'AD') {
@@ -193,7 +217,13 @@ export class TrucksController {
    */
   async createInspection(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { truckId } = req.params as { truckId: string };
       const payload = req.body as any;
 

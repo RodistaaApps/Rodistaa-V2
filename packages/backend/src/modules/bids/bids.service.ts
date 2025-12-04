@@ -37,6 +37,20 @@ export async function createBid(
     throw new Error('Booking is not accepting bids');
   }
 
+  // BUSINESS RULE: Operator can have only ONE active bid per booking
+  const existingBid = await bidsRepo.getActiveBidByOperatorAndBooking(
+    operatorId,
+    input.bookingId
+  );
+
+  if (existingBid) {
+    throw new Error(
+      `BUSINESS RULE: Operator can have only one active bid per booking. ` +
+      `Existing bid ID: ${existingBid.id} (Status: ${existingBid.status}). ` +
+      `Please modify or withdraw the existing bid before creating a new one.`
+    );
+  }
+
   // Verify bid amount is within price range
   if (input.amount < booking.priceRange.min || input.amount > booking.priceRange.max) {
     throw new Error(`Bid amount must be between ${booking.priceRange.min} and ${booking.priceRange.max}`);
