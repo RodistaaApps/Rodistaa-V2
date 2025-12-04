@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rodistaa-postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rodistaa_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rodistaa-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: rodistaa-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - rodistaa-dev
+
+  minio:
+    image: minio/minio:latest
+    container_name: rodistaa-minio-dev
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: rodistaa
+      MINIO_ROOT_PASSWORD: rodistaa123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - rodistaa-dev
+
+  redpanda:
+    image: docker.redpanda.com/vectorized/redpanda:latest
+    container_name: rodistaa-redpanda-dev
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr
+      - internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr
+      - internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr
+      - internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --advertise-schema-registry-addr
+      - internal://redpanda:8081,external://localhost:18081
+      - --rpc-addr
+      - redpanda:33145
+      - --advertise-rpc-addr
+      - redpanda:33145
+      - --smp
+      - '1'
+      - --memory
+      - 1G
+      - --mode dev-container
+      - --default-log-level=info
+    ports:
+      - "18081:18081"
+      - "18082:18082"
+      - "19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rodistaa-dev
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  redpanda_data:
+
+networks:
+  rodistaa-dev:
+    driver: bridge
+

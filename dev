@@ -1,0 +1,258 @@
+#!/usr/bin/env bash
+# Rodistaa Development Orchestration Script
+# Usage: ./dev [command]
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+# Check if .env exists
+check_env() {
+    if [ ! -f .env ]; then
+        log_warn ".env file not found. Creating from .env.example..."
+        cp .env.example .env
+        log_success ".env file created. Please review and update if needed."
+    fi
+}
+
+# Bootstrap: Install dependencies, generate tokens, migrate DB, seed
+bootstrap() {
+    log_info "Starting bootstrap process..."
+    
+    check_env
+    
+    log_info "Installing dependencies..."
+    pnpm install
+    
+    log_info "Generating design tokens..."
+    cd packages/design-system
+    if [ -f "scripts/generate-tokens.js" ]; then
+        pnpm run tokens:generate || log_warn "Token generation skipped (script not found)"
+    fi
+    cd "$SCRIPT_DIR"
+    
+    log_info "Building shared packages..."
+    pnpm --filter "@rodistaa/app-shared" build || true
+    pnpm --filter "@rodistaa/utils" build || true
+    pnpm --filter "@rodistaa/design-system" build || true
+    
+    log_info "Starting Docker services..."
+    docker-compose -f docker-compose.dev.yml up -d
+    
+    log_info "Waiting for Postgres to be ready..."
+    timeout=30
+    while ! docker-compose -f docker-compose.dev.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
+        sleep 1
+        timeout=$((timeout - 1))
+        if [ $timeout -eq 0 ]; then
+            log_error "Postgres failed to start"
+            exit 1
+        fi
+    done
+    log_success "Postgres is ready"
+    
+    log_info "Running database migrations..."
+    cd packages/backend
+    pnpm run migrate:latest || log_warn "Migrations may have already run"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Seeding database..."
+    cd packages/backend
+    pnpm run seed:run || log_warn "Seeds may have already run"
+    cd "$SCRIPT_DIR"
+    
+    log_success "Bootstrap complete!"
+}
+
+# Start all services
+start() {
+    log_info "Starting all services..."
+    
+    check_env
+    
+    log_info "Starting Docker services..."
+    docker-compose -f docker-compose.dev.yml up -d
+    
+    log_info "Waiting for infrastructure services..."
+    sleep 5
+    
+    log_info "Starting backend API..."
+    cd packages/backend
+    pnpm run dev > "$SCRIPT_DIR/logs/backend.log" 2>&1 &
+    echo $! > "$SCRIPT_DIR/logs/backend.pid"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Starting mocks service..."
+    cd packages/mocks
+    pnpm run dev > "$SCRIPT_DIR/logs/mocks.log" 2>&1 &
+    echo $! > "$SCRIPT_DIR/logs/mocks.pid"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Starting admin portal..."
+    cd packages/portal
+    PORT=3001 pnpm run dev > "$SCRIPT_DIR/logs/admin-portal.log" 2>&1 &
+    echo $! > "$SCRIPT_DIR/logs/admin-portal.pid"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Starting franchise portal..."
+    cd packages/portal
+    PORT=3002 pnpm run dev:franchise > "$SCRIPT_DIR/logs/franchise-portal.log" 2>&1 &
+    echo $! > "$SCRIPT_DIR/logs/franchise-portal.pid"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Starting Storybook..."
+    cd packages/design-system
+    pnpm run storybook > "$SCRIPT_DIR/logs/storybook.log" 2>&1 &
+    echo $! > "$SCRIPT_DIR/logs/storybook.pid"
+    cd "$SCRIPT_DIR"
+    
+    log_info "Waiting for services to start..."
+    sleep 10
+    
+    log_info "Checking service health..."
+    check_health
+    
+    log_success "All services started!"
+    log_info "Backend API: http://localhost:4000"
+    log_info "Admin Portal: http://localhost:3001"
+    log_info "Franchise Portal: http://localhost:3002"
+    log_info "Storybook: http://localhost:6006"
+    log_info "Mocks: http://localhost:5000"
+}
+
+# Stop all services
+stop() {
+    log_info "Stopping all services..."
+    
+    # Stop Node processes
+    if [ -d logs ]; then
+        for pidfile in logs/*.pid; do
+            if [ -f "$pidfile" ]; then
+                pid=$(cat "$pidfile")
+                if kill -0 "$pid" 2>/dev/null; then
+                    kill "$pid" 2>/dev/null || true
+                    log_info "Stopped process $pid"
+                fi
+                rm "$pidfile"
+            fi
+        done
+    fi
+    
+    # Stop Docker services
+    docker-compose -f docker-compose.dev.yml down
+    
+    log_success "All services stopped"
+}
+
+# Show logs
+logs() {
+    service=${1:-all}
+    
+    if [ "$service" = "all" ]; then
+        tail -f logs/*.log 2>/dev/null || log_warn "No log files found"
+    elif [ -f "logs/$service.log" ]; then
+        tail -f "logs/$service.log"
+    else
+        log_error "Log file for $service not found"
+        exit 1
+    fi
+}
+
+# Clean: Stop and remove volumes
+clean() {
+    log_info "Cleaning up..."
+    stop
+    docker-compose -f docker-compose.dev.yml down -v
+    rm -rf logs/*.log logs/*.pid 2>/dev/null || true
+    log_success "Cleanup complete"
+}
+
+# Check health of all services
+check_health() {
+    log_info "Checking service health..."
+    
+    services=(
+        "http://localhost:4000/health:Backend API"
+        "http://localhost:3001/health:Admin Portal"
+        "http://localhost:3002/health:Franchise Portal"
+        "http://localhost:5000/health:Mocks Service"
+        "http://localhost:6006:Storybook"
+    )
+    
+    for service in "${services[@]}"; do
+        url=$(echo "$service" | cut -d: -f1-3)
+        name=$(echo "$service" | cut -d: -f4)
+        
+        if curl -sf "$url" > /dev/null 2>&1; then
+            log_success "$name is healthy"
+        else
+            log_warn "$name is not responding (may still be starting)"
+        fi
+    done
+}
+
+# Create logs directory
+mkdir -p logs
+
+# Main command handler
+case "${1:-}" in
+    bootstrap)
+        bootstrap
+        ;;
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    logs)
+        logs "${2:-all}"
+        ;;
+    clean)
+        clean
+        ;;
+    health)
+        check_health
+        ;;
+    *)
+        echo "Rodistaa Development Orchestration"
+        echo ""
+        echo "Usage: ./dev [command]"
+        echo ""
+        echo "Commands:"
+        echo "  bootstrap  Install dependencies, generate tokens, migrate DB, seed"
+        echo "  start      Start all services (Docker + apps)"
+        echo "  stop       Stop all services"
+        echo "  logs       Show logs (optionally: logs [service])"
+        echo "  clean      Stop services and remove volumes"
+        echo "  health     Check health of all services"
+        echo ""
+        exit 1
+        ;;
+esac
+
