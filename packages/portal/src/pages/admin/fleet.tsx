@@ -64,9 +64,34 @@ function FleetManagementPage({ theme = 'dark', toggleTheme }: FleetPageProps) {
             <Button type="primary" icon={<DownloadOutlined />} style={{ background: '#C90D0D', borderColor: '#C90D0D' }}>Export Fleet Data</Button>
           </div>
           <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={8} sm={6} lg={4}><Card><Statistic title="Total Trucks" value={856} prefix={<CarOutlined />} /></Card></Col>
-            <Col xs={8} sm={6} lg={4}><Card><Statistic title="Active" value={723} valueStyle={{ color: '#52c41a' }} /></Card></Col>
-            <Col xs={8} sm={6} lg={4}><Card><Statistic title="Blocked" value={15} valueStyle={{ color: '#cf1322' }} /></Card></Col>
+            <Col xs={8} sm={6} lg={4}>
+              <Card>
+                <Statistic 
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Total Trucks</span>}
+                  value={856} 
+                  prefix={<CarOutlined style={{ color: isDark ? '#FFFFFF' : '#0A0E14' }} />} 
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }} 
+                />
+              </Card>
+            </Col>
+            <Col xs={8} sm={6} lg={4}>
+              <Card>
+                <Statistic 
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Active</span>}
+                  value={723} 
+                  valueStyle={{ color: '#52c41a', fontWeight: 'bold' }} 
+                />
+              </Card>
+            </Col>
+            <Col xs={8} sm={6} lg={4}>
+              <Card>
+                <Statistic 
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Blocked</span>}
+                  value={15} 
+                  valueStyle={{ color: '#cf1322', fontWeight: 'bold' }} 
+                />
+              </Card>
+            </Col>
           </Row>
           <Card><Table columns={columns} dataSource={mockTrucks} rowKey="id" pagination={{ pageSize: 20 }} /></Card>
           <Modal title="Truck Details" open={modalVisible} onCancel={() => setModalVisible(false)} footer={null} width={800}>
