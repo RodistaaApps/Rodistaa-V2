@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+/**
+ * Complete Delivery - OTP Verification
+ * Final step: Enter OTP to complete delivery
+ */
+
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { RInput, RButton, RCard } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { useCompleteDelivery, useGetShipment } from '@rodistaa/mobile-shared';
+import { useState } from 'react';
+import { stopGPSWorker } from '@rodistaa/mobile-shared';
 
 export default function CompleteDeliveryScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: shipment } = useGetShipment(id);
+  const completeMutation = useCompleteDelivery();
   const [otp, setOtp] = useState('');
-  const [completing, setCompleting] = useState(false);
 
   const handleComplete = async () => {
     if (otp.length !== 6) {
@@ -24,182 +24,82 @@ export default function CompleteDeliveryScreen() {
       return;
     }
 
-    setCompleting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setCompleting(false);
-      Alert.alert(
-        'Success!',
-        'Delivery completed successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/(tabs)/home'),
-          },
-        ]
-      );
-    }, 1500);
+    try {
+      await completeMutation.mutateAsync({
+        shipmentId: id,
+        otp,
+      });
+
+      // Stop GPS worker
+      await stopGPSWorker();
+
+      Alert.alert('Success', 'Delivery completed successfully!', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/(tabs)/shipments'),
+        },
+      ]);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to complete delivery');
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="checkmark-circle" size={80} color="#27AE60" />
-        </View>
-
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <RCard style={styles.card}>
         <Text style={styles.title}>Complete Delivery</Text>
-        <Text style={styles.subtitle}>Shipment: {id}</Text>
+        <Text style={styles.subtitle}>
+          Enter the OTP received from the consignee to complete the delivery
+        </Text>
+      </RCard>
 
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle" size={24} color="#2E86DE" />
-          <Text style={styles.infoText}>
-            Enter the OTP provided by the receiver to complete this delivery
-          </Text>
-        </View>
+      <RInput
+        label="OTP"
+        placeholder="Enter 6-digit OTP"
+        value={otp}
+        onChangeText={setOtp}
+        keyboardType="number-pad"
+        maxLength={6}
+        style={styles.input}
+      />
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Delivery OTP</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter 6-digit OTP"
-            value={otp}
-            onChangeText={setOtp}
-            keyboardType="number-pad"
-            maxLength={6}
-            autoFocus
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.completeButton,
-              otp.length !== 6 && styles.completeButtonDisabled,
-            ]}
-            onPress={handleComplete}
-            disabled={otp.length !== 6 || completing}
-          >
-            {completing ? (
-              <Text style={styles.completeButtonText}>Completing...</Text>
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-                <Text style={styles.completeButtonText}>Complete Delivery</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.noteCard}>
-          <Text style={styles.noteTitle}>Note:</Text>
-          <Text style={styles.noteText}>
-            • Ensure all items have been delivered
-          </Text>
-          <Text style={styles.noteText}>
-            • POD should be uploaded before completion
-          </Text>
-          <Text style={styles.noteText}>
-            • OTP is valid for 10 minutes
-          </Text>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+      <RButton
+        title="Complete Delivery"
+        variant="primary"
+        onPress={handleComplete}
+        loading={completeMutation.isPending}
+        disabled={otp.length !== 6}
+        style={styles.button}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   content: {
-    flex: 1,
-    padding: 24,
+    padding: RodistaaSpacing.lg,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginVertical: 32,
+  card: {
+    marginBottom: RodistaaSpacing.lg,
+    padding: RodistaaSpacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    textAlign: 'center',
-    marginBottom: 8,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#4F4F4F',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-    gap: 12,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#4F4F4F',
-    lineHeight: 20,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.secondary,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#C90D0D',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 24,
-    textAlign: 'center',
-    letterSpacing: 8,
-    marginBottom: 16,
+    marginBottom: RodistaaSpacing.lg,
   },
-  completeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#27AE60',
-    padding: 18,
-    borderRadius: 12,
-    gap: 8,
-  },
-  completeButtonDisabled: {
-    backgroundColor: '#D0D0D0',
-  },
-  completeButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  noteCard: {
-    backgroundColor: '#FFF3E0',
-    padding: 16,
-    borderRadius: 12,
-  },
-  noteTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  noteText: {
-    fontSize: 14,
-    color: '#4F4F4F',
-    marginBottom: 4,
+  button: {
+    marginTop: RodistaaSpacing.md,
   },
 });
