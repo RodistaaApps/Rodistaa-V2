@@ -27,6 +27,7 @@ export const RodistaaSpacing = {
     buttonPaddingX: 24,
     buttonPaddingY: 12,
     buttonHeight: 48,
+    inputHeight: 44,
     inputPaddingX: 16,
     inputPaddingY: 12,
     cardPadding: 16,
@@ -34,7 +35,10 @@ export const RodistaaSpacing = {
     listItemHeight: 56,
   },
   // Touch target (minimum 44px for accessibility)
-  touchTarget: 44,
+  touchTarget: {
+    minWidth: 44,
+    minHeight: 44,
+  },
   // Layout spacing
   layout: {
     pagePadding: 24,
