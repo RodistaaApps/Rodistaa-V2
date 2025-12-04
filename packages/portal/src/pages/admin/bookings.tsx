@@ -227,40 +227,40 @@ function BookingsManagementPage({ theme = 'dark', toggleTheme }: BookingsPagePro
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Total Bookings"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Total Bookings</span>}
                   value={stats.total}
-                  prefix={<BookOutlined />}
-                  valueStyle={{ color: textPrimary }}
+                  prefix={<BookOutlined style={{ color: isDark ? '#3B82F6' : '#1890ff' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Open"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Open</span>}
                   value={stats.open}
-                  prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: '#1890ff' }}
+                  prefix={<ClockCircleOutlined style={{ color: '#F59E0B' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Assigned"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Assigned</span>}
                   value={stats.assigned}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: '#722ed1' }}
+                  prefix={<CheckCircleOutlined style={{ color: '#8B5CF6' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Completed"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Completed</span>}
                   value={stats.completed}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
+                  prefix={<CheckCircleOutlined style={{ color: '#10B981' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>

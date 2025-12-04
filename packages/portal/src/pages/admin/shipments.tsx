@@ -226,40 +226,40 @@ function ShipmentsManagementPage({ theme = 'dark', toggleTheme }: ShipmentsPageP
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Total Shipments"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Total Shipments</span>}
                   value={stats.total}
-                  prefix={<TruckOutlined />}
-                  valueStyle={{ color: textPrimary }}
+                  prefix={<TruckOutlined style={{ color: isDark ? '#F59E0B' : '#fa8c16' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="In Transit"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>In Transit</span>}
                   value={stats.inTransit}
-                  prefix={<EnvironmentOutlined />}
-                  valueStyle={{ color: '#722ed1' }}
+                  prefix={<EnvironmentOutlined style={{ color: '#8B5CF6' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Delivered"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Delivered</span>}
                   value={stats.delivered}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
+                  prefix={<CheckCircleOutlined style={{ color: '#10B981' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Delayed"
+                  title={<span style={{ color: isDark ? '#B4B9C5' : '#6B7280' }}>Delayed</span>}
                   value={stats.delayed}
-                  prefix={<WarningOutlined />}
-                  valueStyle={{ color: '#cf1322' }}
+                  prefix={<WarningOutlined style={{ color: '#EF4444' }} />}
+                  valueStyle={{ color: isDark ? '#FFFFFF' : '#0A0E14', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
