@@ -1,23 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { AdminLayout } from "@/components/Layout/AdminLayout";
 import { ShippersList } from "@/modules/shippers/ShippersList";
-import { ShipperDetailPanel } from "@/modules/shippers/ShipperDetailPanel";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useRouter } from "next/router";
 
 const ShippersPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const [selectedShipperId, setSelectedShipperId] = useState<string | null>(
-    null,
-  );
+  const router = useRouter();
 
   const handleViewShipper = (shipperId: string) => {
-    setSelectedShipperId(shipperId);
-  };
-
-  const handleCloseDetail = () => {
-    setSelectedShipperId(null);
+    router.push(`/admin/shippers/${shipperId}`);
   };
 
   return (
@@ -31,29 +25,12 @@ const ShippersPage: React.FC = () => {
       </Head>
       <AdminLayout theme={theme} toggleTheme={toggleTheme}>
         <ShippersList theme={theme} onViewShipper={handleViewShipper} />
-        <ShipperDetailPanel
-          shipperId={selectedShipperId}
-          open={!!selectedShipperId}
-          onClose={handleCloseDetail}
-          theme={theme}
-        />
       </AdminLayout>
     </>
   );
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Add authentication check here
-  // const session = await getSession(context);
-  // if (!session) {
-  //   return {
-  //     redirect: {
-  //       destination: '/login',
-  //       permanent: false,
-  //     },
-  //   };
-  // }
-
   return {
     props: {},
   };

@@ -4,9 +4,15 @@ import Head from "next/head";
 import { AdminLayout } from "@/components/Layout/AdminLayout";
 import { OperatorsList } from "@/modules/operators/OperatorsList";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useRouter } from "next/router";
 
 const OperatorsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  const handleViewOperator = (operatorId: string) => {
+    router.push(`/admin/operators/${operatorId}`);
+  };
 
   return (
     <>
@@ -18,24 +24,13 @@ const OperatorsPage: React.FC = () => {
         />
       </Head>
       <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-        <OperatorsList theme={theme} />
+        <OperatorsList theme={theme} onViewOperator={handleViewOperator} />
       </AdminLayout>
     </>
   );
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Add authentication check here
-  // const session = await getSession(context);
-  // if (!session) {
-  //   return {
-  //     redirect: {
-  //       destination: '/login',
-  //       permanent: false,
-  //     },
-  //   };
-  // }
-
   return {
     props: {},
   };
