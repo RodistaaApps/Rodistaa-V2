@@ -152,9 +152,6 @@ importers:
       '@types/jest':
         specifier: ^29.5.8
         version: 29.5.14
-      '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
       '@types/node':
         specifier: ^20.10.6
         version: 20.19.25
@@ -4828,6 +4825,7 @@ packages:
 
   /@react-native/normalize-colors@0.82.1:
     resolution: {integrity: sha512-CCfTR1uX+Z7zJTdt3DNX9LUXr2zWXsNOyLbwupW2wmRzrxlHRYfmLgTABzRL/cKhh0Ubuwn15o72MQChvCRaHw==}
+    dev: false
 
   /@react-native/virtualized-lists@0.72.8(react-native@0.72.10):
     resolution: {integrity: sha512-J3Q4Bkuo99k7mu+jPS9gSUSgq+lLRSI/+ahXNwV92XgJ/8UgOTxu2LPwhJnBk/sQKxq7E8WkZBnBiozukQMqrw==}
@@ -8371,7 +8369,7 @@ packages:
   /deprecated-react-native-prop-types@4.1.0:
     resolution: {integrity: sha512-WfepZHmRbbdTvhcolb8aOKEvQdcmTMn5tKLbqbXmkBvjFjRVWAYqsXk/DBsV8TZxws8SdGHLuHaJrHSQUPRdfw==}
     dependencies:
-      '@react-native/normalize-colors': 0.82.1
+      '@react-native/normalize-colors': 0.74.89
       invariant: 2.2.4
       prop-types: 15.8.1
 

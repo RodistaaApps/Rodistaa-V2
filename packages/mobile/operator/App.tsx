@@ -1,238 +1,190 @@
-/**
- * Rodistaa Operator App - Main Entry Point
- * Simplified without expo-router for reliability
- */
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
-
-// Simple storage wrapper that works on web and mobile
-const Storage = {
-  getToken: async () => {
-    if (Platform.OS === 'web') {
-      return localStorage.getItem('authToken');
-    }
-    // For mobile, would use SecureStore
-    return null;
-  },
-  setToken: async (token: string) => {
-    if (Platform.OS === 'web') {
-      localStorage.setItem('authToken', token);
-    }
-    // For mobile, would use SecureStore
-  },
-  removeToken: async () => {
-    if (Platform.OS === 'web') {
-      localStorage.removeItem('authToken');
-    }
-    // For mobile, would use SecureStore
-  }
-};
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = await Storage.getToken();
-      if (token) {
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.log('No saved token');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [step, setStep] = useState<'login' | 'otp' | 'dashboard'>('login');
 
   const handleRequestOTP = () => {
-    // Mock OTP request
-    console.log('Requesting OTP for:', phone);
-    setOtpSent(true);
+    console.log('OTP requested for:', phone);
+    setStep('otp');
   };
 
-  const handleLogin = async () => {
-    // Mock login
-    console.log('Logging in with OTP:', otp);
-    await Storage.setToken('mock-token-' + Date.now());
-    setIsAuthenticated(true);
+  const handleLogin = () => {
+    console.log('Logged in with OTP:', otp);
+    setStep('dashboard');
   };
 
-  const handleLogout = async () => {
-    await Storage.removeToken();
-    setIsAuthenticated(false);
-    setOtpSent(false);
+  const handleLogout = () => {
     setPhone('');
     setOtp('');
+    setStep('login');
   };
 
-  if (isLoading) {
+  if (step === 'login') {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#C90D0D" />
-        <Text style={styles.loadingText}>Loading Rodistaa Operator...</Text>
+        <Text style={styles.title}>Rodistaa Operator</Text>
+        <Text style={styles.subtitle}>Fleet Management System</Text>
+
+        <View style={styles.form}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter 10-digit number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            maxLength={10}
+          />
+          <TouchableOpacity
+            style={[styles.button, phone.length !== 10 && styles.buttonDisabled]}
+            onPress={handleRequestOTP}
+            disabled={phone.length !== 10}
+          >
+            <Text style={styles.buttonText}>Request OTP</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
-  if (!isAuthenticated) {
+  if (step === 'otp') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Rodistaa Operator</Text>
-        <Text style={styles.subtitle}>Fleet Management & Bidding</Text>
+        <Text style={styles.title}>Enter OTP</Text>
+        <Text style={styles.subtitle}>Sent to {phone}</Text>
 
-        {!otpSent ? (
-          <View style={styles.form}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 10-digit mobile number"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-            <TouchableOpacity
-              style={[styles.button, !phone || phone.length < 10 ? styles.buttonDisabled : null]}
-              onPress={handleRequestOTP}
-              disabled={!phone || phone.length < 10}
-            >
-              <Text style={styles.buttonText}>Request OTP</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.form}>
-            <Text style={styles.label}>Enter OTP</Text>
-            <Text style={styles.hint}>Sent to {phone}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 6-digit OTP"
-              value={otp}
-              onChangeText={setOtp}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-            <TouchableOpacity
-              style={[styles.button, !otp || otp.length < 6 ? styles.buttonDisabled : null]}
-              onPress={handleLogin}
-              disabled={!otp || otp.length < 6}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setOtpSent(false)}>
-              <Text style={styles.linkText}>Change phone number</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.form}>
+          <Text style={styles.label}>OTP Code</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter 6-digit OTP"
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+            maxLength={6}
+          />
+          <TouchableOpacity
+            style={[styles.button, otp.length !== 6 && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={otp.length !== 6}
+          >
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setStep('login')} style={styles.linkButton}>
+            <Text style={styles.linkText}>Change phone number</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Operator Dashboard</Text>
-      <Text style={styles.subtitle}>Welcome to Rodistaa!</Text>
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Operator Dashboard</Text>
+        <Text style={styles.subtitle}>Welcome, Operator!</Text>
 
-      <View style={styles.dashboard}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Fleet Management</Text>
-          <Text style={styles.cardValue}>5 Trucks</Text>
+        <View style={styles.dashboard}>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Fleet Management</Text>
+            <Text style={styles.cardValue}>5 Trucks</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Active Bids</Text>
+            <Text style={styles.cardValue}>12 Bids</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Active Shipments</Text>
+            <Text style={styles.cardValue}>8 Shipments</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Pending Inspections</Text>
+            <Text style={styles.cardValue}>3 Trucks</Text>
+          </View>
+
+          <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Active Bids</Text>
-          <Text style={styles.cardValue}>12 Bids</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Shipments</Text>
-          <Text style={styles.cardValue}>8 Active</Text>
-        </View>
-
-        <TouchableOpacity style={[styles.button, { marginTop: 24 }]} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
+    paddingTop: 60,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#C90D0D',
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#4F4F4F',
-    marginBottom: 32,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#4F4F4F',
+    marginBottom: 40,
+    textAlign: 'center',
   },
   form: {
     width: '100%',
     maxWidth: 400,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
     marginBottom: 8,
   },
-  hint: {
-    fontSize: 12,
-    color: '#4F4F4F',
-    marginBottom: 8,
-  },
   input: {
-    borderWidth: 1,
-    borderColor: '#D0D0D0',
+    borderWidth: 2,
+    borderColor: '#C90D0D',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
+    padding: 16,
+    fontSize: 18,
+    marginBottom: 20,
     backgroundColor: '#FFFFFF',
   },
   button: {
     backgroundColor: '#C90D0D',
-    padding: 16,
+    padding: 18,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   buttonDisabled: {
     backgroundColor: '#D0D0D0',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  linkButton: {
+    marginTop: 10,
   },
   linkText: {
     color: '#C90D0D',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
-    marginTop: 8,
+    textDecorationLine: 'underline',
   },
   dashboard: {
     width: '100%',
@@ -240,21 +192,25 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#F4F4F4',
-    padding: 20,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderLeftWidth: 4,
+    padding: 24,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderLeftWidth: 6,
     borderLeftColor: '#C90D0D',
   },
-  cardTitle: {
+  cardLabel: {
     fontSize: 14,
     color: '#4F4F4F',
-    marginBottom: 4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   cardValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
   },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: '#4F4F4F',
+  },
 });
-
