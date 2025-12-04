@@ -23,6 +23,8 @@ export * from './components/mobile/RForm';
 export * from './components/mobile/RPhotoCapture';
 export * from './components/mobile/RPDFViewer';
 export * from './components/mobile/RStatusChip';
+export * from './components/mobile/RTag';
+export * from './components/mobile/RStepper';
 
 // Export web components
 export * from './components/web/RButtonWeb';
