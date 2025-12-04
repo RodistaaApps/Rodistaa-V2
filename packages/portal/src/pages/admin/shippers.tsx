@@ -1,18 +1,13 @@
 import React from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import AdminLayout from "@/components/Layout/AdminLayout";
-import ShippersList from "@/modules/shippers/ShippersList";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { ShippersList } from "@/modules/shippers/ShippersList";
+import { useTheme } from "@/contexts/ThemeContext";
 
-interface ShippersPageProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
+const ShippersPage: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
 
-const ShippersPage: React.FC<ShippersPageProps> = ({
-  isDarkMode,
-  toggleTheme,
-}) => {
   return (
     <>
       <Head>
@@ -22,8 +17,8 @@ const ShippersPage: React.FC<ShippersPageProps> = ({
           content="Manage and monitor all shippers in the Rodistaa platform"
         />
       </Head>
-      <AdminLayout isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-        <ShippersList isDarkMode={isDarkMode} />
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <ShippersList theme={theme} />
       </AdminLayout>
     </>
   );

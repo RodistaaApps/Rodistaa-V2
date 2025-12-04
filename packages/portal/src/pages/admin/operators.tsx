@@ -1,18 +1,13 @@
 import React from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import AdminLayout from "@/components/Layout/AdminLayout";
-import OperatorsList from "@/modules/operators/OperatorsList";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { OperatorsList } from "@/modules/operators/OperatorsList";
+import { useTheme } from "@/contexts/ThemeContext";
 
-interface OperatorsPageProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
+const OperatorsPage: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
 
-const OperatorsPage: React.FC<OperatorsPageProps> = ({
-  isDarkMode,
-  toggleTheme,
-}) => {
   return (
     <>
       <Head>
@@ -22,8 +17,8 @@ const OperatorsPage: React.FC<OperatorsPageProps> = ({
           content="Manage and monitor all operators and their fleets in the Rodistaa platform"
         />
       </Head>
-      <AdminLayout isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-        <OperatorsList isDarkMode={isDarkMode} />
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <OperatorsList theme={theme} />
       </AdminLayout>
     </>
   );

@@ -1,18 +1,13 @@
 import React from "react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import AdminLayout from "@/components/Layout/AdminLayout";
-import DriversList from "@/modules/drivers/DriversList";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { DriversList } from "@/modules/drivers/DriversList";
+import { useTheme } from "@/contexts/ThemeContext";
 
-interface DriversPageProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
+const DriversPage: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
 
-const DriversPage: React.FC<DriversPageProps> = ({
-  isDarkMode,
-  toggleTheme,
-}) => {
   return (
     <>
       <Head>
@@ -22,8 +17,8 @@ const DriversPage: React.FC<DriversPageProps> = ({
           content="Manage and monitor all drivers, track live locations, trips, and behaviour in the Rodistaa platform"
         />
       </Head>
-      <AdminLayout isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-        <DriversList isDarkMode={isDarkMode} />
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <DriversList theme={theme} />
       </AdminLayout>
     </>
   );
