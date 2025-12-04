@@ -18,7 +18,7 @@ import {
   TextInputProps,
 } from 'react-native';
 import { RodistaaColors } from '../../tokens/colors';
-import { MobileTextStyles, RodistaaTypography } from '../../tokens/typography';
+import { MobileTextStyles } from '../../tokens/typography';
 import { RodistaaSpacing } from '../../tokens/spacing';
 
 export interface RInputProps extends Omit<TextInputProps, 'style'> {

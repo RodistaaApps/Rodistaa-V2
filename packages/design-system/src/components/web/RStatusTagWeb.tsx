@@ -85,7 +85,7 @@ const getStatusStyles = (status: RStatusWeb): CSSProperties => {
   };
 
   const backgroundColor = statusColors[status] || RodistaaColors.status.pending;
-  const useWhiteText = !['draft', 'pending'].includes(status);
+  const useWhiteText = !['draft', 'pending', 'onHold'].includes(status);
 
   return {
     backgroundColor,
