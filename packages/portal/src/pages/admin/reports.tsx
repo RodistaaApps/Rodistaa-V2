@@ -1,81 +1,54 @@
 /**
- * Reports Page
- * Generate and export reports
+ * Reports Page - Theme-aware version
  */
 
-import { Card, Button, Select, DatePicker, Space, Table, Typography } from 'antd';
-import { DownloadOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
+import { Card, Button, Row, Col } from 'antd';
+import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
-const { RangePicker } = DatePicker;
+interface ReportsPageProps {
+  theme?: 'light' | 'dark';
+  toggleTheme?: () => void;
+}
 
-function ReportsPage() {
-  const handleExport = (format: string) => {
-    // Export logic here
-    console.log(`Exporting as ${format}`);
-  };
+function ReportsPage({ theme = 'dark', toggleTheme }: ReportsPageProps) {
+  const isDark = theme === 'dark';
+  const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
+  const textPrimary = isDark ? '#FFFFFF' : '#0A0E14';
 
-  const reportData = [
-    { id: 1, metric: 'Total Bookings', value: 3542 },
-    { id: 2, metric: 'Completed Shipments', value: 2876 },
-    { id: 3, metric: 'Active Trucks', value: 856 },
-    { id: 4, metric: 'Revenue', value: '₹2,450,000' },
-  ];
-
-  const columns = [
-    { title: 'Metric', dataIndex: 'metric', key: 'metric' },
-    { title: 'Value', dataIndex: 'value', key: 'value' },
+  const reports = [
+    { title: 'Monthly Payout Report', description: 'Operator payouts and commission breakdown' },
+    { title: 'Fraud Digest', description: 'Fraud alerts and investigation summary' },
+    { title: 'Operator Performance', description: 'Operator KPIs and reliability scores' },
+    { title: 'Fleet Utilization', description: 'Truck utilization and efficiency metrics' },
   ];
 
   return (
-    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ACCOUNTS']}>
-      <AdminLayout>
-        <Title level={2}>Reports</Title>
-
-        <Card style={{ marginTop: 24 }}>
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Space wrap>
-              <Select
-                placeholder="Select Report Type"
-                style={{ width: 200 }}
-                options={[
-                  { value: 'inspections', label: 'Truck Inspections' },
-                  { value: 'billing', label: 'Billing & Ledger' },
-                  { value: 'shipments', label: 'Shipment KPIs' },
-                  { value: 'fraud', label: 'Fraud Incidents' },
-                ]}
-              />
-              <RangePicker />
-              <Button type="primary" icon={<FileExcelOutlined />}>
-                Generate Report
-              </Button>
-            </Space>
-
-            <Table
-              columns={columns}
-              dataSource={reportData}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              title={() => <strong>Summary Report</strong>}
-            />
-
-            <Space>
-              <Button icon={<DownloadOutlined />} onClick={() => handleExport('csv')}>
-                Export CSV
-              </Button>
-              <Button icon={<DownloadOutlined />} onClick={() => handleExport('pdf')}>
-                Export PDF
-              </Button>
-            </Space>
-          </Space>
-        </Card>
+    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, marginBottom: '24px' }}>Reports</h1>
+          <Row gutter={[16, 16]}>
+            {reports.map((report, index) => (
+              <Col xs={24} sm={12} lg={6} key={index}>
+                <Card>
+                  <div style={{ marginBottom: '16px' }}>
+                    <FileTextOutlined style={{ fontSize: '32px', color: '#C90D0D' }} />
+                  </div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: textPrimary, marginBottom: '8px' }}>{report.title}</h3>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>{report.description}</div>
+                  <Button type="primary" icon={<DownloadOutlined />} block style={{ background: '#C90D0D', borderColor: '#C90D0D' }}>
+                    Generate
+                  </Button>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
 export default ReportsPage;
-
