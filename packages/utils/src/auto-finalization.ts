@@ -124,7 +124,7 @@ export class AutoFinalizationService {
           },
         });
 
-        rejectedBidIds.push(...otherBids.map((bid) => bid.id));
+        rejectedBidIds.push(...otherBids.map((bid: { id: string }) => bid.id));
       }
 
       // 3. Update booking status to CONFIRMED
