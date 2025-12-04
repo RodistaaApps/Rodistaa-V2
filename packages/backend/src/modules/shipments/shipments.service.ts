@@ -7,6 +7,7 @@ import * as shipmentsRepo from './shipments.repository';
 import * as bookingsRepo from '../bookings/bookings.repository';
 import * as bidsRepo from '../bids/bids.repository';
 import { evaluateAcsRules } from '../acs-adapter';
+import { storageService } from '../../services/storage.service';
 import logger from 'pino';
 import { Shipment, ShipmentStatus, BookingStatus, Bid } from '@rodistaa/app-shared';
 import crypto from 'crypto';
@@ -203,12 +204,22 @@ export async function uploadPOD(
     log.warn({ error }, 'ACS evaluation warning (continuing)');
   }
 
+  // Upload POD file to storage
+  const { url: fileUrl, key: fileKey } = await storageService.uploadFile(
+    pod.fileContent,
+    pod.fileName,
+    'pod',
+    'application/pdf'
+  );
+
   // Generate OTP for completion
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   
-  // Store POD metadata
+  // Store POD metadata with storage URL
   await shipmentsRepo.storePOD(shipmentId, {
     ...pod,
+    fileUrl,
+    fileKey,
     otp,
   });
 
