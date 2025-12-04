@@ -27,6 +27,10 @@ export * from './components/mobile/RTag';
 export * from './components/mobile/RStepper';
 export * from './components/mobile/RList';
 export * from './components/mobile/RNavBar';
+export * from './components/mobile/LoadCard';
+export * from './components/mobile/TruckCard';
+export * from './components/mobile/BidCard';
+export * from './components/mobile/Timeline';
 
 // Export web components
 export * from './components/web/RButtonWeb';
