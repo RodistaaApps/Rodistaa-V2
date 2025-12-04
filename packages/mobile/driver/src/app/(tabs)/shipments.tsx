@@ -1,65 +1,45 @@
 /**
- * Driver Shipments Screen
- * View assigned shipments
+ * Driver Shipments Screen - Uses design system
  */
 
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Card } from '@rodistaa/mobile-shared';
+import { RCard, RTag, LoadCard } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 
 export default function DriverShipmentsScreen() {
   const router = useRouter();
-  
+
   const [shipments] = useState([
     {
       id: 'SH-001',
-      route: 'Mumbai → Delhi',
-      status: 'IN_TRANSIT',
-      pickup: 'Mumbai Port',
-      drop: 'Delhi Warehouse',
-      progress: '45%',
+      pickup: { address: 'Mumbai Port', city: 'Mumbai', state: 'MH' },
+      drop: { address: 'Delhi Warehouse', city: 'Delhi', state: 'DL' },
+      status: 'IN_TRANSIT' as const,
+      progress: 45,
       hasPod: false,
     },
     {
       id: 'SH-002',
-      route: 'Pune → Bangalore',
-      status: 'COMPLETED',
-      pickup: 'Pune Industrial Area',
-      drop: 'Bangalore Hub',
-      progress: '100%',
+      pickup: { address: 'Pune Industrial', city: 'Pune', state: 'MH' },
+      drop: { address: 'Bangalore Hub', city: 'Bangalore', state: 'KA' },
+      status: 'COMPLETED' as const,
+      progress: 100,
       hasPod: true,
     },
   ]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ASSIGNED': return '#FF9800';
-      case 'IN_TRANSIT': return '#2196F3';
-      case 'AT_DESTINATION': return '#9C27B0';
-      case 'COMPLETED': return '#4CAF50';
-      default: return '#666666';
-    }
-  };
-
-  const renderShipment = ({ item }: any) => (
-    <TouchableOpacity onPress={() => router.push(`/shipments/${item.id}`)}>
-      <Card style={styles.shipmentCard}>
-        <View style={styles.shipmentHeader}>
-          <Text style={styles.shipmentId}>{item.id}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-            <Text style={styles.statusText}>{item.status}</Text>
-          </View>
-        </View>
-        <Text style={styles.route}>{item.route}</Text>
-        <View style={styles.shipmentInfo}>
-          <Text style={styles.infoText}>From: {item.pickup}</Text>
-          <Text style={styles.infoText}>To: {item.drop}</Text>
-          <Text style={styles.infoText}>Progress: {item.progress}</Text>
-          {item.hasPod && <Text style={styles.podText}>✓ POD Uploaded</Text>}
-        </View>
-      </Card>
-    </TouchableOpacity>
+  const renderShipment = ({ item }: { item: typeof shipments[0] }) => (
+    <LoadCard
+      id={item.id}
+      pickup={item.pickup}
+      drop={item.drop}
+      tonnage={10}
+      priceRange={{ min: 0, max: 0 }}
+      status={item.status}
+      onPress={() => router.push(`/shipments/${item.id}`)}
+    />
   );
 
   return (
@@ -72,7 +52,9 @@ export default function DriverShipmentsScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>My Shipments</Text>
-            <Text style={styles.subtitle}>{shipments.filter(s => s.status !== 'COMPLETED').length} active</Text>
+            <Text style={styles.subtitle}>
+              {shipments.filter((s) => s.status !== 'COMPLETED').length} active
+            </Text>
           </View>
         }
       />
@@ -83,76 +65,24 @@ export default function DriverShipmentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   header: {
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 16,
+    padding: RodistaaSpacing.xl,
+    backgroundColor: RodistaaColors.background.default,
+    marginBottom: RodistaaSpacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#333333',
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginTop: 4,
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
+    marginTop: RodistaaSpacing.xs,
   },
   list: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  shipmentCard: {
-    marginBottom: 12,
-    padding: 16,
-  },
-  shipmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  shipmentId: {
-    fontSize: 16,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  route: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    fontWeight: 'bold',
-    color: '#C90D0D',
-    marginBottom: 12,
-  },
-  shipmentInfo: {
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-  },
-  podText: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#4CAF50',
-    fontWeight: 'bold',
+    paddingHorizontal: RodistaaSpacing.lg,
+    paddingBottom: RodistaaSpacing.lg,
   },
 });
-
