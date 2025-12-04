@@ -232,8 +232,8 @@ export const ACSPanel: React.FC<ACSPanelProps> = ({
                 style={{
                   padding: `${RodistaaSpacing.xl}px`,
                   textAlign: 'center',
-                  color: RodistaaColors.text.secondary,
                   ...WebTextStyles.body,
+                  color: RodistaaColors.text.secondary,
                 }}
               >
                 No override requests
