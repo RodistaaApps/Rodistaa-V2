@@ -31,6 +31,7 @@ export * from './components/mobile/LoadCard';
 export * from './components/mobile/TruckCard';
 export * from './components/mobile/BidCard';
 export * from './components/mobile/Timeline';
+export * from './components/mobile/BookingFlow';
 
 // Export web components
 export * from './components/web/RButtonWeb';
@@ -52,6 +53,9 @@ export * from './components/web/LoadCardWeb';
 export * from './components/web/TruckCardWeb';
 export * from './components/web/BidCardWeb';
 export * from './components/web/TimelineWeb';
+export * from './components/web/InspectionGrid';
+export * from './components/web/KYCViewer';
+export * from './components/web/ACSPanel';
 
 export { RodistaaTheme as default } from './tokens';
 
