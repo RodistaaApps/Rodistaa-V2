@@ -1,11 +1,12 @@
 /**
  * Booking Details Screen
- * View booking details and bids, accept bids
+ * View booking details and bids, accept bids - Uses design system components
  */
 
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Button, LoadingSpinner } from '@rodistaa/mobile-shared';
+import { RLoader, RCard, RButton, LoadCard, BidCard } from '@rodistaa/design-system';
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 import { useGetBooking, useGetBids, useFinalizeBid } from '@rodistaa/mobile-shared';
 
 export default function BookingDetailsScreen() {
@@ -27,7 +28,7 @@ export default function BookingDetailsScreen() {
             try {
               await finalizeMutation.mutateAsync(bidId);
               Alert.alert('Success', 'Bid accepted! Shipment will be created.', [
-                { text: 'OK', onPress: () => router.push('/(tabs)/shipments') },
+                { text: 'OK', onPress: () => router.push('/(tabs)/bookings') },
               ]);
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to accept bid');
@@ -39,59 +40,69 @@ export default function BookingDetailsScreen() {
   };
 
   if (bookingLoading || bidsLoading) {
-    return <LoadingSpinner />;
+    return <RLoader />;
   }
+
+  if (!booking) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Booking not found</Text>
+      </View>
+    );
+  }
+
+  // Parse addresses for LoadCard
+  const parseAddress = (address: string) => {
+    const parts = address.split(',').map((p) => p.trim());
+    return {
+      address: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2] || '',
+    };
+  };
+
+  const pickup = parseAddress(booking.pickupAddress || '');
+  const drop = parseAddress(booking.dropAddress || '');
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card>
-        <Text style={styles.sectionTitle}>Booking Details</Text>
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Pickup:</Text>
-          <Text style={styles.value}>{booking?.pickupAddress}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Drop:</Text>
-          <Text style={styles.value}>{booking?.dropAddress}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Weight:</Text>
-          <Text style={styles.value}>{booking?.weightTons} tons</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Status:</Text>
-          <Text style={[styles.value, styles.status]}>{booking?.status}</Text>
-        </View>
-      </Card>
+      <LoadCard
+        id={booking.id}
+        pickup={pickup}
+        drop={drop}
+        tonnage={booking.weightTons || 0}
+        priceRange={{
+          min: booking.expectedPriceRange?.min || 0,
+          max: booking.expectedPriceRange?.max || 0,
+        }}
+        status={booking.status as any}
+        bidCount={bids?.data?.length || 0}
+      />
 
-      <Card style={styles.card}>
+      <RCard style={styles.bidsSection}>
         <Text style={styles.sectionTitle}>Bids ({bids?.data?.length || 0})</Text>
         {bids?.data && bids.data.length > 0 ? (
           bids.data.map((bid: any) => (
-            <View key={bid.id} style={styles.bidItem}>
-              <View style={styles.bidHeader}>
-                <Text style={styles.bidOperator}>
-                  Operator: {bid.operatorName || 'Anonymous'}
-                </Text>
-                <Text style={styles.bidAmount}>₹{bid.amount}</Text>
-              </View>
-              <Text style={styles.bidTruck}>
-                Truck: {bid.truckType} - {bid.truckCapacity} tons
-              </Text>
-              {bid.status === 'pending' && (
-                <Button
-                  title="Accept Bid"
-                  onPress={() => handleAcceptBid(bid.id)}
-                  style={styles.acceptButton}
-                  loading={finalizeMutation.isPending}
-                />
-              )}
-            </View>
+            <BidCard
+              key={bid.id}
+              id={bid.id}
+              bookingId={booking.id}
+              amount={bid.amount}
+              operatorName={bid.operatorName || 'Anonymous'}
+              operatorPhone={bid.operatorPhone}
+              status={bid.status || 'PENDING'}
+              submittedAt={bid.submittedAt || new Date().toISOString()}
+              canAccept={bid.status === 'PENDING'}
+              onAccept={() => handleAcceptBid(bid.id)}
+            />
           ))
         ) : (
-          <Text style={styles.noBids}>No bids yet</Text>
+          <View style={styles.emptyBids}>
+            <Text style={styles.emptyText}>No bids yet</Text>
+            <Text style={styles.emptySubtext}>Bids will appear here when operators submit them</Text>
+          </View>
         )}
-      </Card>
+      </RCard>
     </ScrollView>
   );
 }
@@ -99,78 +110,36 @@ export default function BookingDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: RodistaaColors.background.default,
   },
   content: {
-    padding: 16,
+    padding: RodistaaSpacing.lg,
   },
-  card: {
-    marginTop: 16,
+  bidsSection: {
+    marginTop: RodistaaSpacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 16,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.md,
   },
-  detailRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
+  emptyBids: {
+    alignItems: 'center',
+    padding: RodistaaSpacing.xl,
   },
-  label: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    width: 80,
+  emptyText: {
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.xs,
   },
-  value: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#333333',
-    flex: 1,
+  emptySubtext: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.disabled,
   },
-  status: {
-    color: '#C90D0D',
-    fontWeight: '600',
-  },
-  bidItem: {
-    padding: 16,
-    backgroundColor: '#F9F9F9',
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  bidHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  bidOperator: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#333333',
-  },
-  bidAmount: {
-    fontSize: 18,
-    fontFamily: 'Times New Roman',
-    fontWeight: '600',
-    color: '#C90D0D',
-  },
-  bidTruck: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 12,
-  },
-  acceptButton: {
-    marginTop: 8,
-  },
-  noBids: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#999999',
+  errorText: {
+    ...MobileTextStyles.body,
+    color: RodistaaColors.error.main,
     textAlign: 'center',
-    padding: 24,
+    padding: RodistaaSpacing.xl,
   },
 });
-
