@@ -1,46 +1,235 @@
-/**
- * Global Styles for Rodistaa Portals
- */
+/* Rodistaa Admin Portal - Global Styles (Dark Theme) */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400;500;600;700&display=swap');
 
 * {
-  box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
   font-family: 'Times New Roman', Times, serif;
+  background: #0A0E14;
+  color: #FFFFFF;
 }
 
-body {
-  background-color: #F5F5F5;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Baloo Bhai 2', 'Times New Roman', serif;
+  color: #FFFFFF;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Dark Theme Overrides for Ant Design */
+.ant-layout {
+  background: #0A0E14 !important;
 }
 
-/* Rodistaa branding colors */
-:root {
-  --rodistaa-primary: #C90D0D;
-  --rodistaa-bg: #F5F5F5;
-  --rodistaa-white: #FFFFFF;
-}
-
-/* Ant Design overrides for Rodistaa theme */
 .ant-layout-header {
-  background-color: var(--rodistaa-primary) !important;
-  color: var(--rodistaa-white) !important;
+  background: #0A0E14 !important;
+  border-bottom: 1px solid #2D3748 !important;
+  padding: 0 24px !important;
 }
 
-.rodistaa-logo {
-  font-family: 'Baloo Bhai', 'Times New Roman', serif;
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--rodistaa-white);
+.ant-layout-sider {
+  background: #0A0E14 !important;
+  border-right: 1px solid #2D3748 !important;
 }
 
+.ant-layout-content {
+  background: #0A0E14 !important;
+}
+
+.ant-card {
+  background: #151922 !important;
+  border: 1px solid #2D3748 !important;
+  border-radius: 12px !important;
+}
+
+.ant-card-head {
+  background: #1E2430 !important;
+  border-bottom: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+.ant-card-head-title {
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+}
+
+.ant-table {
+  background: #151922 !important;
+  color: #FFFFFF !important;
+}
+
+.ant-table-thead > tr > th {
+  background: #1E2430 !important;
+  color: #B4B9C5 !important;
+  border-bottom: 1px solid #2D3748 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 12px !important;
+}
+
+.ant-table-tbody > tr {
+  background: #151922 !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #1E2430 !important;
+}
+
+.ant-btn-primary {
+  background: #C90D0D !important;
+  border-color: #C90D0D !important;
+  color: #FFFFFF !important;
+}
+
+.ant-btn-primary:hover {
+  background: #A00A0A !important;
+  border-color: #A00A0A !important;
+}
+
+.ant-modal-content {
+  background: #151922 !important;
+  color: #FFFFFF !important;
+}
+
+.ant-modal-header {
+  background: #1E2430 !important;
+  border-bottom: 1px solid #2D3748 !important;
+}
+
+.ant-modal-title {
+  color: #FFFFFF !important;
+}
+
+.ant-modal-close {
+  color: #B4B9C5 !important;
+}
+
+.ant-input,
+.ant-select-selector,
+.ant-picker {
+  background: #1E2430 !important;
+  border: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+.ant-input::placeholder {
+  color: #6B7280 !important;
+}
+
+.ant-select-item {
+  color: #FFFFFF !important;
+}
+
+.ant-select-dropdown {
+  background: #1E2430 !important;
+}
+
+.ant-tabs-tab {
+  color: #B4B9C5 !important;
+}
+
+.ant-tabs-tab-active {
+  color: #C90D0D !important;
+}
+
+.ant-tabs-ink-bar {
+  background: #C90D0D !important;
+}
+
+.ant-tag {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+}
+
+/* Status Pills (like in reference UI) */
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.status-pill.active {
+  background: #10B98120;
+  color: #10B981;
+  border: 1px solid #10B981;
+}
+
+.status-pill.pending {
+  background: #F59E0B20;
+  color: #F59E0B;
+  border: 1px solid #F59E0B;
+}
+
+.status-pill.completed {
+  background: #10B98120;
+  color: #10B981;
+  border: 1px solid #10B981;
+}
+
+.status-pill.cancelled {
+  background: #EF444420;
+  color: #EF4444;
+  border: 1px solid #EF4444;
+}
+
+.status-pill.new {
+  background: #3B82F620;
+  color: #3B82F6;
+  border: 1px solid #3B82F6;
+}
+
+/* Stat Card Styling */
+.stat-card {
+  background: #151922;
+  border: 1px solid #2D3748;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  border-color: #C90D0D;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(201, 13, 13, 0.2);
+}
+
+/* Action Button Styling */
+.action-card {
+  background: #1E2430;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.action-card:hover {
+  background: #252B38;
+  transform: translateX(4px);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #C90D0D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 20px;
+}
