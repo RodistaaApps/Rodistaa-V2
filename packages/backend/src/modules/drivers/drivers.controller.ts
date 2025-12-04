@@ -36,6 +36,12 @@ export class DriversController {
   async linkTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { driverId } = req.params as { driverId: string };
       const { truckId } = req.body as { truckId: string };
 
@@ -58,6 +64,12 @@ export class DriversController {
   async getProfile(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { driverId } = req.params as { driverId: string };
 
       const profile = await driversService.getDriverProfile(
