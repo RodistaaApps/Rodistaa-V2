@@ -1,9 +1,8 @@
 /**
- * Admin Dashboard - Redesigned to match reference UI
- * Dark theme with modern card-based layout
+ * Admin Dashboard - Theme-aware (no fixed colors)
  */
 
-import { Row, Col, Card, Statistic, Timeline, Button } from 'antd';
+import { Row, Col } from 'antd';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { 
@@ -12,7 +11,12 @@ import {
   FileTextOutlined, ClockCircleOutlined, PlusOutlined
 } from '@ant-design/icons';
 
-function DashboardPage() {
+interface DashboardPageProps {
+  theme?: 'light' | 'dark';
+  toggleTheme?: () => void;
+}
+
+function DashboardPage({ theme = 'dark', toggleTheme }: DashboardPageProps) {
   const stats = {
     activeBookings: 24,
     ongoingShipments: 58,
@@ -26,6 +30,16 @@ function DashboardPage() {
     completedToday: 15.2,
     pendingDispatch: -5.1,
   };
+
+  const isDark = theme === 'dark';
+
+  const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
+  const bgCard = isDark ? '#151922' : '#FFFFFF';
+  const bgElevated = isDark ? '#1E2430' : '#F3F4F6';
+  const textPrimary = isDark ? '#FFFFFF' : '#0A0E14';
+  const textSecondary = isDark ? '#B4B9C5' : '#6B7280';
+  const textTertiary = isDark ? '#6B7280' : '#9CA3AF';
+  const border = isDark ? '#2D3748' : '#E5E7EB';
 
   const recentActivity = [
     {
@@ -61,55 +75,32 @@ function DashboardPage() {
   ];
 
   const quickActions = [
-    {
-      icon: <EnvironmentOutlined />,
-      title: 'Dispatch New Unit',
-      description: 'Create a new dispatch assignment',
-    },
-    {
-      icon: <FileTextOutlined />,
-      title: 'Generate Report',
-      description: 'Generate analytics report',
-    },
-    {
-      icon: <PlusOutlined />,
-      title: 'Register Asset',
-      description: 'Register new fleet asset',
-    },
+    { icon: <EnvironmentOutlined />, title: 'Dispatch New Unit', description: 'Create a new dispatch assignment' },
+    { icon: <FileTextOutlined />, title: 'Generate Report', description: 'Generate analytics report' },
+    { icon: <PlusOutlined />, title: 'Register Asset', description: 'Register new fleet asset' },
   ];
 
   const alerts = [
-    {
-      icon: <ClockCircleOutlined style={{ color: '#C90D0D' }} />,
-      text: 'Unit 451: Low Battery',
-      time: '2 minutes ago',
-    },
+    { icon: <ClockCircleOutlined style={{ color: '#C90D0D' }} />, text: 'Unit 451: Low Battery', time: '2 minutes ago' },
   ];
-
-  const cardStyle = {
-    background: '#151922',
-    border: '1px solid #2D3748',
-    borderRadius: '12px',
-  };
-
-  const statCardStyle = {
-    ...cardStyle,
-    padding: '20px',
-  };
 
   return (
     <ProtectedRoute allowedRoles={process.env.NODE_ENV === 'development' ? undefined : ['SUPER_ADMIN']}>
-      <AdminLayout>
-        <div style={{ padding: '24px', background: '#0A0E14', minHeight: '100vh' }}>
-          {/* KPI Cards */}
+      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+        <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
           <Row gutter={[24, 24]}>
             <Col xs={24} sm={12} lg={6}>
-              <div style={statCardStyle}>
+              <div style={{
+                background: bgCard,
+                border: `1px solid ${border}`,
+                borderRadius: '12px',
+                padding: '20px',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                   <BookOutlined style={{ fontSize: '32px', color: '#3B82F6', marginRight: '16px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', color: '#B4B9C5', marginBottom: '4px' }}>Active Bookings</div>
-                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#FFFFFF' }}>{stats.activeBookings}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', color: textSecondary, marginBottom: '4px' }}>Active Bookings</div>
+                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: textPrimary }}>{stats.activeBookings}</div>
                   </div>
                 </div>
                 <div style={{ color: '#10B981', fontSize: '14px' }}>
@@ -119,12 +110,17 @@ function DashboardPage() {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div style={statCardStyle}>
+              <div style={{
+                background: bgCard,
+                border: `1px solid ${border}`,
+                borderRadius: '12px',
+                padding: '20px',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                   <TruckOutlined style={{ fontSize: '32px', color: '#F59E0B', marginRight: '16px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', color: '#B4B9C5', marginBottom: '4px' }}>Ongoing Shipments</div>
-                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#FFFFFF' }}>{stats.ongoingShipments}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', color: textSecondary, marginBottom: '4px' }}>Ongoing Shipments</div>
+                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: textPrimary }}>{stats.ongoingShipments}</div>
                   </div>
                 </div>
                 <div style={{ color: '#10B981', fontSize: '14px' }}>
@@ -134,12 +130,17 @@ function DashboardPage() {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div style={statCardStyle}>
+              <div style={{
+                background: bgCard,
+                border: `1px solid ${border}`,
+                borderRadius: '12px',
+                padding: '20px',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                   <CheckCircleOutlined style={{ fontSize: '32px', color: '#10B981', marginRight: '16px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', color: '#B4B9C5', marginBottom: '4px' }}>Completed Today</div>
-                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#FFFFFF' }}>{stats.completedToday}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', color: textSecondary, marginBottom: '4px' }}>Completed Today</div>
+                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: textPrimary }}>{stats.completedToday}</div>
                   </div>
                 </div>
                 <div style={{ color: '#10B981', fontSize: '14px' }}>
@@ -149,12 +150,17 @@ function DashboardPage() {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div style={statCardStyle}>
+              <div style={{
+                background: bgCard,
+                border: `1px solid ${border}`,
+                borderRadius: '12px',
+                padding: '20px',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                   <InboxOutlined style={{ fontSize: '32px', color: '#C90D0D', marginRight: '16px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', color: '#B4B9C5', marginBottom: '4px' }}>Pending Dispatch</div>
-                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#FFFFFF' }}>{stats.pendingDispatch}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', color: textSecondary, marginBottom: '4px' }}>Pending Dispatch</div>
+                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: textPrimary }}>{stats.pendingDispatch}</div>
                   </div>
                 </div>
                 <div style={{ color: '#EF4444', fontSize: '14px' }}>
@@ -164,12 +170,10 @@ function DashboardPage() {
             </Col>
           </Row>
 
-          {/* Main Content Row */}
           <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
-            {/* Recent Activity */}
             <Col xs={24} lg={12}>
-              <div style={{ ...cardStyle, padding: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#FFFFFF', marginTop: 0, marginBottom: '20px' }}>
+              <div style={{ background: bgCard, border: `1px solid ${border}`, borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: textPrimary, marginTop: 0, marginBottom: '20px' }}>
                   Recent Activity
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -183,17 +187,12 @@ function DashboardPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0,
                       }}>
                         {activity.icon}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ color: '#FFFFFF', fontSize: '14px', marginBottom: '4px' }}>
-                          {activity.text}
-                        </div>
-                        <div style={{ color: '#6B7280', fontSize: '12px' }}>
-                          {activity.time}
-                        </div>
+                        <div style={{ color: textPrimary, fontSize: '14px', marginBottom: '4px' }}>{activity.text}</div>
+                        <div style={{ color: textTertiary, fontSize: '12px' }}>{activity.time}</div>
                       </div>
                     </div>
                   ))}
@@ -201,11 +200,9 @@ function DashboardPage() {
               </div>
             </Col>
 
-            {/* Quick Actions & Alerts */}
             <Col xs={24} lg={12}>
-              {/* Quick Actions */}
-              <div style={{ ...cardStyle, padding: '24px', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#FFFFFF', marginTop: 0, marginBottom: '20px' }}>
+              <div style={{ background: bgCard, border: `1px solid ${border}`, borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: textPrimary, marginTop: 0, marginBottom: '20px' }}>
                   Quick Actions
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -215,14 +212,10 @@ function DashboardPage() {
                       alignItems: 'center',
                       gap: '16px',
                       padding: '16px',
-                      background: '#1E2430',
+                      background: bgElevated,
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      transition: 'all 0.3s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#252B38'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#1E2430'}
-                    >
+                    }}>
                       <div style={{
                         width: '40px',
                         height: '40px',
@@ -237,21 +230,16 @@ function DashboardPage() {
                         {action.icon}
                       </div>
                       <div>
-                        <div style={{ color: '#FFFFFF', fontSize: '16px', fontWeight: 500, marginBottom: '4px' }}>
-                          {action.title}
-                        </div>
-                        <div style={{ color: '#6B7280', fontSize: '12px' }}>
-                          {action.description}
-                        </div>
+                        <div style={{ color: textPrimary, fontSize: '16px', fontWeight: 500, marginBottom: '4px' }}>{action.title}</div>
+                        <div style={{ color: textTertiary, fontSize: '12px' }}>{action.description}</div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Alerts */}
-              <div style={{ ...cardStyle, padding: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#FFFFFF', marginTop: 0, marginBottom: '20px' }}>
+              <div style={{ background: bgCard, border: `1px solid ${border}`, borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: textPrimary, marginTop: 0, marginBottom: '20px' }}>
                   Alerts
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -265,16 +253,10 @@ function DashboardPage() {
                       borderRadius: '8px',
                       border: '1px solid #C90D0D40',
                     }}>
-                      <div style={{ fontSize: '20px', marginTop: '2px' }}>
-                        {alert.icon}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ color: '#FFFFFF', fontSize: '14px', marginBottom: '4px' }}>
-                          {alert.text}
-                        </div>
-                        <div style={{ color: '#6B7280', fontSize: '12px' }}>
-                          {alert.time}
-                        </div>
+                      <div style={{ fontSize: '20px', marginTop: '2px' }}>{alert.icon}</div>
+                      <div>
+                        <div style={{ color: textPrimary, fontSize: '14px', marginBottom: '4px' }}>{alert.text}</div>
+                        <div style={{ color: textTertiary, fontSize: '12px' }}>{alert.time}</div>
                       </div>
                     </div>
                   ))}
@@ -283,21 +265,20 @@ function DashboardPage() {
             </Col>
           </Row>
 
-          {/* Live Fleet Map */}
           <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
             <Col xs={24}>
-              <div style={{ ...cardStyle, padding: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#FFFFFF', marginTop: 0, marginBottom: '20px' }}>
+              <div style={{ background: bgCard, border: `1px solid ${border}`, borderRadius: '12px', padding: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: textPrimary, marginTop: 0, marginBottom: '20px' }}>
                   Live Fleet Map
                 </h2>
                 <div style={{
                   height: '400px',
-                  background: '#1E2430',
+                  background: bgElevated,
                   borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#6B7280',
+                  color: textTertiary,
                   fontSize: '16px',
                 }}>
                   Map integration (OSM/Google Maps) - Shows live truck locations
