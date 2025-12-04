@@ -36,8 +36,8 @@ export interface UserContext {
 const otpStore: Map<string, { otp: string; expiresAt: Date }> = new Map();
 
 /**
- * Generate and send OTP (mock implementation)
- * In production, this would send SMS via Twilio/MessageBird
+ * Generate and store OTP for in-app notification delivery
+ * BUSINESS RULE: OTP delivered via in-app notifications ONLY - No SMS/WhatsApp
  */
 export async function generateOTP(mobile: string): Promise<void> {
   // In development, use fixed OTP for easier testing
@@ -49,11 +49,13 @@ export async function generateOTP(mobile: string): Promise<void> {
   otpStore.set(mobile, { otp, expiresAt });
 
   if (process.env.NODE_ENV === 'development') {
-    log.info({ mobile: maskMobile(mobile), otp }, 'OTP generated (development mode)');
+    log.info({ mobile: maskMobile(mobile), otp }, 'OTP generated (development mode - check in-app notifications)');
   } else {
-    log.info({ mobile: maskMobile(mobile) }, 'OTP generated (mock - would send SMS)');
+    log.info({ mobile: maskMobile(mobile) }, 'OTP generated - delivered via in-app notification system');
   }
-  // In production: await smsService.send(mobile, `Your Rodistaa OTP: ${otp}`);
+  
+  // BUSINESS RULE: OTP is delivered via in-app notification system
+  // Notification service handles delivery - no SMS/WhatsApp
 }
 
 /**

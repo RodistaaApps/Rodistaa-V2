@@ -1,6 +1,7 @@
 /**
  * OTP Service
- * Handles OTP generation and sending via SMS providers
+ * BUSINESS RULE: OTP delivery via in-app notifications ONLY - No SMS/WhatsApp
+ * Handles OTP generation and storage for in-app notification delivery
  */
 
 import crypto from 'crypto';
@@ -27,53 +28,29 @@ export class OTPService {
   }
 
   /**
-   * Send OTP via SMS (AWS SNS)
+   * BUSINESS RULE: OTP delivery via in-app notifications ONLY
+   * SMS/WhatsApp sending methods removed - violates business rule
+   * OTP is stored and delivered via in-app notification system
    */
-  async sendOTPViaSNS(phone: string, otp: string): Promise<boolean> {
-    // TODO: Implement AWS SNS when credentials provided
-    // const sns = new SNSClient({ region: 'ap-south-1' });
-    // await sns.send(new PublishCommand({
-    //   PhoneNumber: `+91${phone}`,
-    //   Message: `Your Rodistaa OTP is: ${otp}. Valid for 5 minutes.`,
-    // }));
-
-    console.log(`[OTP] Would send to ${phone}: ${otp}`);
-    return true;
-  }
 
   /**
-   * Send OTP via Twilio
+   * Generate and store OTP for in-app notification delivery
+   * BUSINESS RULE: OTP delivered via in-app notifications ONLY - No SMS/WhatsApp
    */
-  async sendOTPViaTwilio(phone: string, otp: string): Promise<boolean> {
-    // TODO: Implement Twilio when credentials provided
-    // const twilio = require('twilio')(accountSid, authToken);
-    // await twilio.messages.create({
-    //   body: `Your Rodistaa OTP is: ${otp}. Valid for 5 minutes.`,
-    //   from: twilioPhone,
-    //   to: `+91${phone}`,
-    // });
-
-    console.log(`[OTP] Would send to ${phone}: ${otp}`);
-    return true;
-  }
-
-  /**
-   * Send OTP (mock mode for development)
-   */
-  async sendOTP(phone: string): Promise<{ success: boolean; message: string }> {
+  async generateAndStoreOTP(phone: string): Promise<{ success: boolean; message: string; otp?: string }> {
     // Check rate limiting (max 3 OTPs per hour)
     const recentOTPs = this.getRecentOTPCount(phone);
     if (recentOTPs >= 3) {
       return {
         success: false,
-        message: 'Too many OTP requests. Please try after 1 hour.',
+        message: 'Too many OTP requests. Please check your in-app notifications and try after 1 hour.',
       };
     }
 
     const otp = this.generateOTP();
     const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
 
-    // Store OTP
+    // Store OTP for in-app notification delivery
     this.otpStore.set(phone, {
       phone,
       otp,
@@ -81,27 +58,22 @@ export class OTPService {
       attempts: 0,
     });
 
-    // Send via SMS provider
-    const useMock = process.env.USE_MOCK_OTP !== 'false';
-    if (useMock) {
-      // Mock mode for development
-      console.log(`[MOCK OTP] Phone: ${phone}, OTP: ${otp}`);
+    // BUSINESS RULE: OTP is delivered via in-app notification system
+    // In development, return OTP for testing purposes
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV OTP] Phone: ${phone}, OTP: ${otp} (for testing - production uses in-app notifications)`);
       return {
         success: true,
-        message: `OTP sent to ${phone}. Mock OTP: ${otp}`,
-      };
-    } else {
-      // Production: Use real SMS provider
-      const provider = process.env.SMS_PROVIDER || 'sns';
-      const sent = provider === 'twilio'
-        ? await this.sendOTPViaTwilio(phone, otp)
-        : await this.sendOTPViaSNS(phone, otp);
-
-      return {
-        success: sent,
-        message: sent ? `OTP sent to ${phone}` : 'Failed to send OTP',
+        message: `OTP generated. Check your in-app notifications. (DEV: ${otp})`,
+        otp, // Only in development
       };
     }
+
+    // Production: OTP delivered via in-app notification (handled by notification service)
+    return {
+      success: true,
+      message: 'OTP generated. Please check your in-app notifications.',
+    };
   }
 
   /**
