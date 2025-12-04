@@ -139,10 +139,28 @@ function KYCManagementPage() {
     },
   ];
 
+  const handleExportCSV = () => {
+    console.log('Exporting KYC records to CSV...');
+    alert('CSV export started!');
+  };
+
+  const handleBulkApprove = () => {
+    const pendingCount = mockKycRecords.filter(k => k.status === 'pending').length;
+    if (confirm(`Approve ${pendingCount} pending KYC requests?`)) {
+      alert('Bulk approval completed!');
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FRAUD_INVESTIGATOR']}>
       <AdminLayout>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>KYC Management</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>KYC Management</h1>
+          <Space>
+            <Button onClick={handleBulkApprove}>Bulk Approve Pending</Button>
+            <Button type="primary" onClick={handleExportCSV} style={{ background: '#C90D0D', borderColor: '#C90D0D' }}>Export CSV</Button>
+          </Space>
+        </div>
 
         <Card style={{ marginTop: '24px' }}>
           <Table

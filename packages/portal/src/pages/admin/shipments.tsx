@@ -155,10 +155,18 @@ function ShipmentsManagementPage() {
     },
   ] : [];
 
+  const handleExportCSV = () => {
+    console.log('Exporting shipments to CSV...');
+    alert('CSV export started!');
+  };
+
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Shipment Management</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>Shipment Management</h1>
+          <Button type="primary" onClick={handleExportCSV} style={{ background: '#C90D0D', borderColor: '#C90D0D' }}>Export CSV</Button>
+        </div>
 
         <Card style={{ marginTop: '24px' }}>
           <Table
