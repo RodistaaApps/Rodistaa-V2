@@ -1,0 +1,66 @@
+{
+  "blocked_patterns": [
+    {
+      "pattern": "TIPPER",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_TIPPER"
+    },
+    {
+      "pattern": "DUMPER",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_DUMPER"
+    },
+    {
+      "pattern": "TANKER",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_TANKER"
+    },
+    {
+      "pattern": "COWL",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_COWL"
+    },
+    {
+      "pattern": "CHASSIS",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_CHASSIS"
+    },
+    {
+      "pattern": "CAB-CHASSIS",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_CAB_CHASSIS"
+    },
+    {
+      "pattern": "CABCHASSIS",
+      "caseSensitive": false,
+      "reason": "INVALID_BODY_CAB_CHASSIS"
+    }
+  ],
+  "allowed_patterns": [
+    {
+      "pattern": "OPEN",
+      "caseSensitive": false
+    },
+    {
+      "pattern": "CONTAINER",
+      "caseSensitive": false
+    },
+    {
+      "pattern": "FLATBED",
+      "caseSensitive": false
+    },
+    {
+      "pattern": "FLAT",
+      "caseSensitive": false
+    },
+    {
+      "pattern": "LOWBED",
+      "caseSensitive": false
+    },
+    {
+      "pattern": "TRAILER",
+      "caseSensitive": false
+    }
+  ]
+}
+

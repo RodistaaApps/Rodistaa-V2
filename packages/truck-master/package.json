@@ -1,0 +1,46 @@
+{
+  "name": "@rodistaa/truck-master",
+  "version": "1.0.0",
+  "description": "Rodistaa Truck Master Service - VAHAN verification and compliance",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "migrate": "node -r dotenv/config scripts/migrate.js",
+    "migrate:seed": "node -r dotenv/config scripts/seed-oem.js",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rodistaa/fleet-verification": "workspace:*",
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^8.4.0",
+    "@fastify/jwt": "^7.2.4",
+    "pg": "^8.11.3",
+    "crypto": "^1.0.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.9",
+    "@types/jest": "^29.5.8",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2",
+    "@fastify/type-provider-typebox": "^3.4.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  }
+}
+
