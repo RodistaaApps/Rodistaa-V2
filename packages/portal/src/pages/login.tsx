@@ -23,9 +23,23 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const mobile = values.phone.startsWith('+') ? values.phone : `+91${values.phone}`;
-      await sendOTP(mobile);
+      
+      // DEV MODE: Skip OTP sending if backend is not available
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev) {
+        try {
+          await sendOTP(mobile);
+          message.success('OTP sent successfully!');
+        } catch (error: any) {
+          // In dev mode, if backend is not available, show test OTP message
+          message.warning('Backend not available. Use test OTP: 123456');
+        }
+      } else {
+        await sendOTP(mobile);
+        message.success('OTP sent successfully!');
+      }
+      
       setPhone(mobile);
-      message.success('OTP sent successfully!');
       setStep('otp');
     } catch (error: any) {
       message.error('Failed to send OTP');
@@ -37,14 +51,52 @@ export default function LoginPage() {
   const handleLogin = async (values: { otp: string }) => {
     setLoading(true);
     try {
-      // Mock login - replace with actual API call
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      // DEV MODE: Allow test OTP or bypass if backend unavailable
+      if (isDev && (values.otp === '123456' || values.otp === '000000')) {
+        // Mock successful login in dev mode
+        const mockUser = {
+          id: 'dev-user-1',
+          name: 'Dev Admin',
+          role: 'SUPER_ADMIN' as const,
+          phone: phone,
+        };
+        const mockToken = 'dev-token-' + Date.now();
+        
+        // Set auth state directly using the store
+        const authStore = useAuth.getState();
+        try {
+          await authStore.login(phone, values.otp);
+        } catch {
+          // If API fails, set mock auth state
+          useAuth.setState({
+            user: mockUser,
+            token: mockToken,
+            isAuthenticated: true,
+          });
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('authToken', mockToken);
+            localStorage.setItem('userData', JSON.stringify(mockUser));
+          }
+        }
+        
+        message.success('Login successful! (Dev Mode)');
+        router.push('/admin/dashboard');
+        return;
+      }
+      
+      // Normal login flow
       await login(phone, values.otp);
       message.success('Login successful!');
-      
-      // Redirect based on role
       router.push('/admin/dashboard');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Login failed. Please check your OTP.');
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev && (error.response?.status >= 500 || error.code === 'ECONNREFUSED')) {
+        message.warning('Backend unavailable. Try test OTP: 123456');
+      } else {
+        message.error(error.response?.data?.message || 'Login failed. Please check your OTP.');
+      }
     } finally {
       setLoading(false);
     }
@@ -100,6 +152,11 @@ export default function LoginPage() {
           >
             <div style={styles.otpInfo}>
               <Text>Enter OTP sent to {phone}</Text>
+              {process.env.NODE_ENV === 'development' && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                  <Text type="secondary">Dev Mode: Use test OTP <strong>123456</strong> or <strong>000000</strong></Text>
+                </div>
+              )}
             </div>
 
             <Form.Item
