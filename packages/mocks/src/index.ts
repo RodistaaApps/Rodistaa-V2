@@ -8,7 +8,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import pino from 'pino';
 
-import razorpayRouter from './razorpay/razorpay.mock';
+// BUSINESS RULE: Cash-only payments - No digital payment gateways
+// import razorpayRouter from './razorpay/razorpay.mock'; // REMOVED: Violates cash-only business rule
 import mapsRouter from './maps/maps.mock';
 import vahanRouter from './vahan/vahan.mock';
 import irpRouter from './irp/irp.mock';
@@ -30,7 +31,8 @@ app.get('/health', (req, res) => {
 });
 
 // Mount mock services
-app.use('/razorpay', razorpayRouter);
+// BUSINESS RULE: Cash-only payments - Razorpay removed
+// app.use('/razorpay', razorpayRouter); // REMOVED: Violates cash-only business rule
 app.use('/maps', mapsRouter);
 app.use('/vahan', vahanRouter);
 app.use('/irp', irpRouter);
@@ -39,7 +41,8 @@ app.use('/sip', sipRouter);
 app.listen(PORT, () => {
   logger.info(`🚀 Mock services server running on http://localhost:${PORT}`);
   logger.info(`📦 Available services:`);
-  logger.info(`   - Razorpay: http://localhost:${PORT}/razorpay`);
+  // BUSINESS RULE: Cash-only payments - Razorpay removed
+  // logger.info(`   - Razorpay: http://localhost:${PORT}/razorpay`); // REMOVED
   logger.info(`   - Google Maps: http://localhost:${PORT}/maps`);
   logger.info(`   - Vahan: http://localhost:${PORT}/vahan`);
   logger.info(`   - IRP: http://localhost:${PORT}/irp`);

@@ -33,7 +33,9 @@ export interface LedgerTransaction {
 export interface LedgerDepositRequest {
   operatorId: string;
   amount: number;
-  paymentGatewayTransactionId: string;
-  razorpayPaymentId?: string;
+  // BUSINESS RULE: Cash-only payments - No digital payment gateway IDs
+  // paymentGatewayTransactionId: string; // REMOVED: Digital payments not allowed
+  // razorpayPaymentId?: string; // REMOVED: Violates cash-only business rule
+  cashDepositReference?: string; // Cash deposit reference (receipt number, etc.)
 }
 

@@ -275,7 +275,8 @@ export async function registerRoutes(server: FastifyInstance) {
   });
 
   // ==================== Webhook Routes ====================
-  server.post('/webhooks/razorpay', async (req, reply) => {
-    return webhooksController.razorpay(req, reply);
-  });
+  // BUSINESS RULE: Cash-only payments - Razorpay webhook removed
+  // server.post('/webhooks/razorpay', async (req, reply) => {
+  //   return webhooksController.razorpay(req, reply);
+  // }); // REMOVED: Violates cash-only business rule
 }
