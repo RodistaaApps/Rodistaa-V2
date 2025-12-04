@@ -2,7 +2,7 @@
  * LoadCardWeb Tests
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { LoadCardWeb } from '../LoadCardWeb';
 
 const mockLoad = {

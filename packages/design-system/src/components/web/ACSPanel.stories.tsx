@@ -3,6 +3,7 @@
  * Rodistaa Web ACS Override Panel Component
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ACSPanel } from './ACSPanel';
 

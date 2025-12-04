@@ -2,6 +2,7 @@
  * TruckCard Stories
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { TruckCard } from './TruckCard';
 

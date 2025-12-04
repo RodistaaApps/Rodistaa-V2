@@ -3,6 +3,7 @@
  * Rodistaa Mobile Button Component
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { RButton } from './RButton';
 import { RodistaaColors } from '../../tokens/colors';
