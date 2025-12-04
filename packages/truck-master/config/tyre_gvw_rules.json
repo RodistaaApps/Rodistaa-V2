@@ -1,0 +1,52 @@
+{
+  "sanity_ranges": {
+    "SXL": {
+      "tyre_count": 6,
+      "gvw_min_kg": 7500,
+      "gvw_max_kg": 12000,
+      "length_max_ft": 20
+    },
+    "DXL": {
+      "tyre_count": 10,
+      "gvw_min_kg": 12000,
+      "gvw_max_kg": 18000,
+      "length_max_ft": 24
+    },
+    "TXL": {
+      "tyre_count": 12,
+      "gvw_min_kg": 18000,
+      "gvw_max_kg": 25000,
+      "length_max_ft": 28
+    },
+    "QXL": {
+      "tyre_count": 14,
+      "gvw_min_kg": 25000,
+      "gvw_max_kg": 35000,
+      "length_max_ft": 32
+    },
+    "PXL": {
+      "tyre_count": 16,
+      "gvw_min_kg": 35000,
+      "gvw_max_kg": 50000,
+      "length_max_ft": 40
+    },
+    "HX": {
+      "tyre_count": 18,
+      "gvw_min_kg": 50000,
+      "gvw_max_kg": 70000,
+      "length_max_ft": 42
+    },
+    "TRL": {
+      "tyre_count_min": 18,
+      "tyre_count_max": 22,
+      "gvw_min_kg": 20000,
+      "gvw_max_kg": 100000,
+      "length_max_ft": 60
+    }
+  },
+  "mismatch_tolerance": {
+    "tyre_count_variance": 2,
+    "gvw_percentage_variance": 0.15
+  }
+}
+
