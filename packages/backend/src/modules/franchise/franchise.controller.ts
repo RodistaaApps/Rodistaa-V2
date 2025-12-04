@@ -13,6 +13,12 @@ export class FranchiseController {
   async getDashboard(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const franchiseId = user.franchiseId || user.id; // Assuming franchise ID is in user context
       const franchiseType = user.franchiseType || 'UNIT';
 
@@ -32,6 +38,12 @@ export class FranchiseController {
   async getTargets(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const query = req.query as any;
       const franchiseId = query?.franchiseId || user.franchiseId || user.id;
 
@@ -51,6 +63,12 @@ export class FranchiseController {
   async setTargets(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { franchiseId, targets } = req.body as { franchiseId: string; targets: any };
 
       await franchiseService.setTargets(
@@ -76,6 +94,12 @@ export class FranchiseController {
   async getReports(req: FastifyRequest, reply: FastifyReply) {
     try {
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const query = req.query as any;
       const franchiseId = query?.franchiseId || user.franchiseId || user.id;
       const { startDate, endDate } = query;
