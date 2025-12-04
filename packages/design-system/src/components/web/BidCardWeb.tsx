@@ -164,39 +164,43 @@ export const BidCardWeb: React.FC<BidCardWebProps> = ({
         >
           {onViewDetails && (
             <RButtonWeb
-              label="View Details"
               variant="secondary"
               size="small"
               onClick={onViewDetails}
               style={{ flex: 1 }}
-            />
+            >
+              View Details
+            </RButtonWeb>
           )}
           {canModify && onModify && (
             <RButtonWeb
-              label="Modify"
               variant="secondary"
               size="small"
               onClick={onModify}
               style={{ flex: 1 }}
-            />
+            >
+              Modify
+            </RButtonWeb>
           )}
           {canAccept && onAccept && (
             <RButtonWeb
-              label="Accept"
               variant="primary"
               size="small"
               onClick={onAccept}
               style={{ flex: 1 }}
-            />
+            >
+              Accept
+            </RButtonWeb>
           )}
           {canReject && onReject && (
             <RButtonWeb
-              label="Reject"
               variant="danger"
               size="small"
               onClick={onReject}
               style={{ flex: 1 }}
-            />
+            >
+              Reject
+            </RButtonWeb>
           )}
         </div>
       )}
