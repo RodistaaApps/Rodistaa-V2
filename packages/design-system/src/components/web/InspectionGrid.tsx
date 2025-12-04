@@ -140,9 +140,9 @@ export const InspectionGrid: React.FC<InspectionGridProps> = ({
                     cursor: 'pointer',
                     padding: `${RodistaaSpacing.xs}px ${RodistaaSpacing.sm}px`,
                     backgroundColor: RodistaaColors.primary.main,
-                    color: RodistaaColors.primary.contrast,
                     borderRadius: `${RodistaaSpacing.borderRadius.sm}px`,
                     ...WebTextStyles.caption,
+                    color: RodistaaColors.primary.contrast,
                     fontWeight: '600',
                     display: 'inline-block',
                   }}
