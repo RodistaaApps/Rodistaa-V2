@@ -3,6 +3,7 @@
  * Rodistaa Web Load/Booking Card Component
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { LoadCardWeb } from './LoadCardWeb';
 

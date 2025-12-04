@@ -3,6 +3,7 @@
  * Rodistaa Mobile Timeline Component
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Timeline } from './Timeline';
 
