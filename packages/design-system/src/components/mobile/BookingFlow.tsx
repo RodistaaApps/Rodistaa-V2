@@ -104,7 +104,12 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       case 3:
         return !!(formData.goods?.type && formData.goods?.tonnage > 0);
       case 4:
-        return !!(formData.priceRange?.min > 0 && formData.priceRange?.max >= formData.priceRange?.min);
+        return !!(
+          formData.priceRange?.min &&
+          formData.priceRange?.max &&
+          formData.priceRange.min > 0 &&
+          formData.priceRange.max >= formData.priceRange.min
+        );
       default:
         return false;
     }
