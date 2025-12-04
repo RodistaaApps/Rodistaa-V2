@@ -124,6 +124,12 @@ export class BookingsController {
     try {
       const { bookingId } = req.params as { bookingId: string };
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
 
       const booking = await bookingsService.getBookingById(bookingId);
 
@@ -159,6 +165,12 @@ export class BookingsController {
     try {
       const { bookingId } = req.params as { bookingId: string };
       const user = req.user;
+      if (!user) {
+        return reply.code(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
       const { reason } = req.body as { reason?: string };
 
       const booking = await bookingsService.cancelBooking(
