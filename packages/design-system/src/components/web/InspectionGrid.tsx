@@ -158,7 +158,7 @@ export const InspectionGrid: React.FC<InspectionGridProps> = ({
                 </label>
               </>
             ) : (
-              <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.disabled, textAlign: 'center' }}>
+              <div style={{ ...WebTextStyles.caption, textAlign: 'center', color: RodistaaColors.text.disabled }}>
                 {photoType.label}
                 {photoType.required && (
                   <span style={{ color: RodistaaColors.error.main }}> *</span>

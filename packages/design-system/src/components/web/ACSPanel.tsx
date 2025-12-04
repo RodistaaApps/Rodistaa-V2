@@ -248,7 +248,6 @@ export const ACSPanel: React.FC<ACSPanelProps> = ({
       {/* Review Modal */}
       {showReviewModal && selectedOverride && (
         <RModalWeb
-          isOpen={showReviewModal}
           onClose={() => {
             setShowReviewModal(false);
             setSelectedOverride(null);
