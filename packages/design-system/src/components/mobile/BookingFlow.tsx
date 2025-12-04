@@ -129,14 +129,14 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 placeholder="City"
                 value={formData.pickup?.city || ''}
                 onChangeText={(text) => updateFormData('pickup', { city: text })}
-                style={[styles.input, styles.halfInput]}
+                style={StyleSheet.flatten([styles.input, styles.halfInput])}
               />
               <RInput
                 label="State"
                 placeholder="State"
                 value={formData.pickup?.state || ''}
                 onChangeText={(text) => updateFormData('pickup', { state: text })}
-                style={[styles.input, styles.halfInput]}
+                style={StyleSheet.flatten([styles.input, styles.halfInput])}
               />
             </View>
             <RInput
@@ -174,14 +174,14 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 placeholder="City"
                 value={formData.drop?.city || ''}
                 onChangeText={(text) => updateFormData('drop', { city: text })}
-                style={[styles.input, styles.halfInput]}
+                style={StyleSheet.flatten([styles.input, styles.halfInput])}
               />
               <RInput
                 label="State"
                 placeholder="State"
                 value={formData.drop?.state || ''}
                 onChangeText={(text) => updateFormData('drop', { state: text })}
-                style={[styles.input, styles.halfInput]}
+                style={StyleSheet.flatten([styles.input, styles.halfInput])}
               />
             </View>
             <RInput
