@@ -1,42 +1,57 @@
 /**
- * Bookings Management Page - Uses design system components
+ * Bookings Management Page - Clean version with Ant Design only
  */
 
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { RCardWeb, RTableWeb, RModalWeb, RButtonWeb, LoadCardWeb } from '@rodistaa/design-system';
-import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { Table, Card, Button, Tag, Space, Modal } from 'antd';
 import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-function BookingsPage() {
+function BookingsManagementPage() {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   const mockBookings = [
     {
-      id: 'RID-20240102-0001',
-      shipper: 'ABC Corp',
-      pickup: { address: '123 Main St', city: 'Bangalore', state: 'KA' },
-      drop: { address: '456 Park Ave', city: 'Chennai', state: 'TN' },
-      tonnage: 15,
-      priceRange: { min: 20000, max: 30000 },
-      status: 'OPEN_FOR_BIDDING' as const,
+      id: 'BKG-001',
+      shipperId: 'SH-001',
+      shipperName: 'Krishna Enterprises',
+      route: 'Kurnool → Vijayawada',
+      weight: '15 tons',
+      status: 'OPEN_FOR_BIDDING',
       bidsCount: 5,
-      createdAt: '2024-01-02T10:00:00Z',
+      createdAt: '2025-12-03',
     },
     {
-      id: 'RID-20240102-0002',
-      shipper: 'XYZ Ltd',
-      pickup: { address: '789 Market Rd', city: 'Mumbai', state: 'MH' },
-      drop: { address: '321 Tower St', city: 'Delhi', state: 'DL' },
-      tonnage: 20,
-      priceRange: { min: 50000, max: 60000 },
-      status: 'CONFIRMED' as const,
-      bidsCount: 3,
-      createdAt: '2024-01-02T09:30:00Z',
+      id: 'BKG-002',
+      shipperId: 'SH-002',
+      shipperName: 'Reddy Transport Co',
+      route: 'Guntur → Nandyal',
+      weight: '22 tons',
+      status: 'ASSIGNED',
+      bidsCount: 8,
+      assignedOperator: 'Suresh Logistics',
+      createdAt: '2025-12-02',
+    },
+    {
+      id: 'BKG-003',
+      shipperId: 'SH-003',
+      shipperName: 'Venkat Freight',
+      route: 'Vijayawada → Kurnool',
+      weight: '18 tons',
+      status: 'COMPLETED',
+      bidsCount: 6,
+      assignedOperator: 'Rajesh Transport',
+      completedAt: '2025-12-01',
+      createdAt: '2025-11-28',
     },
   ];
+
+  const handleViewBooking = (record: any) => {
+    setSelectedBooking(record);
+    setModalVisible(true);
+  };
 
   const columns = [
     {
@@ -46,24 +61,33 @@ function BookingsPage() {
     },
     {
       title: 'Shipper',
-      dataIndex: 'shipper',
-      key: 'shipper',
+      dataIndex: 'shipperName',
+      key: 'shipperName',
     },
     {
       title: 'Route',
+      dataIndex: 'route',
       key: 'route',
-      render: (_: any, record: any) => `${record.pickup.city} → ${record.drop.city}`,
+      render: (route: string) => <span style={{ fontWeight: 500 }}>{route}</span>,
     },
     {
       title: 'Weight',
-      dataIndex: 'tonnage',
-      key: 'tonnage',
-      render: (tonnage: number) => `${tonnage} tons`,
+      dataIndex: 'weight',
+      key: 'weight',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      render: (status: string) => {
+        const colorMap: Record<string, string> = {
+          'OPEN_FOR_BIDDING': 'blue',
+          'ASSIGNED': 'orange',
+          'IN_TRANSIT': 'purple',
+          'COMPLETED': 'green',
+        };
+        return <Tag color={colorMap[status] || 'default'}>{status.replace(/_/g, ' ')}</Tag>;
+      },
     },
     {
       title: 'Bids',
@@ -74,23 +98,24 @@ function BookingsPage() {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
-        <div style={{ display: 'flex', gap: `${RodistaaSpacing.sm}px` }}>
-          <RButtonWeb
-            variant="secondary"
+        <Space>
+          <Button
             size="small"
-            onClick={() => {
-              setSelectedBooking(record);
-              setModalVisible(true);
-            }}
+            icon={<EyeOutlined />}
+            onClick={() => handleViewBooking(record)}
           >
-            <EyeOutlined /> View
-          </RButtonWeb>
+            View
+          </Button>
           {record.status === 'OPEN_FOR_BIDDING' && (
-            <RButtonWeb variant="primary" size="small">
-              <CheckCircleOutlined /> Force Finalize
-            </RButtonWeb>
+            <Button 
+              type="primary" 
+              size="small"
+              icon={<CheckCircleOutlined />}
+            >
+              Force Finalize
+            </Button>
           )}
-        </div>
+        </Space>
       ),
     },
   ];
@@ -98,42 +123,58 @@ function BookingsPage() {
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Booking Management</h1>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Booking Management</h1>
 
-        <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
-          <RTableWeb
+        <Card style={{ marginTop: '24px' }}>
+          <Table
             columns={columns}
-            data={mockBookings.map((booking) => ({
-              ...booking,
-              status: booking.status.replace('_', ' '),
-            }))}
+            dataSource={mockBookings}
+            rowKey="id"
             pagination={{ pageSize: 20 }}
           />
-        </RCardWeb>
+        </Card>
 
-        <RModalWeb
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          title="Booking Details"
-          size="large"
+        <Modal
+          title={`Booking Details: ${selectedBooking?.id || ''}`}
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={800}
         >
           {selectedBooking && (
-            <LoadCardWeb
-              id={selectedBooking.id}
-              pickup={selectedBooking.pickup}
-              drop={selectedBooking.drop}
-              tonnage={selectedBooking.tonnage}
-              priceRange={selectedBooking.priceRange}
-              status={selectedBooking.status}
-              bidCount={selectedBooking.bidsCount}
-              shipperName={selectedBooking.shipper}
-              createdAt={selectedBooking.createdAt}
-            />
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Booking ID</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.id}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Shipper</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.shipperName}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Route</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.route}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Weight</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.weight}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Bids Received</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.bidsCount}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Created</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedBooking.createdAt}</div>
+                </div>
+              </div>
+            </div>
           )}
-        </RModalWeb>
+        </Modal>
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
-export default BookingsPage;
+export default BookingsManagementPage;

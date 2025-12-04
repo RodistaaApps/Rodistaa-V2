@@ -1,73 +1,54 @@
 /**
- * Shipments Management Page - Uses design system components
+ * Shipments Management Page - Clean version with Ant Design only
  */
 
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { RCardWeb, RTableWeb, RModalWeb, RButtonWeb, TimelineWeb } from '@rodistaa/design-system';
-import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { Table, Card, Button, Tag, Space, Modal, Timeline } from 'antd';
 import { EyeOutlined, EnvironmentOutlined, FileTextOutlined } from '@ant-design/icons';
 
-function ShipmentsPage() {
+function ShipmentsManagementPage() {
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   const mockShipments = [
     {
-      id: 'SH-001',
-      bookingId: 'RID-20240102-0001',
-      route: 'Bangalore → Chennai',
-      driver: 'Rajesh Kumar',
+      id: 'SHIP-001',
+      bookingId: 'BKG-001',
+      route: 'Kurnool → Vijayawada',
+      driver: 'Ramesh (DL12345)',
       truck: 'KA 01 AB 1234',
-      status: 'IN_TRANSIT' as const,
+      status: 'IN_TRANSIT',
       progress: 65,
-      hasPod: false,
+      eta: '4 hours',
     },
     {
-      id: 'SH-002',
-      bookingId: 'RID-20240101-0087',
-      route: 'Mumbai → Delhi',
-      driver: 'Amit Singh',
-      truck: 'MH 02 CD 5678',
-      status: 'COMPLETED' as const,
+      id: 'SHIP-002',
+      bookingId: 'BKG-002',
+      route: 'Guntur → Nandyal',
+      driver: 'Kumar (DL67890)',
+      truck: 'AP 09 CD 5678',
+      status: 'AT_PICKUP',
+      progress: 10,
+      eta: '12 hours',
+    },
+    {
+      id: 'SHIP-003',
+      bookingId: 'BKG-003',
+      route: 'Vijayawada → Kurnool',
+      driver: 'Suresh (DL54321)',
+      truck: 'TN 12 EF 9012',
+      status: 'COMPLETED',
       progress: 100,
-      hasPod: true,
+      completedAt: '2025-12-01',
     },
   ];
 
-  const timelineEvents = selectedShipment
-    ? [
-        {
-          id: '1',
-          title: 'Shipment Created',
-          description: 'Shipment assigned to driver',
-          timestamp: '2024-01-02T08:00:00Z',
-          status: 'completed' as const,
-        },
-        {
-          id: '2',
-          title: 'Pickup Completed',
-          description: 'Driver completed pickup',
-          timestamp: '2024-01-02T10:00:00Z',
-          status: 'completed' as const,
-        },
-        {
-          id: '3',
-          title: 'In Transit',
-          description: 'On route to destination',
-          timestamp: '2024-01-02T12:00:00Z',
-          status: selectedShipment.status === 'IN_TRANSIT' ? ('active' as const) : ('completed' as const),
-        },
-        {
-          id: '4',
-          title: 'Delivered',
-          description: 'Shipment completed',
-          timestamp: '2024-01-02T18:00:00Z',
-          status: selectedShipment.status === 'COMPLETED' ? ('completed' as const) : ('pending' as const),
-        },
-      ]
-    : [];
+  const handleViewShipment = (record: any) => {
+    setSelectedShipment(record);
+    setModalVisible(true);
+  };
 
   const columns = [
     {
@@ -79,6 +60,7 @@ function ShipmentsPage() {
       title: 'Route',
       dataIndex: 'route',
       key: 'route',
+      render: (route: string) => <span style={{ fontWeight: 500 }}>{route}</span>,
     },
     {
       title: 'Driver',
@@ -94,7 +76,15 @@ function ShipmentsPage() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => status.replace('_', ' ').toUpperCase(),
+      render: (status: string) => {
+        const colorMap: Record<string, string> = {
+          'AT_PICKUP': 'blue',
+          'IN_TRANSIT': 'purple',
+          'AT_DELIVERY': 'orange',
+          'COMPLETED': 'green',
+        };
+        return <Tag color={colorMap[status] || 'default'}>{status.replace(/_/g, ' ')}</Tag>;
+      },
     },
     {
       title: 'Progress',
@@ -106,123 +96,170 @@ function ShipmentsPage() {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
-        <RButtonWeb
-          variant="secondary"
+        <Button
           size="small"
-          onClick={() => {
-            setSelectedShipment(record);
-            setModalVisible(true);
-          }}
+          icon={<EyeOutlined />}
+          onClick={() => handleViewShipment(record)}
         >
-          <EyeOutlined /> Details
-        </RButtonWeb>
+          Details
+        </Button>
       ),
     },
   ];
 
+  const timelineItems = selectedShipment ? [
+    {
+      color: 'green',
+      children: (
+        <div>
+          <div style={{ fontWeight: 500 }}>Trip Assigned</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>Driver accepted assignment</div>
+        </div>
+      ),
+    },
+    {
+      color: 'green',
+      children: (
+        <div>
+          <div style={{ fontWeight: 500 }}>Trip Started</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>GPS tracking activated</div>
+        </div>
+      ),
+    },
+    {
+      color: selectedShipment.status === 'AT_PICKUP' ? 'blue' : 'green',
+      children: (
+        <div>
+          <div style={{ fontWeight: 500 }}>At Pickup</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>Arrived at loading point</div>
+        </div>
+      ),
+    },
+    {
+      color: selectedShipment.status === 'IN_TRANSIT' ? 'blue' : selectedShipment.status === 'COMPLETED' ? 'green' : 'gray',
+      children: (
+        <div>
+          <div style={{ fontWeight: 500 }}>In Transit</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>En route to delivery</div>
+        </div>
+      ),
+    },
+    {
+      color: selectedShipment.status === 'COMPLETED' ? 'green' : 'gray',
+      children: (
+        <div>
+          <div style={{ fontWeight: 500 }}>Delivered</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>POD uploaded</div>
+        </div>
+      ),
+    },
+  ] : [];
+
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Shipment Management</h1>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Shipment Management</h1>
 
-        <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
-          <RTableWeb
+        <Card style={{ marginTop: '24px' }}>
+          <Table
             columns={columns}
-            data={mockShipments}
+            dataSource={mockShipments}
+            rowKey="id"
             pagination={{ pageSize: 20 }}
           />
-        </RCardWeb>
+        </Card>
 
-        <RModalWeb
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          title={`Shipment: ${selectedShipment?.id}`}
-          size="large"
+        <Modal
+          title={`Shipment Details: ${selectedShipment?.id || ''}`}
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={900}
         >
           {selectedShipment && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: `${RodistaaSpacing.lg}px` }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: `${RodistaaSpacing.md}px` }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                   <div>
-                    <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.secondary }}>Booking ID</div>
-                    <div style={{ ...WebTextStyles.body }}>{selectedShipment.bookingId}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Booking ID</div>
+                    <div style={{ fontSize: '16px' }}>{selectedShipment.bookingId}</div>
                   </div>
                   <div>
-                    <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.secondary }}>Route</div>
-                    <div style={{ ...WebTextStyles.body }}>{selectedShipment.route}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Route</div>
+                    <div style={{ fontSize: '16px' }}>{selectedShipment.route}</div>
                   </div>
                   <div>
-                    <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.secondary }}>Driver</div>
-                    <div style={{ ...WebTextStyles.body }}>{selectedShipment.driver}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Driver</div>
+                    <div style={{ fontSize: '16px' }}>{selectedShipment.driver}</div>
                   </div>
                   <div>
-                    <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.secondary }}>Truck</div>
-                    <div style={{ ...WebTextStyles.body }}>{selectedShipment.truck}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Truck</div>
+                    <div style={{ fontSize: '16px' }}>{selectedShipment.truck}</div>
                   </div>
                   <div>
-                    <div style={{ ...WebTextStyles.caption, color: RodistaaColors.text.secondary }}>Progress</div>
-                    <div style={{ ...WebTextStyles.body }}>{selectedShipment.progress}%</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Progress</div>
+                    <div style={{ fontSize: '16px' }}>{selectedShipment.progress}%</div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>Timeline</h3>
-                <TimelineWeb events={timelineEvents} />
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Timeline</h3>
+                <Timeline items={timelineItems} />
               </div>
 
               <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
                   <EnvironmentOutlined /> GPS Tracking
                 </h3>
                 <div
                   style={{
                     height: '400px',
-                    backgroundColor: RodistaaColors.background.paper,
+                    background: '#f5f5f5',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: `${RodistaaSpacing.borderRadius.md}px`,
+                    borderRadius: '8px',
                   }}
                 >
-                  <div style={{ ...WebTextStyles.bodySmall, color: RodistaaColors.text.secondary }}>
-                    GPS Map View (integrate with maps)
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    GPS Map View (integrate with OSM/Google Maps)
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
                   <FileTextOutlined /> POD
                 </h3>
-                {selectedShipment.hasPod ? (
+                {selectedShipment.status === 'COMPLETED' ? (
                   <div
                     style={{
                       height: '400px',
-                      backgroundColor: RodistaaColors.background.paper,
+                      background: '#f5f5f5',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderRadius: `${RodistaaSpacing.borderRadius.md}px`,
+                      borderRadius: '8px',
                     }}
                   >
-                    <div style={{ ...WebTextStyles.bodySmall, color: RodistaaColors.text.secondary }}>
-                      PDF Viewer (react-pdf integration)
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      POD Document Viewer (PDF/Images)
                     </div>
                   </div>
                 ) : (
-                  <div style={{ ...WebTextStyles.bodySmall, color: RodistaaColors.text.secondary }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
                     POD not yet uploaded
                   </div>
                 )}
               </div>
             </div>
           )}
-        </RModalWeb>
+        </Modal>
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
-export default ShipmentsPage;
+export default ShipmentsManagementPage;

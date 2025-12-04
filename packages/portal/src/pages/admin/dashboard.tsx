@@ -1,15 +1,12 @@
 /**
- * Admin Dashboard - Uses design system components
- * Overview of platform metrics and KPIs
+ * Admin Dashboard - Simple working version
  */
 
-import { Row, Col } from 'antd';
+import { Row, Col, Card, Statistic } from 'antd';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
-import { RMetricsCard, RCardWeb, RTableWeb, RButtonWeb } from '@rodistaa/design-system';
-import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
 import { UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, WarningOutlined } from '@ant-design/icons';
 
 function DashboardPage() {
@@ -28,125 +25,100 @@ function DashboardPage() {
       return response.data;
     },
     placeholderData: mockStats,
-    retry: false,
   });
 
   const displayStats = stats || mockStats;
 
-  const recentAlerts = [
-    {
-      id: 1,
-      type: 'GPS_JUMP',
-      severity: 'high',
-      shipment: 'SH-001',
-      time: '10 mins ago',
-    },
-    {
-      id: 2,
-      type: 'POD_DUPLICATE',
-      severity: 'medium',
-      shipment: 'SH-045',
-      time: '1 hour ago',
-    },
-  ];
-
-  const alertColumns = [
-    {
-      title: 'Alert Type',
-      dataIndex: 'type',
-      key: 'type',
-    },
-    {
-      title: 'Shipment',
-      dataIndex: 'shipment',
-      key: 'shipment',
-    },
-    {
-      title: 'Severity',
-      dataIndex: 'severity',
-      key: 'severity',
-    },
-    {
-      title: 'Time',
-      dataIndex: 'time',
-      key: 'time',
-    },
-  ];
-
   return (
     <ProtectedRoute allowedRoles={process.env.NODE_ENV === 'development' ? undefined : ['SUPER_ADMIN', 'FRAUD_INVESTIGATOR']}>
       <AdminLayout>
-        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Dashboard</h1>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Dashboard</h1>
 
-        <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
+        <Row gutter={[24, 24]}>
           <Col xs={24} sm={12} lg={6}>
-            <RMetricsCard
-              title="Daily Active Users"
-              value={displayStats.dau.toString()}
-              icon={<UserOutlined />}
-              trend="up"
-            />
+            <Card>
+              <Statistic
+                title="Daily Active Users"
+                value={displayStats.dau}
+                prefix={<UserOutlined />}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <RMetricsCard
-              title="Total Bookings"
-              value={displayStats.totalBookings.toString()}
-              icon={<FileTextOutlined />}
-              trend="up"
-            />
+            <Card>
+              <Statistic
+                title="Total Bookings"
+                value={displayStats.totalBookings}
+                prefix={<FileTextOutlined />}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <RMetricsCard
-              title="Active Trucks"
-              value={displayStats.activeTrucks.toString()}
-              icon={<CarOutlined />}
-              trend="neutral"
-            />
+            <Card>
+              <Statistic
+                title="Active Trucks"
+                value={displayStats.activeTrucks}
+                prefix={<CarOutlined />}
+              />
+            </Card>
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <RMetricsCard
-              title="Revenue (₹)"
-              value={displayStats.revenue.toLocaleString('en-IN')}
-              icon={<DollarOutlined />}
-              trend="up"
-            />
+            <Card>
+              <Statistic
+                title="Revenue (₹)"
+                value={(displayStats.revenue / 100000).toFixed(2) + 'L'}
+                prefix={<DollarOutlined />}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
           </Col>
         </Row>
 
-        <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
+        <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
           <Col xs={24} lg={12}>
-            <RCardWeb title="Recent Fraud Alerts" style={{ height: '100%' }}>
-              <RTableWeb
-                columns={alertColumns}
-                data={recentAlerts.map((alert) => ({
-                  ...alert,
-                  type: alert.type,
-                  shipment: alert.shipment,
-                  severity: alert.severity.toUpperCase(),
-                  time: alert.time,
-                }))}
-                pagination={false}
-              />
-            </RCardWeb>
+            <Card title="Recent Fraud Alerts">
+              {displayStats.fraudAlerts > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#fff3f3', borderRadius: '8px' }}>
+                  <WarningOutlined style={{ fontSize: '24px', color: '#C90D0D' }} />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{displayStats.fraudAlerts} Active Alerts</div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>Requires investigation</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: '14px', color: '#666' }}>No active alerts</div>
+              )}
+            </Card>
           </Col>
 
           <Col xs={24} lg={12}>
-            <RCardWeb title="Quick Actions" style={{ height: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: `${RodistaaSpacing.md}px` }}>
-                <RButtonWeb variant="primary" onClick={() => window.location.href = '/admin/kyc'}>
+            <Card title="Quick Actions">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  style={{ padding: '12px 24px', background: '#C90D0D', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+                  onClick={() => window.location.href = '/admin/kyc'}
+                >
                   View Pending KYC
-                </RButtonWeb>
-                <RButtonWeb variant="secondary" onClick={() => window.location.href = '/admin/overrides'}>
-                  Review Override Requests
-                </RButtonWeb>
-                <RButtonWeb variant="secondary" onClick={() => window.location.href = '/admin/trucks'}>
-                  Truck Expiry Report
-                </RButtonWeb>
+                </button>
+                <button 
+                  style={{ padding: '12px 24px', background: '#f0f0f0', color: '#000', border: '1px solid #d9d9d9', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+                  onClick={() => window.location.href = '/admin/trucks'}
+                >
+                  Manage Trucks
+                </button>
+                <button 
+                  style={{ padding: '12px 24px', background: '#f0f0f0', color: '#000', border: '1px solid #d9d9d9', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+                  onClick={() => window.location.href = '/admin/bookings'}
+                >
+                  View Bookings
+                </button>
               </div>
-            </RCardWeb>
+            </Card>
           </Col>
         </Row>
       </AdminLayout>

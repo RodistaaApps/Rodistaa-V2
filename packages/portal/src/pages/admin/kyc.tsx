@@ -1,61 +1,62 @@
 /**
- * KYC Management Page - Uses design system KYCViewer component
+ * KYC Management Page - Clean version with Ant Design only
  */
 
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { RCardWeb, RTableWeb, RButtonWeb, KYCViewer } from '@rodistaa/design-system';
-import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { Table, Card, Button, Tag, Space, Modal } from 'antd';
 import { EyeOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
-function KycManagementPage() {
+function KYCManagementPage() {
   const [selectedKyc, setSelectedKyc] = useState<any>(null);
 
   const mockKycRecords = [
     {
-      id: 'KYC-001',
-      userId: 'USR-SH-001',
-      userName: 'John Doe (Masked)',
-      documentType: 'aadhaar' as const,
+      id: 'KYC-OP-001',
+      userId: 'OP-001',
+      name: 'Rajesh Kumar',
+      role: 'Operator',
+      phone: '+919876543210',
       status: 'pending',
-      uploadedAt: '2024-01-01',
-      encrypted: true,
+      submittedAt: '2025-12-02',
+      documentCount: 3,
     },
     {
-      id: 'KYC-002',
-      userId: 'USR-OP-002',
-      userName: 'Jane Smith (Masked)',
-      documentType: 'pan' as const,
+      id: 'KYC-DR-002',
+      userId: 'DR-002',
+      name: 'Suresh Reddy',
+      role: 'Driver',
+      phone: '+919876543211',
+      status: 'pending',
+      submittedAt: '2025-12-03',
+      documentCount: 2,
+    },
+    {
+      id: 'KYC-SH-003',
+      userId: 'SH-003',
+      name: 'Krishna Enterprises',
+      role: 'Shipper',
+      phone: '+919876543212',
       status: 'verified',
-      uploadedAt: '2024-01-02',
-      encrypted: true,
-      decryptedData: {
-        name: 'Jane Smith',
-        number: 'ABCDE1234F',
-      },
+      submittedAt: '2025-12-01',
+      verifiedAt: '2025-12-02',
+      documentCount: 4,
     },
   ];
 
-  const handleDecrypt = async (kycId: string) => {
-    const kyc = mockKycRecords.find((k) => k.id === kycId);
-    if (kyc) {
-      kyc.decryptedData = {
-        name: 'Decrypted Name',
-        number: 'Decrypted Number',
-        dob: '1990-01-01',
-        address: 'Decrypted Address',
-      };
-      setSelectedKyc({ ...kyc });
-    }
+  const handleViewKyc = (record: any) => {
+    setSelectedKyc(record);
   };
 
-  const handleVerify = async (kycId: string, status: 'verified' | 'rejected') => {
-    const kyc = mockKycRecords.find((k) => k.id === kycId);
-    if (kyc) {
-      kyc.status = status;
-      setSelectedKyc({ ...kyc });
-    }
+  const handleVerify = (id: string) => {
+    console.log('Verify KYC:', id);
+    alert('KYC Verified successfully!');
+  };
+
+  const handleReject = (id: string) => {
+    console.log('Reject KYC:', id);
+    alert('KYC Rejected');
   };
 
   const columns = [
@@ -66,104 +67,131 @@ function KycManagementPage() {
     },
     {
       title: 'User',
-      dataIndex: 'userName',
-      key: 'userName',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string, record: any) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{name}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.phone}</div>
+        </div>
+      ),
     },
     {
-      title: 'Document Type',
-      dataIndex: 'documentType',
-      key: 'documentType',
-      render: (type: string) => type.toUpperCase(),
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role: string) => <Tag color="blue">{role}</Tag>,
+    },
+    {
+      title: 'Documents',
+      dataIndex: 'documentCount',
+      key: 'documentCount',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => status.toUpperCase(),
+      render: (status: string) => {
+        const color = status === 'verified' ? 'green' : status === 'rejected' ? 'red' : 'orange';
+        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+      },
     },
     {
-      title: 'Uploaded',
-      dataIndex: 'uploadedAt',
-      key: 'uploadedAt',
+      title: 'Submitted',
+      dataIndex: 'submittedAt',
+      key: 'submittedAt',
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
-        <div style={{ display: 'flex', gap: `${RodistaaSpacing.sm}px` }}>
-          <RButtonWeb
-            variant="secondary"
+        <Space>
+          <Button
             size="small"
-            onClick={() => {
-              setSelectedKyc(record);
-              handleDecrypt(record.id);
-            }}
+            icon={<EyeOutlined />}
+            onClick={() => handleViewKyc(record)}
           >
-            <EyeOutlined /> Decrypt & View
-          </RButtonWeb>
+            View
+          </Button>
           {record.status === 'pending' && (
             <>
-              <RButtonWeb
-                variant="primary"
+              <Button
+                type="primary"
                 size="small"
-                onClick={() => handleVerify(record.id, 'verified')}
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleVerify(record.id)}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
               >
-                <CheckCircleOutlined /> Verify
-              </RButtonWeb>
-              <RButtonWeb
-                variant="danger"
+                Verify
+              </Button>
+              <Button
+                danger
                 size="small"
-                onClick={() => handleVerify(record.id, 'rejected')}
+                icon={<CloseCircleOutlined />}
+                onClick={() => handleReject(record.id)}
               >
-                <CloseCircleOutlined /> Reject
-              </RButtonWeb>
+                Reject
+              </Button>
             </>
           )}
-        </div>
+        </Space>
       ),
     },
   ];
 
-  const kycDocuments = selectedKyc
-    ? [
-        {
-          id: selectedKyc.id,
-          type: selectedKyc.documentType,
-          encrypted: selectedKyc.encrypted,
-          decryptedData: selectedKyc.decryptedData,
-        },
-      ]
-    : [];
-
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FRAUD_INVESTIGATOR']}>
       <AdminLayout>
-        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>KYC Management</h1>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>KYC Management</h1>
 
-        <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
-          <RTableWeb
+        <Card style={{ marginTop: '24px' }}>
+          <Table
             columns={columns}
-            data={mockKycRecords}
-            pagination={{ pageSize: 10 }}
+            dataSource={mockKycRecords}
+            rowKey="id"
+            pagination={{ pageSize: 20 }}
           />
-        </RCardWeb>
+        </Card>
 
-        {selectedKyc && (
-          <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
-            <h2 style={{ ...WebTextStyles.h2, marginBottom: RodistaaSpacing.lg }}>
-              KYC Document: {selectedKyc.id}
-            </h2>
-            <KYCViewer
-              documents={kycDocuments}
-              canDecrypt={true}
-              onDecrypt={handleDecrypt}
-              onViewDocument={(docId) => console.log('View document:', docId)}
-            />
-          </RCardWeb>
-        )}
+        <Modal
+          title={`KYC Details: ${selectedKyc?.id || ''}`}
+          open={!!selectedKyc}
+          onCancel={() => setSelectedKyc(null)}
+          footer={null}
+          width={800}
+        >
+          {selectedKyc && (
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+                KYC Document: {selectedKyc.id}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Name</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedKyc.name}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Phone</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedKyc.phone}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Role</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedKyc.role}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Documents</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedKyc.documentCount} uploaded</div>
+                </div>
+              </div>
+              <div style={{ marginTop: '24px', padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
+                <div style={{ fontSize: '14px', color: '#666' }}>Document viewer would show encrypted/hashed Aadhaar, DL, etc.</div>
+              </div>
+            </div>
+          )}
+        </Modal>
       </AdminLayout>
     </ProtectedRoute>
   );
 }
 
-export default KycManagementPage;
+export default KYCManagementPage;

@@ -1,12 +1,11 @@
 /**
- * Truck Management Page - Uses design system components
+ * Truck Management Page - Clean version with Ant Design only
  */
 
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
-import { RCardWeb, RTableWeb, RModalWeb, RButtonWeb, TruckCardWeb, InspectionGrid } from '@rodistaa/design-system';
-import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { Table, Card, Button, Tag, Space, Modal } from 'antd';
 import { CarOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 function TruckManagementPage() {
@@ -18,73 +17,50 @@ function TruckManagementPage() {
       id: 'TRK-KA01AB1234-001',
       registrationNumber: 'KA 01 AB 1234',
       vehicleType: 'Container 20ft',
-      capacityTons: 10,
-      bodyType: 'Container',
-      operatorName: 'ABC Transport',
-      status: 'ACTIVE' as const,
-      lastInspection: '2024-01-01',
-      nextInspectionDue: '2024-04-30',
+      operatorId: 'OP-001',
+      operatorName: 'Rajesh Kumar',
+      status: 'ACTIVE',
+      lastInspectionDate: '2025-11-15',
+      nextInspectionDue: '2026-02-15',
       docsExpiring: 0,
     },
     {
-      id: 'TRK-MH02CD5678-002',
-      registrationNumber: 'MH 02 CD 5678',
-      vehicleType: 'Container 40ft',
-      capacityTons: 20,
-      bodyType: 'Container',
-      operatorName: 'XYZ Logistics',
-      status: 'EXPIRED_DOCS' as const,
-      lastInspection: '2023-12-15',
-      nextInspectionDue: '2024-04-13',
+      id: 'TRK-AP09CD5678-002',
+      registrationNumber: 'AP 09 CD 5678',
+      vehicleType: 'Flatbed 32ft',
+      operatorId: 'OP-002',
+      operatorName: 'Suresh Transport',
+      status: 'ACTIVE',
+      lastInspectionDate: '2025-10-20',
+      nextInspectionDue: '2025-12-10',
       docsExpiring: 2,
+    },
+    {
+      id: 'TRK-TN12EF9012-003',
+      registrationNumber: 'TN 12 EF 9012',
+      vehicleType: 'Tanker 5000L',
+      operatorId: 'OP-003',
+      operatorName: 'Krishna Logistics',
+      status: 'BLOCKED',
+      lastInspectionDate: '2025-09-01',
+      nextInspectionDue: '2025-12-01',
+      docsExpiring: 3,
     },
   ];
 
-  const inspectionPhotos = selectedTruck
-    ? [
-        {
-          id: '1',
-          url: '/placeholder-truck.jpg',
-          type: 'front' as const,
-          uploadedAt: selectedTruck.lastInspection,
-          geotagged: true,
-        },
-        {
-          id: '2',
-          url: '/placeholder-truck.jpg',
-          type: 'back' as const,
-          uploadedAt: selectedTruck.lastInspection,
-          geotagged: true,
-        },
-        {
-          id: '3',
-          url: '/placeholder-truck.jpg',
-          type: 'left' as const,
-          uploadedAt: selectedTruck.lastInspection,
-          geotagged: true,
-        },
-        {
-          id: '4',
-          url: '/placeholder-truck.jpg',
-          type: 'right' as const,
-          uploadedAt: selectedTruck.lastInspection,
-          geotagged: true,
-        },
-      ]
-    : [];
-
-  const handleBlock = async (truckId: string) => {
-    const truck = mockTrucks.find((t) => t.id === truckId);
-    if (truck) {
-      truck.status = 'BLOCKED';
-    }
+  const handleBlock = (id: string) => {
+    console.log('Block truck:', id);
+    alert('Truck blocked successfully!');
   };
 
-  const handleUnblock = async (truckId: string) => {
-    const truck = mockTrucks.find((t) => t.id === truckId);
-    if (truck) {
-      truck.status = 'ACTIVE';
-    }
+  const handleUnblock = (id: string) => {
+    console.log('Unblock truck:', id);
+    alert('Truck unblocked successfully!');
+  };
+
+  const handleViewDetails = (record: any) => {
+    setSelectedTruck(record);
+    setModalVisible(true);
   };
 
   const columns = [
@@ -92,6 +68,12 @@ function TruckManagementPage() {
       title: 'Registration',
       dataIndex: 'registrationNumber',
       key: 'registrationNumber',
+      render: (text: string) => <span style={{ fontWeight: 600 }}>{text}</span>,
+    },
+    {
+      title: 'Type',
+      dataIndex: 'vehicleType',
+      key: 'vehicleType',
     },
     {
       title: 'Operator',
@@ -102,19 +84,17 @@ function TruckManagementPage() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => status.replace('_', ' '),
+      render: (status: string) => {
+        const color = status === 'ACTIVE' ? 'green' : status === 'BLOCKED' ? 'red' : 'orange';
+        return <Tag color={color}>{status}</Tag>;
+      },
     },
     {
-      title: 'Last Inspection',
-      dataIndex: 'lastInspection',
-      key: 'lastInspection',
-    },
-    {
-      title: 'Next Due',
+      title: 'Next Inspection',
       dataIndex: 'nextInspectionDue',
       key: 'nextInspectionDue',
       render: (date: string, record: any) => (
-        <span style={{ color: record.docsExpiring > 0 ? RodistaaColors.error.main : RodistaaColors.text.primary }}>
+        <span style={{ color: record.docsExpiring > 0 ? '#C90D0D' : '#000' }}>
           {date}
           {record.docsExpiring > 0 && ` (${record.docsExpiring} docs expiring)`}
         </span>
@@ -124,27 +104,34 @@ function TruckManagementPage() {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
-        <div style={{ display: 'flex', gap: `${RodistaaSpacing.sm}px` }}>
-          <RButtonWeb
-            variant="secondary"
+        <Space>
+          <Button
             size="small"
-            onClick={() => {
-              setSelectedTruck(record);
-              setModalVisible(true);
-            }}
+            onClick={() => handleViewDetails(record)}
           >
             View Details
-          </RButtonWeb>
+          </Button>
           {record.status === 'BLOCKED' ? (
-            <RButtonWeb variant="primary" size="small" onClick={() => handleUnblock(record.id)}>
-              <CheckCircleOutlined /> Unblock
-            </RButtonWeb>
+            <Button 
+              type="primary" 
+              size="small" 
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleUnblock(record.id)}
+              style={{ background: '#52c41a', borderColor: '#52c41a' }}
+            >
+              Unblock
+            </Button>
           ) : (
-            <RButtonWeb variant="danger" size="small" onClick={() => handleBlock(record.id)}>
-              <StopOutlined /> Block
-            </RButtonWeb>
+            <Button 
+              danger 
+              size="small" 
+              icon={<StopOutlined />}
+              onClick={() => handleBlock(record.id)}
+            >
+              Block
+            </Button>
           )}
-        </div>
+        </Space>
       ),
     },
   ];
@@ -152,52 +139,51 @@ function TruckManagementPage() {
   return (
     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
       <AdminLayout>
-        <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Truck Management</h1>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Truck Management</h1>
 
-        <RCardWeb style={{ marginTop: RodistaaSpacing.xl }}>
-          <RTableWeb columns={columns} data={mockTrucks} pagination={{ pageSize: 20 }} />
-        </RCardWeb>
+        <Card style={{ marginTop: '24px' }}>
+          <Table 
+            columns={columns} 
+            dataSource={mockTrucks} 
+            rowKey="id"
+            pagination={{ pageSize: 20 }} 
+          />
+        </Card>
 
-        <RModalWeb
-          visible={modalVisible}
-          onClose={() => {
-            setModalVisible(false);
-            setSelectedTruck(null);
-          }}
-          title={`Truck Details: ${selectedTruck?.registrationNumber}`}
-          size="large"
+        <Modal
+          title={`Truck Details: ${selectedTruck?.registrationNumber || ''}`}
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={800}
         >
           {selectedTruck && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: `${RodistaaSpacing.lg}px` }}>
-              <TruckCardWeb
-                id={selectedTruck.id}
-                registrationNumber={selectedTruck.registrationNumber}
-                vehicleType={selectedTruck.vehicleType}
-                capacityTons={selectedTruck.capacityTons}
-                bodyType={selectedTruck.bodyType}
-                status={selectedTruck.status}
-                inspectionDue={selectedTruck.nextInspectionDue}
-                operatorName={selectedTruck.operatorName}
-              />
-
-              <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>Inspection Photos</h3>
-                <InspectionGrid
-                  photos={inspectionPhotos}
-                  onPhotoClick={(photo) => console.log('View photo:', photo)}
-                  canUpload={false}
-                />
-              </div>
-
-              <div>
-                <h3 style={{ ...WebTextStyles.h3, marginBottom: RodistaaSpacing.md }}>Documents</h3>
-                <div style={{ ...WebTextStyles.bodySmall, color: RodistaaColors.text.secondary }}>
-                  Document status and expiry tracking
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Registration Number</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedTruck.registrationNumber}</div>
                 </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Vehicle Type</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedTruck.vehicleType}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Operator</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedTruck.operatorName}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Status</div>
+                  <Tag color={selectedTruck.status === 'ACTIVE' ? 'green' : 'red'}>{selectedTruck.status}</Tag>
+                </div>
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Inspection Photos</h3>
+              <div style={{ padding: '32px', background: '#f5f5f5', borderRadius: '8px', textAlign: 'center', color: '#666' }}>
+                Inspection photos would be displayed here (geotagged images)
               </div>
             </div>
           )}
-        </RModalWeb>
+        </Modal>
       </AdminLayout>
     </ProtectedRoute>
   );
