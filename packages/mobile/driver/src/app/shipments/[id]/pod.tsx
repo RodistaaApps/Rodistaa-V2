@@ -1,93 +1,111 @@
-/**
- * POD Upload Screen
- * Driver uploads proof of delivery (image or PDF)
- */
-
-import { useState } from 'react';
-import { View, Text, StyleSheet, Alert, Image } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Button, Card } from '@rodistaa/mobile-shared';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function PODUploadScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [podImage, setPodImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const handlePickImage = async () => {
-    // Mock image picker
-    setImageUri('https://via.placeholder.com/400x300');
-    Alert.alert('Image Selected', 'POD image ready to upload');
+  const pickImage = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setPodImage(result.assets[0].uri);
+    }
   };
 
   const handleUpload = async () => {
-    if (!imageUri) {
-      Alert.alert('Error', 'Please select a POD image first');
+    if (!podImage) {
+      Alert.alert('Error', 'Please capture POD document');
       return;
     }
 
     setUploading(true);
-    try {
-      // API call: await uploadPOD(id, imageUri);
-      Alert.alert('Success', 'POD uploaded successfully', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to upload POD');
-    } finally {
+    // Simulate upload
+    setTimeout(() => {
       setUploading(false);
-    }
+      Alert.alert('Success', 'POD uploaded successfully', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    }, 1500);
   };
 
   return (
-    <View style={styles.container}>
-      <Card style={styles.card}>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
         <Text style={styles.title}>Upload Proof of Delivery</Text>
         <Text style={styles.subtitle}>Shipment: {id}</Text>
+      </View>
 
-        {imageUri ? (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
-            <Button
-              title="Change Image"
-              onPress={handlePickImage}
-              variant="outline"
-              style={styles.changeButton}
-            />
-          </View>
+      <View style={styles.instructionsCard}>
+        <Ionicons name="information-circle" size={24} color="#2E86DE" />
+        <View style={styles.instructionsText}>
+          <Text style={styles.instructionsTitle}>Instructions:</Text>
+          <Text style={styles.instructionItem}>
+            • Capture clear image of signed POD
+          </Text>
+          <Text style={styles.instructionItem}>
+            • Ensure signature is visible
+          </Text>
+          <Text style={styles.instructionItem}>
+            • Document should be readable
+          </Text>
+        </View>
+      </View>
+
+      {podImage ? (
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: podImage }} style={styles.image} />
+          <TouchableOpacity style={styles.retakeButton} onPress={pickImage}>
+            <Ionicons name="camera" size={20} color="#FFFFFF" />
+            <Text style={styles.retakeText}>Retake</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.captureButton} onPress={pickImage}>
+          <Ionicons name="camera" size={48} color="#FFFFFF" />
+          <Text style={styles.captureText}>Capture POD</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={[
+          styles.uploadButton,
+          !podImage && styles.uploadButtonDisabled,
+        ]}
+        onPress={handleUpload}
+        disabled={!podImage || uploading}
+      >
+        {uploading ? (
+          <Text style={styles.uploadButtonText}>Uploading...</Text>
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>No image selected</Text>
-          </View>
+          <>
+            <Ionicons name="cloud-upload" size={24} color="#FFFFFF" />
+            <Text style={styles.uploadButtonText}>Upload POD</Text>
+          </>
         )}
-
-        <View style={styles.instructions}>
-          <Text style={styles.instructionTitle}>Instructions:</Text>
-          <Text style={styles.instructionText}>• Take clear photo of signed POD</Text>
-          <Text style={styles.instructionText}>• Ensure all details are visible</Text>
-          <Text style={styles.instructionText}>• Document will be encrypted before upload</Text>
-        </View>
-
-        <View style={styles.actions}>
-          {!imageUri && (
-            <Button
-              title="Capture POD"
-              onPress={handlePickImage}
-              style={styles.actionButton}
-            />
-          )}
-          
-          {imageUri && (
-            <Button
-              title="Upload POD"
-              onPress={handleUpload}
-              loading={uploading}
-              style={styles.actionButton}
-            />
-          )}
-        </View>
-      </Card>
-    </View>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
@@ -95,73 +113,99 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    padding: 16,
   },
-  card: {
+  header: {
+    backgroundColor: '#FFFFFF',
     padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   title: {
-    fontSize: 20,
-    fontFamily: 'Times New Roman',
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 8,
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 24,
+    color: '#4F4F4F',
+  },
+  instructionsCard: {
+    flexDirection: 'row',
+    backgroundColor: '#E3F2FD',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  instructionsText: {
+    flex: 1,
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  instructionItem: {
+    fontSize: 14,
+    color: '#4F4F4F',
+    marginBottom: 4,
+  },
+  captureButton: {
+    backgroundColor: '#C90D0D',
+    margin: 16,
+    padding: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 12,
   },
   imageContainer: {
-    marginBottom: 24,
+    margin: 16,
   },
   image: {
     width: '100%',
-    height: 300,
-    borderRadius: 8,
-    marginBottom: 12,
+    height: 400,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
   },
-  changeButton: {
-    marginTop: 8,
-  },
-  placeholder: {
-    height: 200,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    justifyContent: 'center',
+  retakeButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  placeholderText: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
-    color: '#999999',
-  },
-  instructions: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    backgroundColor: '#4F4F4F',
+    padding: 12,
     borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
   },
-  instructionTitle: {
-    fontSize: 14,
-    fontFamily: 'Times New Roman',
+  retakeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#27AE60',
+    margin: 16,
+    padding: 18,
+    borderRadius: 12,
+    gap: 8,
+  },
+  uploadButtonDisabled: {
+    backgroundColor: '#D0D0D0',
+  },
+  uploadButtonText: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  instructionText: {
-    fontSize: 12,
-    fontFamily: 'Times New Roman',
-    color: '#666666',
-    marginBottom: 4,
-  },
-  actions: {
-    gap: 12,
-  },
-  actionButton: {
-    marginTop: 8,
+    color: '#FFFFFF',
   },
 });
-

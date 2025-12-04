@@ -2,7 +2,7 @@
   "name": "@rodistaa/mobile-driver",
   "version": "1.0.0",
   "description": "Rodistaa Driver Mobile App",
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -13,7 +13,10 @@
   },
   "dependencies": {
     "expo": "~49.0.0",
+    "expo-router": "~2.0.0",
     "expo-secure-store": "~12.3.1",
+    "@tanstack/react-query": "^5.17.0",
+    "@expo/vector-icons": "^15.0.3",
     "expo-location": "~16.1.0",
     "expo-image-picker": "~14.3.2",
     "expo-camera": "~13.4.4",
