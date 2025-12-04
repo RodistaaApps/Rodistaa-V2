@@ -1,31 +1,34 @@
 /**
- * Inspection Management Page (Unit Franchise)
- * Perform and track truck inspections
+ * Inspection Management Page (Unit Franchise) - Uses design system InspectionGrid
  */
 
-import { Card, Button, Table, Upload, message, Modal, Form, Input, Typography } from 'antd';
-import { CameraOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { Layout } from 'antd';
+import { RCardWeb, RTableWeb, RButtonWeb, RModalWeb, InspectionGrid } from '@rodistaa/design-system';
+import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { CameraOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
 const { Header, Content } = Layout;
-const { TextArea } = Input;
 
 function InspectionsPage() {
   const [inspectionModal, setInspectionModal] = useState(false);
-  const [form] = Form.useForm();
+  const [selectedTruck, setSelectedTruck] = useState<any>(null);
 
   const pendingInspections = [
     { id: 1, truck: 'KA 01 AB 1234', dueDate: '2024-01-05', operator: 'ABC Transport' },
     { id: 2, truck: 'KA 02 EF 5678', dueDate: '2024-01-07', operator: 'XYZ Logistics' },
   ];
 
-  const handlePerformInspection = async (values: any) => {
-    message.success('Inspection recorded successfully');
+  const handlePerformInspection = (truck: any) => {
+    setSelectedTruck(truck);
+    setInspectionModal(true);
+  };
+
+  const handleSubmitInspection = async (photos: any[]) => {
+    console.log('Submit inspection:', selectedTruck, photos);
     setInspectionModal(false);
-    form.resetFields();
+    setSelectedTruck(null);
   };
 
   const columns = [
@@ -35,69 +38,94 @@ function InspectionsPage() {
     {
       title: 'Action',
       key: 'action',
-      render: () => (
-        <Button
-          type="primary"
+      render: (_: any, record: any) => (
+        <RButtonWeb
+          variant="primary"
           size="small"
-          icon={<CameraOutlined />}
-          onClick={() => setInspectionModal(true)}
+          onClick={() => handlePerformInspection(record)}
         >
-          Perform Inspection
-        </Button>
+          <CameraOutlined /> Perform Inspection
+        </RButtonWeb>
       ),
     },
   ];
 
+  const inspectionPhotos = selectedTruck
+    ? [
+        {
+          id: '1',
+          url: '',
+          type: 'front' as const,
+          uploadedAt: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          url: '',
+          type: 'back' as const,
+          uploadedAt: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          url: '',
+          type: 'left' as const,
+          uploadedAt: new Date().toISOString(),
+        },
+        {
+          id: '4',
+          url: '',
+          type: 'right' as const,
+          uploadedAt: new Date().toISOString(),
+        },
+      ]
+    : [];
+
   return (
     <ProtectedRoute allowedRoles={['FRANCHISE_UNIT']}>
       <Layout style={{ minHeight: '100vh' }}>
-        <Header style={{ backgroundColor: '#C90D0D', color: '#FFF', padding: '0 24px' }}>
-          <Title level={3} style={{ color: '#FFF', margin: 0, lineHeight: '64px' }}>
+        <Header style={{ backgroundColor: RodistaaColors.primary.main, color: RodistaaColors.primary.contrast, padding: '0 24px' }}>
+          <h1 style={{ ...WebTextStyles.h1, color: RodistaaColors.primary.contrast, margin: 0, lineHeight: '64px' }}>
             Rodistaa Franchise Portal
-          </Title>
+          </h1>
         </Header>
-        <Content style={{ padding: 24 }}>
-          <Title level={2}>Inspection Management</Title>
+        <Content style={{ padding: RodistaaSpacing.xl }}>
+          <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>Inspection Management</h1>
 
-          <Card title="Pending Inspections" style={{ marginTop: 24 }}>
-            <Table columns={columns} dataSource={pendingInspections} rowKey="id" pagination={false} />
-          </Card>
+          <RCardWeb title="Pending Inspections" style={{ marginTop: RodistaaSpacing.xl }}>
+            <RTableWeb columns={columns} data={pendingInspections} pagination={false} />
+          </RCardWeb>
 
-          <Modal
-            title="Perform Inspection"
-            open={inspectionModal}
-            onCancel={() => setInspectionModal(false)}
-            footer={null}
+          <RModalWeb
+            visible={inspectionModal}
+            onClose={() => {
+              setInspectionModal(false);
+              setSelectedTruck(null);
+            }}
+            title={`Perform Inspection: ${selectedTruck?.truck}`}
+            size="large"
           >
-            <Form form={form} layout="vertical" onFinish={handlePerformInspection}>
-              <Form.Item label="Inspection Photos" name="photos">
-                <Upload listType="picture-card" accept="image/*" maxCount={5}>
-                  <div>
-                    <CameraOutlined style={{ fontSize: 24 }} />
-                    <div style={{ marginTop: 8 }}>Upload</div>
-                  </div>
-                </Upload>
-              </Form.Item>
+            {selectedTruck && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${RodistaaSpacing.lg}px` }}>
+                <InspectionGrid
+                  photos={inspectionPhotos}
+                  onUpload={(type, file) => {
+                    console.log('Upload photo:', type, file);
+                    const photo = inspectionPhotos.find((p) => p.type === type);
+                    if (photo) {
+                      photo.url = URL.createObjectURL(file);
+                    }
+                  }}
+                  canUpload={true}
+                />
 
-              <Form.Item label="Notes" name="notes">
-                <TextArea rows={4} placeholder="Any observations or issues..." />
-              </Form.Item>
-
-              <Form.Item label="Status" name="status" rules={[{ required: true }]}>
-                <select style={{ padding: 8, width: '100%' }}>
-                  <option value="passed">Passed</option>
-                  <option value="minor_issues">Minor Issues</option>
-                  <option value="failed">Failed</option>
-                </select>
-              </Form.Item>
-
-              <Form.Item>
-                <Button type="primary" htmlType="submit" block icon={<CheckCircleOutlined />}>
-                  Submit Inspection
-                </Button>
-              </Form.Item>
-            </Form>
-          </Modal>
+                <RButtonWeb
+                  variant="primary"
+                  onClick={() => handleSubmitInspection(inspectionPhotos)}
+                >
+                  <CheckCircleOutlined /> Submit Inspection
+                </RButtonWeb>
+              </div>
+            )}
+          </RModalWeb>
         </Content>
       </Layout>
     </ProtectedRoute>
@@ -105,4 +133,3 @@ function InspectionsPage() {
 }
 
 export default InspectionsPage;
-

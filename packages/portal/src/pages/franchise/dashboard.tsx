@@ -1,16 +1,16 @@
 /**
- * Franchise Dashboard Page
- * Different views for District vs Unit franchises
+ * Franchise Dashboard Page - Uses design system components
  */
 
-import { Card, Row, Col, Statistic, Typography, Table, Button, Tag } from 'antd';
-import { TeamOutlined, CarOutlined, CheckCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { useAuth } from '../../hooks/useAuth';
-import { Layout, Menu } from 'antd';
+import { Layout } from 'antd';
+import { RMetricsCard, RCardWeb, RTableWeb, RButtonWeb } from '@rodistaa/design-system';
+import { RodistaaColors, WebTextStyles, RodistaaSpacing } from '@rodistaa/design-system';
+import { TeamOutlined, CarOutlined, CheckCircleOutlined, DollarOutlined } from '@ant-design/icons';
+import { Row, Col } from 'antd';
 
-const { Header, Content, Sider } = Layout;
-const { Title } = Typography;
+const { Header, Content } = Layout;
 
 function FranchiseDashboard() {
   const { user } = useAuth();
@@ -33,150 +33,141 @@ function FranchiseDashboard() {
   return (
     <ProtectedRoute allowedRoles={['FRANCHISE_DISTRICT', 'FRANCHISE_UNIT']}>
       <Layout style={{ minHeight: '100vh' }}>
-        <Header style={{ backgroundColor: '#C90D0D', color: '#FFFFFF', padding: '0 24px' }}>
-          <Title level={3} style={{ color: '#FFFFFF', margin: 0, lineHeight: '64px' }}>
+        <Header style={{ backgroundColor: RodistaaColors.primary.main, color: RodistaaColors.primary.contrast, padding: '0 24px' }}>
+          <h1 style={{ ...WebTextStyles.h1, color: RodistaaColors.primary.contrast, margin: 0, lineHeight: '64px' }}>
             Rodistaa Franchise Portal
-          </Title>
+          </h1>
         </Header>
 
-        <Content style={{ padding: 24 }}>
-          <Title level={2}>
+        <Content style={{ padding: RodistaaSpacing.xl }}>
+          <h1 style={{ ...WebTextStyles.h1, marginBottom: RodistaaSpacing.xl }}>
             {isDistrict ? 'District Franchise Dashboard' : 'Unit Franchise Dashboard'}
-          </Title>
+          </h1>
 
           {isDistrict ? (
             <>
-              <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+              <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Linked Units"
-                      value={districtStats.linkedUnits}
-                      prefix={<TeamOutlined />}
-                      valueStyle={{ color: '#C90D0D' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Linked Units"
+                    value={districtStats.linkedUnits.toString()}
+                    icon={<TeamOutlined />}
+                    trend="neutral"
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Total Inspections"
-                      value={districtStats.totalInspections}
-                      prefix={<CheckCircleOutlined />}
-                      valueStyle={{ color: '#C90D0D' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Total Inspections"
+                    value={districtStats.totalInspections.toString()}
+                    icon={<CheckCircleOutlined />}
+                    trend="up"
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Targets Achieved"
-                      value={districtStats.targetsAchieved}
-                      suffix="%"
-                      prefix={<CarOutlined />}
-                      valueStyle={{ color: '#4CAF50' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Targets Achieved"
+                    value={`${districtStats.targetsAchieved}%`}
+                    icon={<CarOutlined />}
+                    trend="up"
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Revenue (₹)"
-                      value={districtStats.revenue}
-                      prefix={<DollarOutlined />}
-                      valueStyle={{ color: '#4CAF50' }}
-                      precision={0}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Revenue (₹)"
+                    value={districtStats.revenue.toLocaleString('en-IN')}
+                    icon={<DollarOutlined />}
+                    trend="up"
+                  />
                 </Col>
               </Row>
 
-              <Card title="Unit Franchises" style={{ marginTop: 24 }}>
-                <Button type="primary" style={{ marginBottom: 16 }}>
+              <RCardWeb title="Unit Franchises" style={{ marginTop: RodistaaSpacing.xl }}>
+                <RButtonWeb variant="primary" onClick={() => {}} style={{ marginBottom: RodistaaSpacing.md }}>
                   Set Monthly Targets
-                </Button>
-                <Table
+                </RButtonWeb>
+                <RTableWeb
                   columns={[
                     { title: 'Unit Name', dataIndex: 'name', key: 'name' },
                     { title: 'Inspections', dataIndex: 'inspections', key: 'inspections' },
                     { title: 'Target Progress', dataIndex: 'progress', key: 'progress', render: (p: number) => `${p}%` },
-                    { title: 'Actions', key: 'actions', render: () => <Button size="small">View Details</Button> },
+                    {
+                      title: 'Actions',
+                      key: 'actions',
+                      render: () => (
+                        <RButtonWeb variant="secondary" size="small">
+                          View Details
+                        </RButtonWeb>
+                      ),
+                    },
                   ]}
-                  dataSource={[
+                  data={[
                     { id: 1, name: 'North Unit 1', inspections: 42, progress: 85 },
                     { id: 2, name: 'North Unit 2', inspections: 38, progress: 76 },
                   ]}
-                  rowKey="id"
                   pagination={false}
-                  size="small"
                 />
-              </Card>
+              </RCardWeb>
             </>
           ) : (
             <>
-              <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+              <Row gutter={[RodistaaSpacing.lg, RodistaaSpacing.lg]} style={{ marginTop: RodistaaSpacing.xl }}>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Inspections This Month"
-                      value={unitStats.inspectionsThisMonth}
-                      prefix={<CheckCircleOutlined />}
-                      valueStyle={{ color: '#C90D0D' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Inspections This Month"
+                    value={unitStats.inspectionsThisMonth.toString()}
+                    icon={<CheckCircleOutlined />}
+                    trend="up"
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Target Progress"
-                      value={unitStats.targetProgress}
-                      suffix="%"
-                      prefix={<CarOutlined />}
-                      valueStyle={{ color: unitStats.targetProgress >= 80 ? '#4CAF50' : '#FF9800' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Target Progress"
+                    value={`${unitStats.targetProgress}%`}
+                    icon={<CarOutlined />}
+                    trend={unitStats.targetProgress >= 80 ? 'up' : 'down'}
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Pending Inspections"
-                      value={unitStats.pendingInspections}
-                      valueStyle={{ color: '#FF9800' }}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Pending Inspections"
+                    value={unitStats.pendingInspections.toString()}
+                    icon={<CheckCircleOutlined />}
+                    trend="neutral"
+                  />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Earnings (₹)"
-                      value={unitStats.earnings}
-                      prefix={<DollarOutlined />}
-                      valueStyle={{ color: '#4CAF50' }}
-                      precision={0}
-                    />
-                  </Card>
+                  <RMetricsCard
+                    title="Earnings (₹)"
+                    value={unitStats.earnings.toLocaleString('en-IN')}
+                    icon={<DollarOutlined />}
+                    trend="up"
+                  />
                 </Col>
               </Row>
 
-              <Card title="Inspection Schedule" style={{ marginTop: 24 }}>
-                <Button type="primary" style={{ marginBottom: 16 }}>
+              <RCardWeb title="Inspection Schedule" style={{ marginTop: RodistaaSpacing.xl }}>
+                <RButtonWeb variant="primary" onClick={() => {}} style={{ marginBottom: RodistaaSpacing.md }}>
                   Schedule Inspection
-                </Button>
-                <Table
+                </RButtonWeb>
+                <RTableWeb
                   columns={[
                     { title: 'Truck', dataIndex: 'truck', key: 'truck' },
                     { title: 'Due Date', dataIndex: 'dueDate', key: 'dueDate' },
-                    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => <Tag>{s}</Tag> },
-                    { title: 'Actions', key: 'actions', render: () => <Button size="small">Perform Inspection</Button> },
+                    { title: 'Status', dataIndex: 'status', key: 'status' },
+                    {
+                      title: 'Actions',
+                      key: 'actions',
+                      render: () => (
+                        <RButtonWeb variant="primary" size="small">
+                          Perform Inspection
+                        </RButtonWeb>
+                      ),
+                    },
                   ]}
-                  dataSource={[
-                    { id: 1, truck: 'KA 01 AB 1234', dueDate: '2024-01-05', status: 'Scheduled' },
-                  ]}
-                  rowKey="id"
+                  data={[{ id: 1, truck: 'KA 01 AB 1234', dueDate: '2024-01-05', status: 'Scheduled' }]}
                   pagination={false}
-                  size="small"
                 />
-              </Card>
+              </RCardWeb>
             </>
           )}
         </Content>
@@ -186,4 +177,3 @@ function FranchiseDashboard() {
 }
 
 export default FranchiseDashboard;
-
