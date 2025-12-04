@@ -35,7 +35,7 @@ export class DriversController {
    */
   async linkTruck(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { driverId } = req.params as { driverId: string };
       const { truckId } = req.body as { truckId: string };
 
@@ -57,7 +57,7 @@ export class DriversController {
    */
   async getProfile(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { driverId } = req.params as { driverId: string };
 
       const profile = await driversService.getDriverProfile(

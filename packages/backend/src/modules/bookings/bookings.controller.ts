@@ -15,7 +15,7 @@ export class BookingsController {
    */
   async createBooking(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       if (!user) {
         return reply.code(401).send({
           code: 'UNAUTHORIZED',
@@ -79,7 +79,7 @@ export class BookingsController {
    */
   async getBookings(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const query = req.query as any;
 
       const filters: any = {
@@ -123,7 +123,7 @@ export class BookingsController {
   async getBooking(req: FastifyRequest, reply: FastifyReply) {
     try {
       const { bookingId } = req.params as { bookingId: string };
-      const user = (req as any).user;
+      const user = req.user;
 
       const booking = await bookingsService.getBookingById(bookingId);
 
@@ -158,7 +158,7 @@ export class BookingsController {
   async cancelBooking(req: FastifyRequest, reply: FastifyReply) {
     try {
       const { bookingId } = req.params as { bookingId: string };
-      const user = (req as any).user;
+      const user = req.user;
       const { reason } = req.body as { reason?: string };
 
       const booking = await bookingsService.cancelBooking(

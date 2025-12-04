@@ -15,7 +15,7 @@ export class KycController {
    */
   async upload(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const data = await (req as any).file();
 
       if (!data) {
@@ -77,7 +77,7 @@ export class KycController {
    */
   async getStatus(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
 
       const status = await kycService.getKycStatus(user.id);
 
@@ -96,7 +96,7 @@ export class KycController {
    */
   async getKyc(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { kycId } = req.params as { kycId: string };
 
       const record = await kycService.getKycRecord(kycId, user.id, user.role);
@@ -123,7 +123,7 @@ export class KycController {
    */
   async decrypt(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { kycId } = req.params as { kycId: string };
 
       if (user.role !== 'ADMIN' && user.role !== 'AD') {

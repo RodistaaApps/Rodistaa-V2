@@ -181,7 +181,7 @@ export class OTPService {
   /**
    * Get recent OTP count for rate limiting
    */
-  private getRecentOTPCount(phone: string): number {
+  private getRecentOTPCount(_phone: string): number {
     // TODO: Implement with Redis for distributed rate limiting
     // For now, simple in-memory check
     return 0;

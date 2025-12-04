@@ -12,7 +12,7 @@ export class FranchiseController {
    */
   async getDashboard(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const franchiseId = user.franchiseId || user.id; // Assuming franchise ID is in user context
       const franchiseType = user.franchiseType || 'UNIT';
 
@@ -31,7 +31,7 @@ export class FranchiseController {
    */
   async getTargets(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const query = req.query as any;
       const franchiseId = query?.franchiseId || user.franchiseId || user.id;
 
@@ -50,7 +50,7 @@ export class FranchiseController {
    */
   async setTargets(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { franchiseId, targets } = req.body as { franchiseId: string; targets: any };
 
       await franchiseService.setTargets(
@@ -75,7 +75,7 @@ export class FranchiseController {
    */
   async getReports(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const query = req.query as any;
       const franchiseId = query?.franchiseId || user.franchiseId || user.id;
       const { startDate, endDate } = query;

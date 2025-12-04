@@ -15,7 +15,7 @@ export class LedgerController {
    */
   async getBalance(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { operatorId } = req.params as { operatorId: string };
 
       // Verify access (operator can only see their own balance, admin can see any)
@@ -47,7 +47,7 @@ export class LedgerController {
    */
   async getLedgerEntries(req: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (req as any).user;
+      const user = req.user;
       const { operatorId } = req.params as { operatorId: string };
       const query = req.query as any;
 

@@ -45,7 +45,11 @@ export async function registerAuthMiddleware(server: FastifyInstance) {
 
     try {
       // Validate and decode token
-      const decoded: any = validateToken(token);
+      const decoded = validateToken(token) as {
+        userId: string;
+        deviceId?: string;
+        exp?: number;
+      };
       
       // Get user from database to ensure they still exist and are active
       const result = await query(
@@ -80,7 +84,7 @@ export async function registerAuthMiddleware(server: FastifyInstance) {
       }
 
       // Attach user context to request
-      (request as any).user = {
+      request.user = {
         id: user.id,
         role: user.role,
         name: user.name,
