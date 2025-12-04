@@ -5,6 +5,7 @@
 
 import * as trucksRepo from './trucks.repository';
 import { evaluateAcsRules } from '../acs-adapter';
+import { storageService } from '../../services/storage.service';
 import logger from 'pino';
 import { Truck, TruckStatus } from '@rodistaa/app-shared';
 
