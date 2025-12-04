@@ -1,185 +1,195 @@
-# Action Required - External Credentials
+# Action Required - External Services & Credentials
 
-This document lists external API credentials and services that require manual setup for production use. **Local development uses mocks and does not require these credentials.**
+This document lists external services and credentials needed for full production deployment of the Rodistaa platform.
 
-## Required for Production Only
+---
 
-### 1. AWS SNS (SMS Service)
-**Purpose**: Login OTP SMS delivery  
-**Required For**: Production SMS notifications  
-**Local Dev**: Mock service at `http://localhost:5000/sms`  
-**Setup**:
-- Create AWS account
-- Create SNS topic
-- Generate IAM access keys with SNS publish permissions
-- Add to environment:
-  ```
-  AWS_ACCESS_KEY_ID=your_key
-  AWS_SECRET_ACCESS_KEY=your_secret
-  AWS_REGION=us-east-1
-  AWS_SNS_TOPIC_ARN=arn:aws:sns:...
-  SMS_ENABLED=true
-  ```
+## 🔐 SHIPPERS FEATURE - DOCUMENT STORAGE
 
-### 2. Google Maps API
-**Purpose**: Route calculation, distance matrix, geocoding  
-**Required For**: Production route calculations  
-**Local Dev**: Mock service at `http://localhost:5000/maps`  
-**Setup**:
-- Create Google Cloud project
-- Enable Maps JavaScript API, Distance Matrix API, Geocoding API
-- Generate API key
-- Add to environment:
-  ```
-  GOOGLE_MAPS_API_KEY=your_api_key
-  GOOGLE_MAPS_ENABLED=true
-  ```
-**Note**: Billing must be enabled. Use API key restrictions in production.
+### Service: AWS S3 / MinIO
 
-### 3. Firebase Service Account
-**Purpose**: Push notifications to mobile apps  
-**Required For**: Production push notifications  
-**Local Dev**: Firebase emulator or disabled  
-**Setup**:
-- Create Firebase project
-- Generate service account JSON
-- Download and store securely
-- Add to environment:
-  ```
-  FIREBASE_SERVICE_ACCOUNT_JSON_PATH=/path/to/firebase-svc.json
-  FIREBASE_PROJECT_ID=your-project-id
-  FIREBASE_USE_EMULATOR=false
-  ```
+**Purpose**: Store shipper documents (KYC, business proof, etc.)
 
-### 4. IRP eInvoice (Indian Government)
-**Purpose**: eInvoice generation and submission  
-**Required For**: Production invoice compliance  
-**Local Dev**: Mock service at `http://localhost:5000/irp`  
-**Setup**:
-- Register on IRP portal (https://einvoice.gst.gov.in)
-- Generate client ID and secret
-- Add to environment:
-  ```
-  IRP_PROD_CLIENT_ID=your_client_id
-  IRP_PROD_CLIENT_SECRET=your_client_secret
-  IRP_USE_SANDBOX=false
-  ```
-**Note**: Requires GST registration and IRP portal access.
+**Required Credentials**:
+- AWS Access Key ID
+- AWS Secret Access Key
+- S3 Bucket Name
+- AWS Region
 
-### 5. VAHAN Verification APIs
-**Purpose**: Vehicle registration verification  
-**Required For**: Production truck verification  
-**Local Dev**: Mock service at `http://localhost:5000/vahan`  
-**Setup**:
-- Register with VAHAN provider (Parivahan/Surepass)
-- Generate API keys
-- Add to environment:
-  ```
-  VAHAN_PARIVAHAN_API_KEY=your_key (if available)
-  VAHAN_SUREPASS_API_KEY=your_key
-  VAHAN_BACKUP_API_KEY=your_key
-  ```
-**Note**: Parivahan requires government API access. Surepass/Backup are commercial providers.
-
-### 6. OpenAI API (Optional)
-**Purpose**: Freight cost calculation fallback  
-**Required For**: AI-powered cost estimation (optional feature)  
-**Local Dev**: Mock or disabled  
-**Setup**:
-- Create OpenAI account
-- Generate API key
-- Add to environment:
-  ```
-  OPENAI_API_KEY=your_key
-  OPENAI_ENABLED=true
-  ```
-**Note**: This is optional. System works without it using rule-based calculations.
-
-### 7. Figma API (Optional)
-**Purpose**: Design token synchronization  
-**Required For**: Automated design system updates  
-**Local Dev**: Not required  
-**Setup**:
-- Generate Figma personal access token
-- Get Figma file key
-- Add to environment:
-  ```
-  FIGMA_FILE_KEY=your_file_key
-  FIGMA_TOKEN=your_token
-  ```
-**Note**: Only needed if using automated token sync from Figma.
-
-### 8. Play Store Keystore (Mobile Apps)
-**Purpose**: Android app signing for release builds  
-**Required For**: Production Android app releases  
-**Local Dev**: Not required  
-**Setup**:
-- Generate keystore using `keytool`
-- Store securely (use CI/CD secrets)
-- Add to environment:
-  ```
-  PLAYSTORE_KEYSTORE_PATH=/path/to/keystore.jks
-  PLAYSTORE_KEYSTORE_PASSWORD=your_password
-  PLAYSTORE_KEY_ALIAS=your_alias
-  PLAYSTORE_KEY_PASSWORD=your_key_password
-  ```
-**Note**: Only needed for release builds, not local development.
-
-## Security Best Practices
-
-1. **Never commit credentials to git**
-   - Use `.env` files (gitignored)
-   - Use CI/CD secrets (GitHub Secrets, GitLab CI variables)
-   - Use secret management services (AWS Secrets Manager, HashiCorp Vault)
-
-2. **Use least privilege**
-   - Grant only required permissions
-   - Use API key restrictions (IP, referrer)
-   - Rotate keys regularly
-
-3. **Separate environments**
-   - Use different keys for dev/staging/production
-   - Use sandbox/test keys where available
-   - Never use production keys in development
-
-4. **Monitor usage**
-   - Set up billing alerts
-   - Monitor API usage logs
-   - Review access logs regularly
-
-## Local Development
-
-**All services work locally without these credentials** using mock services:
-- SMS: Mock at `http://localhost:5000/sms`
-- Maps: Mock at `http://localhost:5000/maps`
-- VAHAN: Mock at `http://localhost:5000/vahan`
-- IRP: Mock at `http://localhost:5000/irp`
-- Firebase: Use emulator or disable notifications
-
-To start mocks:
+**Environment Variables**:
 ```bash
-cd packages/mocks
-pnpm run dev
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_S3_BUCKET=rodistaa-documents
+AWS_REGION=ap-south-1
 ```
 
-## CI/CD Setup
+**Current Status**: ⚠️ Using mock URLs  
+**Impact**: Document viewing will not work until configured  
+**Priority**: High
 
-For GitHub Actions, add secrets in repository settings:
-1. Go to Settings → Secrets and variables → Actions
-2. Add each credential as a secret
-3. Reference in workflows using `${{ secrets.SECRET_NAME }}`
+---
 
-Example:
-```yaml
-env:
-  GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+## 📧 NOTIFICATIONS - SMS & EMAIL
+
+### Service: Twilio (SMS) / AWS SNS
+
+**Purpose**: Send SMS notifications to shippers
+
+**Required Credentials**:
+- Twilio Account SID
+- Twilio Auth Token
+- Twilio Phone Number
+
+**Environment Variables**:
+```bash
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
 ```
 
-## Questions?
+**Current Status**: ⚠️ Using mock service  
+**Impact**: Notifications will not actually send  
+**Priority**: Medium
 
-If you need help setting up any of these services, contact the DevOps team or refer to:
-- `docs/dev-setup.md` - Development setup guide
-- `VERIFY_LOCAL.md` - Local verification guide
-- Service-specific documentation in `packages/*/README.md`
+### Service: SendGrid / AWS SES (Email)
 
+**Purpose**: Send email notifications
+
+**Required Credentials**:
+- SendGrid API Key or AWS SES credentials
+
+**Environment Variables**:
+```bash
+SENDGRID_API_KEY=your_api_key
+# OR
+AWS_SES_REGION=ap-south-1
+```
+
+**Current Status**: ⚠️ Using mock service  
+**Impact**: Email notifications will not send  
+**Priority**: Medium
+
+---
+
+## 🗺️ MAPS & GEOCODING
+
+### Service: Google Maps API / OpenStreetMap
+
+**Purpose**: Display shipper locations, routes, geocoding
+
+**Required Credentials**:
+- Google Maps API Key (if using Google Maps)
+- OR OpenStreetMap setup (free, no key required)
+
+**Environment Variables**:
+```bash
+GOOGLE_MAPS_API_KEY=your_api_key
+# OR
+MAP_PROVIDER=osm  # Use OpenStreetMap (default)
+```
+
+**Current Status**: ✅ Using OpenStreetMap (no credentials needed)  
+**Impact**: None (OSM works out of the box)  
+**Priority**: Low (optional upgrade to Google Maps)
+
+---
+
+## 💳 PAYMENT GATEWAY (FOR FUTURE)
+
+### Service: Razorpay / Stripe
+
+**Purpose**: Process ledger top-ups, payments
+
+**Required Credentials**:
+- Razorpay API Key
+- Razorpay API Secret
+
+**Environment Variables**:
+```bash
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+```
+
+**Current Status**: ⚠️ Mock payment gateway  
+**Impact**: No real payments processed  
+**Priority**: High (when going live with payments)
+
+---
+
+## 🔒 DATABASE ENCRYPTION
+
+### Service: AWS KMS / Vault
+
+**Purpose**: Encrypt sensitive PII (mobile numbers, Aadhaar)
+
+**Required**:
+- Encryption key
+- Key management service
+
+**Environment Variables**:
+```bash
+ENCRYPTION_KEY=your_32_byte_key
+# OR
+AWS_KMS_KEY_ID=your_kms_key_id
+```
+
+**Current Status**: ⚠️ Not implemented  
+**Impact**: PII stored in plaintext (development only)  
+**Priority**: Critical (before production)
+
+---
+
+## 📊 MONITORING & LOGGING
+
+### Service: DataDog / CloudWatch
+
+**Purpose**: Monitor API performance, errors, usage
+
+**Required Credentials**:
+- DataDog API Key
+- OR AWS CloudWatch access
+
+**Environment Variables**:
+```bash
+DATADOG_API_KEY=your_api_key
+# OR use AWS CloudWatch (already configured if on AWS)
+```
+
+**Current Status**: ⚠️ Console logging only  
+**Impact**: No production monitoring  
+**Priority**: High (for production)
+
+---
+
+## 🎬 NEXT STEPS
+
+### Immediate (Before Production):
+1. ✅ Configure AWS S3 for document storage
+2. ✅ Set up database encryption for PII
+3. ✅ Configure email service (SendGrid/SES)
+
+### Important (Within 1 Week):
+4. ✅ Set up SMS service (Twilio)
+5. ✅ Configure monitoring (DataDog/CloudWatch)
+6. ✅ Set up payment gateway (Razorpay)
+
+### Optional (Future Enhancement):
+7. Switch to Google Maps API (better routing)
+8. Add real-time notifications (Firebase)
+9. Set up CDN for document delivery
+
+---
+
+## 📝 NOTES
+
+- All external services are currently mocked for development
+- The application will work without these services but with limited functionality
+- Before deploying to production, configure at minimum: S3, encryption, and monitoring
+- Use `.env.example` as a template for environment variables
+
+---
+
+**Last Updated**: December 4, 2025  
+**Status**: Development Environment (Mocked Services)  
+**Action Owner**: DevOps / Infrastructure Team
