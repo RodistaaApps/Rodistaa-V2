@@ -10,6 +10,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "echo 'No tests configured for design-system yet'",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
     "figma:sync": "cd ../design-system-automation && pnpm figma:sync",
     "tokens:generate": "cd ../design-system-automation && pnpm tokens:generate",
     "tokens:validate": "cd ../design-system-automation && pnpm tokens:validate",
