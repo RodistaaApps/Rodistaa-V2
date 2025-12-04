@@ -178,21 +178,23 @@ export const TruckCardWeb: React.FC<TruckCardWebProps> = ({
         >
           {onViewDetails && (
             <RButtonWeb
-              label="View Details"
               variant="secondary"
               size="small"
               onClick={onViewDetails}
               style={{ flex: 1 }}
-            />
+            >
+              View Details
+            </RButtonWeb>
           )}
           {onManage && (
             <RButtonWeb
-              label="Manage"
               variant="primary"
               size="small"
               onClick={onManage}
               style={{ flex: 1 }}
-            />
+            >
+              Manage
+            </RButtonWeb>
           )}
         </div>
       )}
