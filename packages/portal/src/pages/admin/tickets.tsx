@@ -213,10 +213,8 @@ const TicketsPage: React.FC = () => {
       title: "Ticket ID",
       dataIndex: "id",
       key: "id",
-      width: 110,
-      fixed: "left" as const,
       render: (id: string, record: Ticket) => (
-        <div style={{ paddingLeft: "4px" }}>
+        <div style={{ minWidth: "90px" }}>
           <div>
             <a
               style={{
@@ -224,6 +222,7 @@ const TicketsPage: React.FC = () => {
                 fontWeight: 600,
                 color: "#1890ff",
                 fontSize: "13px",
+                whiteSpace: "nowrap",
               }}
               onClick={() => setSelectedTicketId(id)}
             >
@@ -243,7 +242,6 @@ const TicketsPage: React.FC = () => {
       title: "Title",
       dataIndex: "title",
       key: "title",
-      width: 300,
       ellipsis: true,
       render: (title: string) => (
         <span style={{ color: textPrimary, fontWeight: 500 }}>{title}</span>
@@ -252,7 +250,6 @@ const TicketsPage: React.FC = () => {
     {
       title: "Linked To",
       key: "linked",
-      width: 140,
       render: (_: any, record: Ticket) =>
         record.linked_type && record.linked_id ? (
           <div>
@@ -270,7 +267,6 @@ const TicketsPage: React.FC = () => {
     {
       title: "Owner",
       key: "owner",
-      width: 150,
       render: (_: any, record: Ticket) =>
         record.owner_role ? (
           <div>
@@ -297,7 +293,6 @@ const TicketsPage: React.FC = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 140,
       render: (status: string) => (
         <Tag color={getStatusColor(status)}>{status.replace(/_/g, " ")}</Tag>
       ),
@@ -305,7 +300,6 @@ const TicketsPage: React.FC = () => {
     {
       title: "SLA",
       key: "sla",
-      width: 140,
       render: (_: any, record: Ticket) =>
         getSLAIndicator(record.sla_status, record.sla_due_at),
     },
@@ -313,7 +307,6 @@ const TicketsPage: React.FC = () => {
       title: "Tags",
       dataIndex: "tags",
       key: "tags",
-      width: 150,
       render: (tags: string[]) => (
         <Space wrap>
           {tags.slice(0, 2).map((tag) => (
@@ -331,7 +324,6 @@ const TicketsPage: React.FC = () => {
       title: "Created",
       dataIndex: "created_at",
       key: "created_at",
-      width: 120,
       render: (timestamp: string) => (
         <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
           <span style={{ color: textSecondary }}>
@@ -527,7 +519,8 @@ const TicketsPage: React.FC = () => {
                 limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ y: 600, x: 1400 }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
           />
         </Card>
       </div>

@@ -173,8 +173,6 @@ const BookingsPage: React.FC = () => {
       title: "Booking ID",
       dataIndex: "id",
       key: "id",
-      width: 110,
-      fixed: "left" as const,
       render: (id: string) => (
         <a
           style={{
@@ -182,8 +180,8 @@ const BookingsPage: React.FC = () => {
             fontWeight: 600,
             color: "#1890ff",
             fontSize: "13px",
-            paddingLeft: "4px",
             display: "inline-block",
+            whiteSpace: "nowrap",
           }}
           onClick={() => setSelectedBookingId(id)}
         >
@@ -195,11 +193,10 @@ const BookingsPage: React.FC = () => {
       title: "Posted Date",
       dataIndex: "posted_at",
       key: "posted_at",
-      width: 140,
       sorter: true,
       render: (timestamp: string) => (
         <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
-          <span style={{ color: textSecondary }}>
+          <span style={{ color: textSecondary, whiteSpace: "nowrap" }}>
             {dayjs(timestamp).fromNow()}
           </span>
         </Tooltip>
@@ -208,13 +205,24 @@ const BookingsPage: React.FC = () => {
     {
       title: "Route",
       key: "route",
-      width: 250,
       render: (_: any, record: Booking) => (
-        <div>
-          <div style={{ fontWeight: 600, color: textPrimary }}>
+        <div style={{ minWidth: "200px" }}>
+          <div
+            style={{
+              fontWeight: 600,
+              color: textPrimary,
+              whiteSpace: "nowrap",
+            }}
+          >
             {record.pickup_city} → {record.drop_city}
           </div>
-          <div style={{ fontSize: "12px", color: textSecondary }}>
+          <div
+            style={{
+              fontSize: "12px",
+              color: textSecondary,
+              whiteSpace: "nowrap",
+            }}
+          >
             {record.distance_km} km • {record.pickup_state} →{" "}
             {record.drop_state}
           </div>
@@ -224,9 +232,8 @@ const BookingsPage: React.FC = () => {
     {
       title: "Material & Weight",
       key: "load",
-      width: 180,
       render: (_: any, record: Booking) => (
-        <div>
+        <div style={{ minWidth: "130px" }}>
           <div style={{ color: textPrimary }}>{record.material}</div>
           <div style={{ fontSize: "12px", color: textSecondary }}>
             {(record.weight_kg / 1000).toFixed(1)} MT
@@ -237,7 +244,6 @@ const BookingsPage: React.FC = () => {
     {
       title: "Expected Price",
       key: "expected_price",
-      width: 140,
       align: "right" as const,
       render: (_: any, record: Booking) => (
         <div style={{ fontSize: "13px" }}>
@@ -253,7 +259,6 @@ const BookingsPage: React.FC = () => {
     {
       title: "Lowest Bid",
       key: "lowest_bid",
-      width: 160,
       align: "right" as const,
       render: (_: any, record: Booking) =>
         record.lowest_bid_amount ? (
@@ -275,7 +280,6 @@ const BookingsPage: React.FC = () => {
       title: "Bids",
       dataIndex: "bids_count",
       key: "bids_count",
-      width: 80,
       align: "center" as const,
       render: (count: number) =>
         count > 0 ? (
@@ -288,7 +292,6 @@ const BookingsPage: React.FC = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 120,
       render: (status: string) => (
         <Tag color={getStatusColor(status)}>{status.toUpperCase()}</Tag>
       ),
@@ -297,7 +300,6 @@ const BookingsPage: React.FC = () => {
       title: "Shipper",
       dataIndex: "shipper_name",
       key: "shipper_name",
-      width: 150,
       render: (name: string, record: Booking) => (
         <div>
           <div style={{ color: textPrimary }}>{name}</div>
@@ -317,7 +319,6 @@ const BookingsPage: React.FC = () => {
       title: "Shipment",
       dataIndex: "created_shipment_id",
       key: "created_shipment_id",
-      width: 130,
       render: (shipmentId: string | null) =>
         shipmentId ? (
           <a style={{ fontFamily: "monospace", fontSize: "13px" }}>
@@ -476,7 +477,8 @@ const BookingsPage: React.FC = () => {
                 limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ y: 600, x: 1600 }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
           />
         </Card>
 

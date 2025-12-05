@@ -155,8 +155,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Shipment ID",
       dataIndex: "id",
       key: "id",
-      width: 110,
-      fixed: "left" as const,
       render: (id: string) => (
         <a
           style={{
@@ -164,8 +162,8 @@ const ShipmentsPage: React.FC = () => {
             fontWeight: 600,
             color: "#1890ff",
             fontSize: "13px",
-            paddingLeft: "4px",
             display: "inline-block",
+            whiteSpace: "nowrap",
           }}
           onClick={() => setSelectedShipmentId(id)}
         >
@@ -177,15 +175,21 @@ const ShipmentsPage: React.FC = () => {
       title: "Booking",
       dataIndex: "booking_id",
       key: "booking_id",
-      width: 120,
       render: (bookingId: string) => (
-        <a style={{ fontFamily: "monospace", fontSize: "13px" }}>{bookingId}</a>
+        <a
+          style={{
+            fontFamily: "monospace",
+            fontSize: "13px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {bookingId}
+        </a>
       ),
     },
     {
       title: "Operator",
       key: "operator",
-      width: 160,
       render: (_: any, record: Shipment) => (
         <div>
           <div style={{ color: textPrimary }}>{record.operator_name}</div>
@@ -205,7 +209,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Truck",
       dataIndex: "truck_id",
       key: "truck_id",
-      width: 120,
       render: (truckId: string) => (
         <span style={{ fontFamily: "monospace", color: textPrimary }}>
           {truckId}
@@ -216,7 +219,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Driver",
       dataIndex: "driver_name",
       key: "driver_name",
-      width: 140,
       render: (name: string) => (
         <span style={{ color: textPrimary }}>{name}</span>
       ),
@@ -224,7 +226,6 @@ const ShipmentsPage: React.FC = () => {
     {
       title: "Route",
       key: "route",
-      width: 200,
       render: (_: any, record: Shipment) => (
         <div>
           <div style={{ fontWeight: 600, color: textPrimary }}>
@@ -240,7 +241,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 120,
       render: (status: string) => (
         <Tag color={getStatusColor(status)}>
           {status.replace("_", " ").toUpperCase()}
@@ -251,7 +251,6 @@ const ShipmentsPage: React.FC = () => {
       title: "POD",
       dataIndex: "pod_uploaded",
       key: "pod_uploaded",
-      width: 100,
       align: "center" as const,
       render: (uploaded: boolean) =>
         uploaded ? (
@@ -266,7 +265,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Payment",
       dataIndex: "payment_state",
       key: "payment_state",
-      width: 140,
       render: (state: string, record: Shipment) => (
         <div>
           <Tag color={getPaymentColor(state)}>
@@ -285,7 +283,6 @@ const ShipmentsPage: React.FC = () => {
       title: "Last Ping",
       dataIndex: "last_ping_at",
       key: "last_ping_at",
-      width: 120,
       render: (timestamp: string) => (
         <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
           <span style={{ color: textSecondary }}>
@@ -398,7 +395,8 @@ const ShipmentsPage: React.FC = () => {
                 limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ y: 600, x: 1500 }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
           />
         </Card>
 

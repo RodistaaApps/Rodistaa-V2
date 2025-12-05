@@ -158,7 +158,6 @@ export function DriversList({
       title: "User ID / Role",
       dataIndex: "id",
       key: "id",
-      width: 140,
       render: (id: string, record: Driver) => (
         <div
           style={{ cursor: "pointer" }}
@@ -184,7 +183,6 @@ export function DriversList({
       title: "Name & Mobile",
       dataIndex: "name",
       key: "name",
-      width: 200,
       sorter: true,
       render: (name: string, record: Driver) => (
         <div>
@@ -198,7 +196,6 @@ export function DriversList({
     {
       title: "Assigned Operator(s)",
       key: "operators",
-      width: 180,
       render: (_: any, record: Driver) => (
         <div>
           {record.operators.length > 0 ? (
@@ -222,7 +219,6 @@ export function DriversList({
       title: "Assigned Truck",
       dataIndex: "assigned_truck",
       key: "assigned_truck",
-      width: 130,
       render: (truck: string | null) => (
         <span
           style={{
@@ -239,7 +235,6 @@ export function DriversList({
       title: "DL Expiry",
       dataIndex: "dl_expiry",
       key: "dl_expiry",
-      width: 130,
       sorter: true,
       render: (expiry: string) => (
         <div>
@@ -263,7 +258,6 @@ export function DriversList({
       title: "Availability",
       dataIndex: "availability",
       key: "availability",
-      width: 110,
       render: (availability: string) => (
         <Tag color={getAvailabilityColor(availability)}>
           {availability.replace("_", " ").toUpperCase()}
@@ -273,7 +267,6 @@ export function DriversList({
     {
       title: "Last Ping",
       key: "last_ping",
-      width: 140,
       sorter: true,
       render: (_: any, record: Driver) => (
         <div>
@@ -294,7 +287,6 @@ export function DriversList({
       title: "Trips (30d)",
       dataIndex: "trips_30d",
       key: "trips_30d",
-      width: 100,
       align: "center" as const,
       sorter: true,
       render: (trips: number) => (
@@ -305,7 +297,6 @@ export function DriversList({
       title: "Behaviour",
       dataIndex: "behaviour_score",
       key: "behaviour_score",
-      width: 110,
       align: "center" as const,
       sorter: true,
       render: (score: number, record: Driver) => (
@@ -453,7 +444,8 @@ export function DriversList({
           showTotal: (total) => `Total ${total} drivers`,
         }}
         onChange={handleTableChange}
-        scroll={{ x: 1500 }}
+        scroll={{ y: 600 }}
+        tableLayout="auto"
       />
     </div>
   );
