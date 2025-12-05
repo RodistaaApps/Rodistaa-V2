@@ -448,7 +448,16 @@ const BookingsPage: React.FC = () => {
 
         {/* Table */}
         <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
+          <style jsx global>{`
+            .bookings-table .ant-table-selection-column {
+              padding-right: 8px !important;
+            }
+            .bookings-table .ant-table-cell:first-child + .ant-table-cell {
+              padding-left: 8px !important;
+            }
+          `}</style>
           <Table
+            className="bookings-table"
             columns={columns}
             dataSource={bookings}
             rowKey="id"

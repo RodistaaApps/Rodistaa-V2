@@ -453,7 +453,16 @@ const TrucksListPage: React.FC = () => {
 
         {/* Trucks Table */}
         <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
+          <style jsx global>{`
+            .fleet-table .ant-table-selection-column {
+              padding-right: 8px !important;
+            }
+            .fleet-table .ant-table-cell:first-child + .ant-table-cell {
+              padding-left: 8px !important;
+            }
+          `}</style>
           <Table
+            className="fleet-table"
             columns={columns}
             dataSource={trucks}
             rowKey="id"
