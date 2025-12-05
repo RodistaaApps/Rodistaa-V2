@@ -376,10 +376,13 @@ const ShipmentsPage: React.FC = () => {
         <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
           <style jsx global>{`
             .shipments-table .ant-table-selection-column {
-              padding-right: 8px !important;
+              padding-right: 4px !important;
             }
             .shipments-table .ant-table-cell:first-child + .ant-table-cell {
-              padding-left: 8px !important;
+              padding-left: 4px !important;
+            }
+            .shipments-table .ant-table-tbody > tr > td:nth-child(2) {
+              padding-left: 4px !important;
             }
           `}</style>
           <Table
