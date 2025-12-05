@@ -1,40 +1,69 @@
 /**
- * Fleet Management Dashboard
+ * Fleet Management - Trucks List
  * 
- * Main landing page for fleet management showing:
- * - Fleet health KPIs (total, allowed, blocked, pending)
- * - Provider performance metrics
- * - Ticket SLA status
- * - Top RTOs by blocked count
- * - Recent activity feed
- * - Date range selector for analytics
+ * List of all trucks with compliance status, operator info, and actions.
+ * Similar structure to Bookings page.
  */
 
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Progress, Table, Tag, Space, DatePicker, Select } from 'antd';
 import {
+  Table,
+  Card,
+  Input,
+  Select,
+  Button,
+  Tag,
+  Space,
+  Badge,
+  Tooltip,
+  message,
+} from 'antd';
+import {
+  SearchOutlined,
+  FilterOutlined,
   CarOutlined,
   CheckCircleOutlined,
-  StopOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
+  CloseCircleOutlined,
   WarningOutlined,
-  RiseOutlined,
-  FallOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { FleetKPIs, ProviderStats, RTOStats } from '@/modules/fleet/types';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
-const FleetDashboard: React.FC = () => {
+dayjs.extend(relativeTime);
+
+interface Truck {
+  id: string;
+  registration: string;
+  operator_id: string;
+  operator_name: string;
+  truck_type: string;
+  capacity_mt: number;
+  rto_code: string;
+  rc_expiry: string;
+  insurance_expiry: string;
+  permit_expiry: string;
+  fitness_expiry: string;
+  compliance_status: 'verified' | 'pending' | 'expired' | 'blocked';
+  last_trip_date: string | null;
+  total_trips: number;
+  created_at: string;
+}
+
+const TrucksListPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [kpis, setKPIs] = useState<FleetKPIs | null>(null);
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
-    dayjs().subtract(30, 'days'),
-    dayjs(),
-  ]);
+  const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [total, setTotal] = useState(0);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 25,
+    status: undefined as string | undefined,
+    search: '',
+  });
 
   const isDark = theme === 'dark';
   const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
@@ -44,100 +73,219 @@ const FleetDashboard: React.FC = () => {
   const border = isDark ? '#2D3748' : '#E5E7EB';
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [dateRange]);
+    fetchTrucks();
+  }, [filters]);
 
-  const fetchDashboardData = async () => {
+  const fetchTrucks = async () => {
     setLoading(true);
     try {
-      // TODO: Fetch from /admin/analytics/dashboard
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const mockKPIs: FleetKPIs = {
-        totalTrucks: 1248,
-        allowedTrucks: 1156,
-        blockedTrucks: 67,
-        pendingVerifications: 25,
-        allowedRatio: 92.6,
-        providerSuccessRate: 97.8,
-        avgVerificationTime: 45, // minutes
-        ticketsSLACompliance: 94.5,
-      };
+      const mockTrucks: Truck[] = [
+        {
+          id: 'TRK-001',
+          registration: 'DL 01 AB 1234',
+          operator_id: 'OP-001',
+          operator_name: 'ABC Transport',
+          truck_type: 'Container 20ft',
+          capacity_mt: 10,
+          rto_code: 'DL',
+          rc_expiry: '2026-03-15',
+          insurance_expiry: '2025-06-30',
+          permit_expiry: '2025-12-31',
+          fitness_expiry: '2026-01-20',
+          compliance_status: 'verified',
+          last_trip_date: '2025-12-04T10:00:00Z',
+          total_trips: 234,
+          created_at: '2023-01-15T08:00:00Z',
+        },
+        {
+          id: 'TRK-002',
+          registration: 'HR 26 BX 5678',
+          operator_id: 'OP-002',
+          operator_name: 'XYZ Logistics',
+          truck_type: 'Open Body 14ft',
+          capacity_mt: 7.5,
+          rto_code: 'HR',
+          rc_expiry: '2025-08-20',
+          insurance_expiry: '2025-05-10',
+          permit_expiry: '2025-11-30',
+          fitness_expiry: '2025-09-15',
+          compliance_status: 'pending',
+          last_trip_date: '2025-11-28T14:30:00Z',
+          total_trips: 156,
+          created_at: '2023-06-20T10:00:00Z',
+        },
+        {
+          id: 'TRK-003',
+          registration: 'MH 12 CD 9012',
+          operator_id: 'OP-003',
+          operator_name: 'Mumbai Transport Co.',
+          truck_type: 'Trailer 32ft',
+          capacity_mt: 25,
+          rto_code: 'MH',
+          rc_expiry: '2025-02-28',
+          insurance_expiry: '2024-12-15',
+          permit_expiry: '2025-03-31',
+          fitness_expiry: '2025-04-10',
+          compliance_status: 'expired',
+          last_trip_date: '2025-11-15T16:00:00Z',
+          total_trips: 89,
+          created_at: '2024-02-10T12:00:00Z',
+        },
+      ];
 
-      setKPIs(mockKPIs);
+      setTrucks(mockTrucks);
+      setTotal(1248);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+      console.error('Failed to fetch trucks:', error);
+      message.error('Failed to load trucks');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!kpis) {
-    return (
-      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-        <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
-          <div style={{ color: textPrimary }}>Loading dashboard...</div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const getComplianceColor = (status: string) => {
+    const colors = {
+      verified: 'green',
+      pending: 'orange',
+      expired: 'red',
+      blocked: 'volcano',
+    };
+    return colors[status as keyof typeof colors] || 'default';
+  };
 
-  // Provider stats mock data
-  const providerStats: ProviderStats[] = [
-    { provider: 'VAHAN', totalRequests: 856, successCount: 842, failureCount: 14, successRate: 98.4, avgLatency: 1200, lastFailure: null },
-    { provider: 'Surepass', totalRequests: 392, successCount: 378, failureCount: 14, successRate: 96.4, avgLatency: 850, lastFailure: '2025-12-04T15:30:00Z' },
-  ];
-
-  // Top RTOs by blocked count
-  const topRTOs: RTOStats[] = [
-    { rto_code: 'DL', total_trucks: 345, blocked_trucks: 23, blocked_ratio: 6.7 },
-    { rto_code: 'HR', total_trucks: 189, blocked_trucks: 12, blocked_ratio: 6.3 },
-    { rto_code: 'UP', total_trucks: 267, blocked_trucks: 15, blocked_ratio: 5.6 },
-    { rto_code: 'PB', total_trucks: 123, blocked_trucks: 6, blocked_ratio: 4.9 },
-    { rto_code: 'RJ', total_trucks: 98, blocked_trucks: 4, blocked_ratio: 4.1 },
-  ];
-
-  const rtoColumns = [
+  const columns = [
     {
-      title: 'RTO Code',
+      title: 'Registration',
+      dataIndex: 'registration',
+      key: 'registration',
+      width: 150,
+      fixed: 'left' as const,
+      render: (reg: string, record: Truck) => (
+        <Space direction="vertical" size={0}>
+          <a style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}>
+            {reg}
+          </a>
+          <span style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+            {record.id}
+          </span>
+        </Space>
+      ),
+    },
+    {
+      title: 'Operator',
+      key: 'operator',
+      width: 180,
+      render: (_: any, record: Truck) => (
+        <div>
+          <div style={{ color: textPrimary, fontWeight: 500 }}>{record.operator_name}</div>
+          <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+            {record.operator_id}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Type & Capacity',
+      key: 'type',
+      width: 160,
+      render: (_: any, record: Truck) => (
+        <div>
+          <div style={{ color: textPrimary }}>{record.truck_type}</div>
+          <div style={{ fontSize: '11px', color: textSecondary }}>
+            {record.capacity_mt} MT
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'RTO',
       dataIndex: 'rto_code',
       key: 'rto_code',
+      width: 80,
       render: (code: string) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: textPrimary }}>
-          {code}
-        </span>
+        <Tag style={{ fontFamily: 'monospace', fontWeight: 600 }}>{code}</Tag>
       ),
     },
     {
-      title: 'Total Trucks',
-      dataIndex: 'total_trucks',
-      key: 'total_trucks',
-      align: 'right' as const,
-      render: (count: number) => (
-        <span style={{ color: textPrimary }}>{count}</span>
+      title: 'Compliance',
+      dataIndex: 'compliance_status',
+      key: 'compliance_status',
+      width: 120,
+      render: (status: string) => (
+        <Tag color={getComplianceColor(status)} icon={
+          status === 'verified' ? <CheckCircleOutlined /> :
+          status === 'expired' ? <CloseCircleOutlined /> :
+          <WarningOutlined />
+        }>
+          {status.toUpperCase()}
+        </Tag>
       ),
     },
     {
-      title: 'Blocked',
-      dataIndex: 'blocked_trucks',
-      key: 'blocked_trucks',
+      title: 'RC Expiry',
+      dataIndex: 'rc_expiry',
+      key: 'rc_expiry',
+      width: 120,
+      render: (date: string) => {
+        const isExpiringSoon = dayjs(date).diff(dayjs(), 'day') < 30;
+        const isExpired = dayjs(date).isBefore(dayjs());
+        return (
+          <Tooltip title={dayjs(date).format('DD MMM YYYY')}>
+            <span style={{
+              color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : textPrimary,
+              fontWeight: isExpired || isExpiringSoon ? 600 : 400,
+            }}>
+              {dayjs(date).format('DD MMM YY')}
+            </span>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: 'Insurance',
+      dataIndex: 'insurance_expiry',
+      key: 'insurance_expiry',
+      width: 120,
+      render: (date: string) => {
+        const isExpiringSoon = dayjs(date).diff(dayjs(), 'day') < 30;
+        const isExpired = dayjs(date).isBefore(dayjs());
+        return (
+          <Tooltip title={dayjs(date).format('DD MMM YYYY')}>
+            <span style={{
+              color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : textPrimary,
+              fontWeight: isExpired || isExpiringSoon ? 600 : 400,
+            }}>
+              {dayjs(date).format('DD MMM YY')}
+            </span>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: 'Total Trips',
+      dataIndex: 'total_trips',
+      key: 'total_trips',
+      width: 100,
       align: 'right' as const,
-      render: (count: number) => (
-        <Tag color="red">{count}</Tag>
+      render: (trips: number) => (
+        <span style={{ color: textPrimary, fontWeight: 600 }}>{trips}</span>
       ),
     },
     {
-      title: 'Blocked %',
-      dataIndex: 'blocked_ratio',
-      key: 'blocked_ratio',
-      align: 'right' as const,
-      render: (ratio: number) => (
-        <span style={{ 
-          color: ratio > 5 ? '#EF4444' : textSecondary,
-          fontWeight: ratio > 5 ? 600 : 400,
-        }}>
-          {ratio.toFixed(1)}%
-        </span>
+      title: 'Last Trip',
+      dataIndex: 'last_trip_date',
+      key: 'last_trip_date',
+      width: 120,
+      render: (date: string | null) => (
+        date ? (
+          <Tooltip title={dayjs(date).format('DD MMM YYYY, HH:mm')}>
+            <span style={{ color: textSecondary }}>{dayjs(date).fromNow()}</span>
+          </Tooltip>
+        ) : (
+          <span style={{ color: textSecondary }}>—</span>
+        )
       ),
     },
   ];
@@ -146,174 +294,98 @@ const FleetDashboard: React.FC = () => {
     <AdminLayout theme={theme} toggleTheme={toggleTheme}>
       <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
         {/* Header */}
-        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, margin: 0 }}>
-              Fleet Management
-            </h1>
-            <div style={{ color: textSecondary, fontSize: '14px', marginTop: '4px' }}>
-              Compliance, verification, and operational control
-            </div>
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, margin: 0 }}>
+            <CarOutlined style={{ marginRight: '12px' }} />
+            Fleet Management
+          </h1>
+          <div style={{ color: textSecondary, fontSize: '14px', marginTop: '4px' }}>
+            Truck compliance, verification, and operational control
           </div>
-          <DatePicker.RangePicker
-            value={dateRange}
-            onChange={(dates) => dates && setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
-            presets={[
-              { label: 'Last 7 Days', value: [dayjs().subtract(7, 'days'), dayjs()] },
-              { label: 'Last 30 Days', value: [dayjs().subtract(30, 'days'), dayjs()] },
-              { label: 'Last 90 Days', value: [dayjs().subtract(90, 'days'), dayjs()] },
-            ]}
-          />
         </div>
 
-        {/* KPI Cards */}
-        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-          <Col xs={24} sm={12} md={6}>
-            <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
-              <Statistic
-                title={<span style={{ color: textSecondary }}>Total Fleet</span>}
-                value={kpis.totalTrucks}
-                prefix={<CarOutlined style={{ color: '#3B82F6' }} />}
-                valueStyle={{ color: textPrimary, fontWeight: 'bold' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
-              <Statistic
-                title={<span style={{ color: textSecondary }}>Allowed</span>}
-                value={kpis.allowedTrucks}
-                prefix={<CheckCircleOutlined style={{ color: '#10B981' }} />}
-                suffix={<span style={{ fontSize: '14px', color: textSecondary }}>({kpis.allowedRatio.toFixed(1)}%)</span>}
-                valueStyle={{ color: '#10B981', fontWeight: 'bold' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
-              <Statistic
-                title={<span style={{ color: textSecondary }}>Blocked</span>}
-                value={kpis.blockedTrucks}
-                prefix={<StopOutlined style={{ color: '#EF4444' }} />}
-                valueStyle={{ color: '#EF4444', fontWeight: 'bold' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
-              <Statistic
-                title={<span style={{ color: textSecondary }}>Pending Verification</span>}
-                value={kpis.pendingVerifications}
-                prefix={<ClockCircleOutlined style={{ color: '#F59E0B' }} />}
-                valueStyle={{ color: '#F59E0B', fontWeight: 'bold' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Provider Performance & Ticket SLA */}
-        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-          <Col xs={24} md={12}>
-            <Card 
-              title={<span style={{ color: textPrimary }}>Provider Performance</span>}
-              style={{ background: bgCard, border: `1px solid ${border}` }}
+        {/* Filters */}
+        <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
+          <Space wrap>
+            <Input
+              placeholder="Search registration, operator, truck ID..."
+              prefix={<SearchOutlined />}
+              style={{ width: 300 }}
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              allowClear
+            />
+            <Select
+              placeholder="Compliance Status"
+              style={{ width: 160 }}
+              allowClear
+              value={filters.status}
+              onChange={(value) => setFilters(prev => ({ ...prev, status: value, page: 1 }))}
+              options={[
+                { label: 'Verified', value: 'verified' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Expired', value: 'expired' },
+                { label: 'Blocked', value: 'blocked' },
+              ]}
+            />
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() => setFilters({ page: 1, limit: 25, status: undefined, search: '' })}
             >
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {providerStats.map(provider => (
-                  <div key={provider.provider}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ color: textPrimary, fontWeight: 600 }}>{provider.provider}</span>
-                      <span style={{ color: provider.successRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 600 }}>
-                        {provider.successRate.toFixed(1)}%
-                      </span>
-                    </div>
-                    <Progress 
-                      percent={provider.successRate} 
-                      strokeColor={provider.successRate >= 95 ? '#10B981' : '#F59E0B'}
-                      showInfo={false}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: textSecondary, marginTop: '4px' }}>
-                      <span>{provider.successCount}/{provider.totalRequests} successful</span>
-                      <span>Avg: {provider.avgLatency}ms</span>
-                    </div>
-                  </div>
-                ))}
+              Clear Filters
+            </Button>
+          </Space>
+        </Card>
+
+        {/* Bulk Actions */}
+        {selectedRowKeys.length > 0 && (
+          <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Badge count={selectedRowKeys.length} style={{ backgroundColor: '#3B82F6' }}>
+                <span style={{ color: textPrimary, fontWeight: 600, paddingRight: '20px' }}>
+                  Selected
+                </span>
+              </Badge>
+              <Space>
+                <Button icon={<DownloadOutlined />}>Export Selected</Button>
+                <Button onClick={() => setSelectedRowKeys([])}>Clear</Button>
               </Space>
-            </Card>
-          </Col>
+            </div>
+          </Card>
+        )}
 
-          <Col xs={24} md={12}>
-            <Card 
-              title={<span style={{ color: textPrimary }}>Tickets & SLA</span>}
-              style={{ background: bgCard, border: `1px solid ${border}` }}
-            >
-              <Space direction="vertical" style={{ width: '100%', gap: '16px' }}>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: textSecondary }}>SLA Compliance</span>
-                    <span style={{ 
-                      color: kpis.ticketsSLACompliance >= 90 ? '#10B981' : '#EF4444',
-                      fontWeight: 600,
-                    }}>
-                      {kpis.ticketsSLACompliance.toFixed(1)}%
-                    </span>
-                  </div>
-                  <Progress 
-                    percent={kpis.ticketsSLACompliance} 
-                    strokeColor={kpis.ticketsSLACompliance >= 90 ? '#10B981' : '#EF4444'}
-                    status={kpis.ticketsSLACompliance >= 90 ? 'success' : 'exception'}
-                  />
-                </div>
-
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Statistic
-                      title={<span style={{ color: textSecondary, fontSize: '12px' }}>Open Tickets</span>}
-                      value={12}
-                      prefix={<FileTextOutlined style={{ color: '#3B82F6' }} />}
-                      valueStyle={{ color: textPrimary, fontSize: '20px' }}
-                    />
-                  </Col>
-                  <Col span={12}>
-                    <Statistic
-                      title={<span style={{ color: textSecondary, fontSize: '12px' }}>SLA Breached</span>}
-                      value={2}
-                      prefix={<WarningOutlined style={{ color: '#EF4444' }} />}
-                      valueStyle={{ color: '#EF4444', fontSize: '20px' }}
-                    />
-                  </Col>
-                </Row>
-              </Space>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Top RTOs by Blocked Count */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24}>
-            <Card 
-              title={<span style={{ color: textPrimary }}>Top RTOs by Blocked Trucks</span>}
-              style={{ background: bgCard, border: `1px solid ${border}` }}
-              extra={
-                <Tag color="red" icon={<WarningOutlined />}>
-                  High Risk Areas
-                </Tag>
-              }
-            >
-              <Table
-                columns={rtoColumns}
-                dataSource={topRTOs}
-                rowKey="rto_code"
-                pagination={false}
-                size="small"
-              />
-            </Card>
-          </Col>
-        </Row>
+        {/* Trucks Table */}
+        <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
+          <Table
+            columns={columns}
+            dataSource={trucks}
+            rowKey="id"
+            loading={loading}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: (keys) => setSelectedRowKeys(keys as string[]),
+            }}
+            pagination={{
+              current: filters.page,
+              pageSize: filters.limit,
+              total,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '25', '50', '100'],
+              showTotal: (total) => `Total ${total} trucks`,
+            }}
+            onChange={(pagination) => {
+              setFilters(prev => ({
+                ...prev,
+                page: pagination.current || 1,
+                limit: pagination.pageSize || 25,
+              }));
+            }}
+            scroll={{ x: 1400 }}
+          />
+        </Card>
       </div>
     </AdminLayout>
   );
 };
 
-export default FleetDashboard;
-
+export default TrucksListPage;
