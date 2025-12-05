@@ -80,6 +80,8 @@ const DriverDetailPage: React.FC = () => {
         dl_number: "AP-0920210012345",
         dl_expiry: "2027-08-15",
         availability: "on_trip",
+        availability_status: "on_trip",
+        kyc_status: "verified",
         last_ping: "2025-12-04T11:45:00Z",
         last_location: {
           city: "Vijayawada",
@@ -121,7 +123,7 @@ const DriverDetailPage: React.FC = () => {
         },
         recent_activities: [],
         acs_flags: [],
-      };
+      } as any;
 
       setDriver(mockDriver);
     } catch (error) {
