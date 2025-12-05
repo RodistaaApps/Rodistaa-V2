@@ -1,6 +1,6 @@
 /**
  * Tickets List Page
- * 
+ *
  * Admin view of all support tickets:
  * - Comprehensive filters (status, priority, owner, franchise, linked entity)
  * - Full-text search
@@ -9,7 +9,7 @@
  * - Create ticket CTA
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Table,
   Card,
@@ -23,7 +23,7 @@ import {
   message,
   Dropdown,
   MenuProps,
-} from 'antd';
+} from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
@@ -33,11 +33,11 @@ import {
   WarningOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
-} from '@ant-design/icons';
-import { AdminLayout } from '@/components/Layout/AdminLayout';
-import { useTheme } from '@/contexts/ThemeContext';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+} from "@ant-design/icons";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { useTheme } from "@/contexts/ThemeContext";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
@@ -48,12 +48,12 @@ interface Ticket {
   created_by_role: string;
   owner_id: string | null;
   owner_role: string | null;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   status: string;
   linked_type: string | null;
   linked_id: string | null;
   sla_due_at: string;
-  sla_status: 'on_track' | 'near_breach' | 'breached';
+  sla_status: "on_track" | "near_breach" | "breached";
   tags: string[];
   created_at: string;
 }
@@ -71,15 +71,15 @@ const TicketsPage: React.FC = () => {
     limit: 100,
     status: undefined as string | undefined,
     priority: undefined as string | undefined,
-    search: '',
+    search: "",
   });
 
-  const isDark = theme === 'dark';
-  const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
-  const bgCard = isDark ? '#151922' : '#FFFFFF';
-  const textPrimary = isDark ? '#FFFFFF' : '#0A0E14';
-  const textSecondary = isDark ? '#B4B9C5' : '#6B7280';
-  const border = isDark ? '#2D3748' : '#E5E7EB';
+  const isDark = theme === "dark";
+  const bgPrimary = isDark ? "#0A0E14" : "#F9FAFB";
+  const bgCard = isDark ? "#151922" : "#FFFFFF";
+  const textPrimary = isDark ? "#FFFFFF" : "#0A0E14";
+  const textSecondary = isDark ? "#B4B9C5" : "#6B7280";
+  const border = isDark ? "#2D3748" : "#E5E7EB";
 
   useEffect(() => {
     fetchTickets();
@@ -88,55 +88,55 @@ const TicketsPage: React.FC = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const mockTickets: Ticket[] = [
         {
-          id: 'TKT-001',
-          title: 'Payment not received for shipment SHP-001',
-          created_by_id: 'USR-20241',
-          created_by_role: 'driver',
-          owner_id: 'ADM-001',
-          owner_role: 'finance',
-          priority: 'HIGH',
-          status: 'IN_PROGRESS',
-          linked_type: 'shipment',
-          linked_id: 'SHP-001',
+          id: "TKT-001",
+          title: "Payment not received for shipment SHP-001",
+          created_by_id: "USR-20241",
+          created_by_role: "driver",
+          owner_id: "ADM-001",
+          owner_role: "finance",
+          priority: "HIGH",
+          status: "IN_PROGRESS",
+          linked_type: "shipment",
+          linked_id: "SHP-001",
           sla_due_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          sla_status: 'on_track',
-          tags: ['payment', 'urgent'],
+          sla_status: "on_track",
+          tags: ["payment", "urgent"],
           created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
         },
         {
-          id: 'TKT-002',
-          title: 'Truck KYC documents expired',
-          created_by_id: 'SYSTEM',
-          created_by_role: 'system',
-          owner_id: 'ADM-002',
-          owner_role: 'compliance_officer',
-          priority: 'MEDIUM',
-          status: 'OPEN',
-          linked_type: 'truck',
-          linked_id: 'DL01AB1234',
+          id: "TKT-002",
+          title: "Truck KYC documents expired",
+          created_by_id: "SYSTEM",
+          created_by_role: "system",
+          owner_id: "ADM-002",
+          owner_role: "compliance_officer",
+          priority: "MEDIUM",
+          status: "OPEN",
+          linked_type: "truck",
+          linked_id: "DL01AB1234",
           sla_due_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-          sla_status: 'on_track',
-          tags: ['kyc', 'compliance'],
+          sla_status: "on_track",
+          tags: ["kyc", "compliance"],
           created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
         },
         {
-          id: 'TKT-003',
-          title: 'POD mismatch reported by shipper',
-          created_by_id: 'USR-20242',
-          created_by_role: 'shipper',
+          id: "TKT-003",
+          title: "POD mismatch reported by shipper",
+          created_by_id: "USR-20242",
+          created_by_role: "shipper",
           owner_id: null,
-          owner_role: 'ops_manager',
-          priority: 'CRITICAL',
-          status: 'ESCALATED',
-          linked_type: 'shipment',
-          linked_id: 'SHP-002',
+          owner_role: "ops_manager",
+          priority: "CRITICAL",
+          status: "ESCALATED",
+          linked_type: "shipment",
+          linked_id: "SHP-002",
           sla_due_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          sla_status: 'breached',
-          tags: ['pod', 'dispute'],
+          sla_status: "breached",
+          tags: ["pod", "dispute"],
           created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
         },
       ];
@@ -144,8 +144,8 @@ const TicketsPage: React.FC = () => {
       setTickets(mockTickets);
       setTotal(45);
     } catch (error) {
-      console.error('Failed to fetch tickets:', error);
-      message.error('Failed to load tickets');
+      console.error("Failed to fetch tickets:", error);
+      message.error("Failed to load tickets");
     } finally {
       setLoading(false);
     }
@@ -153,33 +153,33 @@ const TicketsPage: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     const colors = {
-      LOW: 'default',
-      MEDIUM: 'blue',
-      HIGH: 'orange',
-      CRITICAL: 'red',
+      LOW: "default",
+      MEDIUM: "blue",
+      HIGH: "orange",
+      CRITICAL: "red",
     };
-    return colors[priority as keyof typeof colors] || 'default';
+    return colors[priority as keyof typeof colors] || "default";
   };
 
   const getStatusColor = (status: string) => {
     const colors = {
-      NEW: 'blue',
-      OPEN: 'cyan',
-      IN_PROGRESS: 'orange',
-      AWAITING_SHIPPER: 'purple',
-      AWAITING_OPERATOR: 'purple',
-      AWAITING_FINANCE: 'purple',
-      RESOLVED: 'green',
-      CLOSED: 'default',
-      ESCALATED: 'red',
+      NEW: "blue",
+      OPEN: "cyan",
+      IN_PROGRESS: "orange",
+      AWAITING_SHIPPER: "purple",
+      AWAITING_OPERATOR: "purple",
+      AWAITING_FINANCE: "purple",
+      RESOLVED: "green",
+      CLOSED: "default",
+      ESCALATED: "red",
     };
-    return colors[status as keyof typeof colors] || 'default';
+    return colors[status as keyof typeof colors] || "default";
   };
 
   const getSLAIndicator = (sla_status: string, sla_due_at: string) => {
-    const timeLeft = dayjs(sla_due_at).diff(dayjs(), 'minute');
-    
-    if (sla_status === 'breached') {
+    const timeLeft = dayjs(sla_due_at).diff(dayjs(), "minute");
+
+    if (sla_status === "breached") {
       return (
         <Tooltip title={`SLA breached ${dayjs(sla_due_at).fromNow()}`}>
           <Tag color="red" icon={<WarningOutlined />}>
@@ -188,8 +188,8 @@ const TicketsPage: React.FC = () => {
         </Tooltip>
       );
     }
-    
-    if (sla_status === 'near_breach') {
+
+    if (sla_status === "near_breach") {
       return (
         <Tooltip title={`${timeLeft} minutes remaining`}>
           <Tag color="orange" icon={<ClockCircleOutlined />}>
@@ -198,7 +198,7 @@ const TicketsPage: React.FC = () => {
         </Tooltip>
       );
     }
-    
+
     return (
       <Tooltip title={`${timeLeft} minutes remaining`}>
         <Tag color="green" icon={<CheckCircleOutlined />}>
@@ -210,29 +210,36 @@ const TicketsPage: React.FC = () => {
 
   const columns = [
     {
-      title: 'Ticket ID',
-      dataIndex: 'id',
-      key: 'id',
+      title: "Ticket ID",
+      dataIndex: "id",
+      key: "id",
       width: 120,
-      fixed: 'left' as const,
+      fixed: "left" as const,
       render: (id: string, record: Ticket) => (
         <Space direction="vertical" size={0}>
           <a
-            style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}
+            style={{
+              fontFamily: "monospace",
+              fontWeight: 600,
+              color: "#1890ff",
+            }}
             onClick={() => setSelectedTicketId(id)}
           >
             {id}
           </a>
-          <Tag color={getPriorityColor(record.priority)} style={{ fontSize: '10px' }}>
+          <Tag
+            color={getPriorityColor(record.priority)}
+            style={{ fontSize: "10px" }}
+          >
             {record.priority}
           </Tag>
         </Space>
       ),
     },
     {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
       width: 300,
       ellipsis: true,
       render: (title: string) => (
@@ -240,88 +247,93 @@ const TicketsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Linked To',
-      key: 'linked',
+      title: "Linked To",
+      key: "linked",
       width: 140,
-      render: (_: any, record: Ticket) => (
+      render: (_: any, record: Ticket) =>
         record.linked_type && record.linked_id ? (
           <div>
-            <div style={{ fontSize: '11px', color: textSecondary }}>
+            <div style={{ fontSize: "11px", color: textSecondary }}>
               {record.linked_type}
             </div>
-            <a style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+            <a style={{ fontFamily: "monospace", fontSize: "13px" }}>
               {record.linked_id}
             </a>
           </div>
         ) : (
           <span style={{ color: textSecondary }}>—</span>
-        )
-      ),
+        ),
     },
     {
-      title: 'Owner',
-      key: 'owner',
+      title: "Owner",
+      key: "owner",
       width: 150,
-      render: (_: any, record: Ticket) => (
+      render: (_: any, record: Ticket) =>
         record.owner_role ? (
           <div>
-            <div style={{ fontSize: '12px', color: textPrimary }}>
-              {record.owner_role.replace(/_/g, ' ')}
+            <div style={{ fontSize: "12px", color: textPrimary }}>
+              {record.owner_role.replace(/_/g, " ")}
             </div>
             {record.owner_id && (
-              <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: textSecondary,
+                  fontFamily: "monospace",
+                }}
+              >
                 {record.owner_id}
               </div>
             )}
           </div>
         ) : (
           <Tag color="default">Unassigned</Tag>
-        )
-      ),
+        ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       width: 140,
       render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {status.replace(/_/g, ' ')}
-        </Tag>
+        <Tag color={getStatusColor(status)}>{status.replace(/_/g, " ")}</Tag>
       ),
     },
     {
-      title: 'SLA',
-      key: 'sla',
+      title: "SLA",
+      key: "sla",
       width: 140,
-      render: (_: any, record: Ticket) => getSLAIndicator(record.sla_status, record.sla_due_at),
+      render: (_: any, record: Ticket) =>
+        getSLAIndicator(record.sla_status, record.sla_due_at),
     },
     {
-      title: 'Tags',
-      dataIndex: 'tags',
-      key: 'tags',
+      title: "Tags",
+      dataIndex: "tags",
+      key: "tags",
       width: 150,
       render: (tags: string[]) => (
         <Space wrap>
           {tags.slice(0, 2).map((tag) => (
-            <Tag key={tag} style={{ fontSize: '11px' }}>
+            <Tag key={tag} style={{ fontSize: "11px" }}>
               {tag}
             </Tag>
           ))}
           {tags.length > 2 && (
-            <Tag style={{ fontSize: '11px' }}>+{tags.length - 2}</Tag>
+            <Tag style={{ fontSize: "11px" }}>+{tags.length - 2}</Tag>
           )}
         </Space>
       ),
     },
     {
-      title: 'Created',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      title: "Created",
+      dataIndex: "created_at",
+      key: "created_at",
       width: 120,
       render: (timestamp: string) => (
-        <Tooltip title={dayjs(timestamp).format('DD MMM YYYY, HH:mm')}>
-          <span style={{ color: textSecondary }}>{dayjs(timestamp).fromNow()}</span>
+        <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
+          <span style={{ color: textSecondary }}>
+            {dayjs(timestamp).fromNow()}
+          </span>
         </Tooltip>
       ),
     },
@@ -329,15 +341,37 @@ const TicketsPage: React.FC = () => {
 
   return (
     <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-      <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
+      <div
+        style={{ padding: "24px", background: bgPrimary, minHeight: "100vh" }}
+      >
         {/* Header */}
-        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            marginBottom: "24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, margin: 0 }}>
-              <FileTextOutlined style={{ marginRight: '12px' }} />
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: "bold",
+                color: textPrimary,
+                margin: 0,
+              }}
+            >
+              <FileTextOutlined style={{ marginRight: "12px" }} />
               Support Tickets
             </h1>
-            <div style={{ color: textSecondary, fontSize: '14px', marginTop: '4px' }}>
+            <div
+              style={{
+                color: textSecondary,
+                fontSize: "14px",
+                marginTop: "4px",
+              }}
+            >
               Ticketing system for support, operations, and compliance
             </div>
           </div>
@@ -352,14 +386,26 @@ const TicketsPage: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
+        <Card
+          style={{
+            marginBottom: "16px",
+            background: bgCard,
+            border: `1px solid ${border}`,
+          }}
+        >
           <Space wrap>
             <Input
               placeholder="Search ticket ID, title, linked entity..."
               prefix={<SearchOutlined />}
               style={{ width: 300 }}
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  search: e.target.value,
+                  page: 1,
+                }))
+              }
               allowClear
             />
             <Select
@@ -367,13 +413,15 @@ const TicketsPage: React.FC = () => {
               style={{ width: 140 }}
               allowClear
               value={filters.status}
-              onChange={(value) => setFilters(prev => ({ ...prev, status: value, page: 1 }))}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, status: value, page: 1 }))
+              }
               options={[
-                { label: 'New', value: 'NEW' },
-                { label: 'Open', value: 'OPEN' },
-                { label: 'In Progress', value: 'IN_PROGRESS' },
-                { label: 'Escalated', value: 'ESCALATED' },
-                { label: 'Resolved', value: 'RESOLVED' },
+                { label: "New", value: "NEW" },
+                { label: "Open", value: "OPEN" },
+                { label: "In Progress", value: "IN_PROGRESS" },
+                { label: "Escalated", value: "ESCALATED" },
+                { label: "Resolved", value: "RESOLVED" },
               ]}
             />
             <Select
@@ -381,17 +429,27 @@ const TicketsPage: React.FC = () => {
               style={{ width: 120 }}
               allowClear
               value={filters.priority}
-              onChange={(value) => setFilters(prev => ({ ...prev, priority: value, page: 1 }))}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, priority: value, page: 1 }))
+              }
               options={[
-                { label: 'Critical', value: 'CRITICAL' },
-                { label: 'High', value: 'HIGH' },
-                { label: 'Medium', value: 'MEDIUM' },
-                { label: 'Low', value: 'LOW' },
+                { label: "Critical", value: "CRITICAL" },
+                { label: "High", value: "HIGH" },
+                { label: "Medium", value: "MEDIUM" },
+                { label: "Low", value: "LOW" },
               ]}
             />
             <Button
               icon={<FilterOutlined />}
-              onClick={() => setFilters({ page: 1, limit: 100, status: undefined, priority: undefined, search: '' })}
+              onClick={() =>
+                setFilters({
+                  page: 1,
+                  limit: 25,
+                  status: undefined,
+                  priority: undefined,
+                  search: "",
+                })
+              }
             >
               Clear
             </Button>
@@ -400,10 +458,31 @@ const TicketsPage: React.FC = () => {
 
         {/* Bulk Actions */}
         {selectedRowKeys.length > 0 && (
-          <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Badge count={selectedRowKeys.length} style={{ backgroundColor: '#3B82F6' }}>
-                <span style={{ color: textPrimary, fontWeight: 600, paddingRight: '20px' }}>
+          <Card
+            style={{
+              marginBottom: "16px",
+              background: bgCard,
+              border: `1px solid ${border}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Badge
+                count={selectedRowKeys.length}
+                style={{ backgroundColor: "#3B82F6" }}
+              >
+                <span
+                  style={{
+                    color: textPrimary,
+                    fontWeight: 600,
+                    paddingRight: "20px",
+                  }}
+                >
                   Selected
                 </span>
               </Badge>
@@ -422,23 +501,24 @@ const TicketsPage: React.FC = () => {
             dataSource={tickets}
             rowKey="id"
             loading={loading}
-            virtual
-            sticky
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys as string[]),
             }}
+            virtual
+            sticky
             pagination={{
               current: filters.page,
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ['50', '100', '200', '500'],
-              showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} tickets`,
+              pageSizeOptions: ["50", "100", "200", "500"],
+              showTotal: (total, range) =>
+                `Showing ${range[0]}-${range[1]} of ${total} tickets`,
             }}
             onChange={(pagination) => {
-              setFilters(prev => ({
+              setFilters((prev) => ({
                 ...prev,
                 page: pagination.current || 1,
                 limit: pagination.pageSize || 100,
@@ -453,4 +533,3 @@ const TicketsPage: React.FC = () => {
 };
 
 export default TicketsPage;
-

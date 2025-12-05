@@ -41,7 +41,7 @@ export function ShippersList({
   const [shippers, setShippers] = useState<Shipper[]>([]);
   const [total, setTotal] = useState(0);
   const [params, setParams] = useState<ShippersListParams>({
-    limit: 100,
+    limit: 25,
     offset: 0,
     sort: "last_active",
     order: "desc",
@@ -375,19 +375,16 @@ export function ShippersList({
         dataSource={shippers}
         rowKey="id"
         loading={loading}
-        virtual
-        sticky
         pagination={{
-          current: (params.offset || 0) / (params.limit || 100) + 1,
-          pageSize: params.limit || 100,
+          current: (params.offset || 0) / (params.limit || 25) + 1,
+          pageSize: params.limit || 25,
           total: total,
           showSizeChanger: true,
-          showQuickJumper: true,
-          pageSizeOptions: ["50", "100", "200", "500"],
-          showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} shippers`,
+          pageSizeOptions: ["10", "25", "50", "100"],
+          showTotal: (total) => `Total ${total} shippers`,
         }}
         onChange={handleTableChange}
-        scroll={{ y: 600, x: 1200 }}
+        scroll={{ x: 1200 }}
       />
     </div>
   );

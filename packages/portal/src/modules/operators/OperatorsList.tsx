@@ -40,7 +40,7 @@ export function OperatorsList({
   const [operators, setOperators] = useState<Operator[]>([]);
   const [total, setTotal] = useState(0);
   const [params, setParams] = useState<OperatorsListParams>({
-    limit: 100,
+    limit: 25,
     offset: 0,
     sort: "last_active",
     order: "desc",
@@ -423,7 +423,7 @@ export function OperatorsList({
           icon={<FilterOutlined />}
           onClick={() =>
             setParams({
-              limit: 100,
+              limit: 25,
               offset: 0,
               sort: "last_active",
               order: "desc",
@@ -440,19 +440,16 @@ export function OperatorsList({
         dataSource={operators}
         rowKey="id"
         loading={loading}
-        virtual
-        sticky
         pagination={{
-          current: (params.offset || 0) / (params.limit || 100) + 1,
-          pageSize: params.limit || 100,
+          current: (params.offset || 0) / (params.limit || 25) + 1,
+          pageSize: params.limit || 25,
           total: total,
           showSizeChanger: true,
-          showQuickJumper: true,
-          pageSizeOptions: ["50", "100", "200", "500"],
-          showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} operators`,
+          pageSizeOptions: ["10", "25", "50", "100"],
+          showTotal: (total) => `Total ${total} operators`,
         }}
         onChange={handleTableChange}
-        scroll={{ y: 600, x: 1400 }}
+        scroll={{ x: 1400 }}
       />
     </div>
   );
