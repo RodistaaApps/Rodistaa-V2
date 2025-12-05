@@ -1,127 +1,200 @@
+/**
+ * Bookings Screen - Browse available bookings with LoadCard from design system
+ */
+
 import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
+  FlatList,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import {
+  LoadCard,
+  RodistaaColors,
+  MobileTextStyles,
+  RodistaaSpacing,
+} from '@rodistaa/design-system';
 
-export default function BookingsScreen() {
+const mockBookings = [
+  {
+    id: 'BKG-001',
+    pickup: {
+      address: '123 Main Street, Sector 15',
+      city: 'Hyderabad',
+      state: 'Telangana',
+    },
+    drop: {
+      address: '456 Park Avenue, Andheri West',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+    },
+    tonnage: 5,
+    priceRange: { min: 45000, max: 55000 },
+    status: 'OPEN_FOR_BIDDING' as const,
+    bidCount: 4,
+    pickupDate: '2025-12-06',
+    material: 'Electronics',
+    distance: 710,
+  },
+  {
+    id: 'BKG-002',
+    pickup: {
+      address: '789 Market Road',
+      city: 'Delhi',
+      state: 'Delhi',
+    },
+    drop: {
+      address: '321 Tower Street, Whitefield',
+      city: 'Bangalore',
+      state: 'Karnataka',
+    },
+    tonnage: 12,
+    priceRange: { min: 85000, max: 95000 },
+    status: 'OPEN_FOR_BIDDING' as const,
+    bidCount: 6,
+    pickupDate: '2025-12-07',
+    material: 'Machinery Parts',
+    distance: 2150,
+  },
+  {
+    id: 'BKG-003',
+    pickup: {
+      address: '555 Tech Park',
+      city: 'Chennai',
+      state: 'Tamil Nadu',
+    },
+    drop: {
+      address: '777 Business Hub',
+      city: 'Pune',
+      state: 'Maharashtra',
+    },
+    tonnage: 8,
+    priceRange: { min: 35000, max: 45000 },
+    status: 'OPEN_FOR_BIDDING' as const,
+    bidCount: 2,
+    pickupDate: '2025-12-08',
+    material: 'Textiles',
+    distance: 1200,
+  },
+];
+
+interface BookingsScreenProps {
+  navigation?: any;
+}
+
+export default function BookingsScreen({ navigation }: BookingsScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'open' | 'mybids' | 'all'>('open');
 
-  const mockBookings = [
-    {
-      id: 'BKG-001',
-      from: 'Hyderabad',
-      to: 'Mumbai',
-      pickupDate: '2025-12-06',
-      vehicleType: 'Container 20ft',
-      distance: 710,
-      weight: 5.0,
-      amount: 48000,
-      bids: 4,
-    },
-    {
-      id: 'BKG-002',
-      from: 'Delhi',
-      to: 'Bangalore',
-      pickupDate: '2025-12-07',
-      vehicleType: 'Open Body 14ft',
-      distance: 2150,
-      weight: 12.0,
-      amount: 87500,
-      bids: 6,
-    },
-  ];
-
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 2000);
-  }, []);
+    try {
+      // TODO: Call GET /bookings API with filters
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Failed to refresh bookings:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const filteredBookings = mockBookings.filter(booking => {
+    if (filter === 'open') return booking.status === 'OPEN_FOR_BIDDING';
+    if (filter === 'mybids') return booking.bidCount > 0; // TODO: Check actual user bids
+    return true;
+  });
+
+  const handleBookingPress = (bookingId: string) => {
+    console.log('Navigate to bid screen:', bookingId);
+    // TODO: Navigate to bid placement screen
+  };
+
+  const renderBooking = ({ item }: { item: typeof mockBookings[0] }) => (
+    <LoadCard
+      id={item.id}
+      pickup={item.pickup}
+      drop={item.drop}
+      tonnage={item.tonnage}
+      priceRange={item.priceRange}
+      status={item.status}
+      bidCount={item.bidCount}
+      onPress={() => handleBookingPress(item.id)}
+    />
+  );
 
   return (
     <View style={styles.container}>
-      {/* Filters */}
+      {/* Filter Tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'open' && styles.filterButtonActive]}
+          style={[styles.filterTab, filter === 'open' && styles.filterTabActive]}
           onPress={() => setFilter('open')}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.filterText, filter === 'open' && styles.filterTextActive]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === 'open' && styles.filterTextActive,
+            ]}
+          >
             Open Bookings
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'mybids' && styles.filterButtonActive]}
+          style={[styles.filterTab, filter === 'mybids' && styles.filterTabActive]}
           onPress={() => setFilter('mybids')}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.filterText, filter === 'mybids' && styles.filterTextActive]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === 'mybids' && styles.filterTextActive,
+            ]}
+          >
             My Bids
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
+          style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
           onPress={() => setFilter('all')}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+          <Text
+            style={[
+              styles.filterText,
+              filter === 'all' && styles.filterTextActive,
+            ]}
+          >
             All
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
+      {/* Bookings List */}
+      <FlatList
+        data={filteredBookings}
+        renderItem={renderBooking}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={RodistaaColors.primary.main}
+          />
         }
-      >
-        {mockBookings.map((booking) => (
-          <View key={booking.id} style={styles.bookingCard}>
-            <View style={styles.bookingHeader}>
-              <Text style={styles.bookingId}>{booking.id}</Text>
-              <View style={styles.bidsBadge}>
-                <Text style={styles.bidsText}>{booking.bids} bids</Text>
-              </View>
-            </View>
-
-            <View style={styles.routeContainer}>
-              <Text style={styles.routeText}>
-                {booking.from} → {booking.to}
-              </Text>
-              <Text style={styles.routeDetails}>
-                {booking.distance} km • {booking.weight} MT
-              </Text>
-            </View>
-
-            <View style={styles.detailsRow}>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Pickup</Text>
-                <Text style={styles.detailValue}>
-                  {new Date(booking.pickupDate).toLocaleDateString('en-IN', { 
-                    day: '2-digit', 
-                    month: 'short' 
-                  })}
-                </Text>
-              </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Vehicle</Text>
-                <Text style={styles.detailValue}>{booking.vehicleType}</Text>
-              </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Amount</Text>
-                <Text style={styles.amountText}>₹{booking.amount.toLocaleString()}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.bidButton}>
-              <Text style={styles.bidButtonText}>Place Bid</Text>
-            </TouchableOpacity>
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No bookings found</Text>
+            <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
           </View>
-        ))}
-      </ScrollView>
+        }
+      />
     </View>
   );
 }
@@ -129,115 +202,46 @@ export default function BookingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: RodistaaColors.background.default,
   },
   filterContainer: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: RodistaaColors.background.paper,
+    padding: RodistaaSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    gap: 8,
+    borderBottomColor: RodistaaColors.border.light,
   },
-  filterButton: {
+  filterTab: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    padding: RodistaaSpacing.md,
     alignItems: 'center',
+    borderRadius: RodistaaSpacing.borderRadius.md,
   },
-  filterButtonActive: {
-    backgroundColor: '#C90D0D',
+  filterTabActive: {
+    backgroundColor: RodistaaColors.primary.main,
   },
   filterText: {
-    fontSize: 13,
+    ...MobileTextStyles.bodySmall,
     fontWeight: '600',
-    color: '#6B7280',
+    color: RodistaaColors.text.secondary,
   },
   filterTextActive: {
-    color: '#fff',
+    color: RodistaaColors.primary.contrast,
   },
-  scrollView: {
-    flex: 1,
+  list: {
+    padding: RodistaaSpacing.lg,
   },
-  bookingCard: {
-    backgroundColor: '#fff',
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  empty: {
     alignItems: 'center',
-    marginBottom: 12,
+    padding: RodistaaSpacing.xxxl,
   },
-  bookingId: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1E40AF',
-    fontFamily: 'monospace',
+  emptyText: {
+    ...MobileTextStyles.h4,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.sm,
   },
-  bidsBadge: {
-    backgroundColor: '#DBEAFE',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  bidsText: {
-    fontSize: 12,
-    color: '#1E40AF',
-    fontWeight: '600',
-  },
-  routeContainer: {
-    marginBottom: 16,
-  },
-  routeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  routeDetails: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  detailItem: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  amountText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#10B981',
-  },
-  bidButton: {
-    backgroundColor: '#C90D0D',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  bidButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 'bold',
+  emptySubtext: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.disabled,
   },
 });
-

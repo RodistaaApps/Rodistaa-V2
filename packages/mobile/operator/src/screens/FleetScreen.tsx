@@ -1,110 +1,158 @@
-import React from 'react';
+/**
+ * Fleet Screen - Full truck management with design system TruckCard
+ */
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
+  FlatList,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import {
+  TruckCard,
+  RButton,
+  RodistaaColors,
+  MobileTextStyles,
+  RodistaaSpacing,
+} from '@rodistaa/design-system';
 
-export default function FleetScreen() {
-  const [refreshing, setRefreshing] = React.useState(false);
+const mockTrucks = [
+  {
+    id: '1',
+    registrationNumber: 'DL 01 AB 1234',
+    vehicleType: 'Container 20ft',
+    capacityTons: 10,
+    bodyType: 'Container',
+    status: 'ACTIVE' as const,
+    inspectionDue: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
+    driver: 'Ramesh Kumar',
+  },
+  {
+    id: '2',
+    registrationNumber: 'HR 26 BX 5678',
+    vehicleType: 'Open Body 14ft',
+    capacityTons: 7.5,
+    bodyType: 'Open Body',
+    status: 'PENDING_INSPECTION' as const,
+    inspectionDue: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    driver: null,
+  },
+  {
+    id: '3',
+    registrationNumber: 'MH 12 CD 9012',
+    vehicleType: 'Trailer 32ft',
+    capacityTons: 25,
+    bodyType: 'Trailer',
+    status: 'ACTIVE' as const,
+    inspectionDue: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+    driver: 'Suresh Reddy',
+  },
+  {
+    id: '4',
+    registrationNumber: 'GJ 05 EF 3456',
+    vehicleType: 'Tanker',
+    capacityTons: 20,
+    bodyType: 'Tanker',
+    status: 'BLOCKED' as const,
+    inspectionDue: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    driver: null,
+  },
+  {
+    id: '5',
+    registrationNumber: 'KA 01 GH 7890',
+    vehicleType: 'Container 20ft',
+    capacityTons: 10,
+    bodyType: 'Container',
+    status: 'ACTIVE' as const,
+    inspectionDue: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+    driver: 'Vijay Kumar',
+  },
+];
 
-  const mockTrucks = [
-    {
-      id: 'TRK-001',
-      registration: 'DL 01 AB 1234',
-      type: 'Container 20ft',
-      status: 'active',
-      driver: 'Ramesh Kumar',
-      lastInspection: '2 days ago',
-    },
-    {
-      id: 'TRK-002',
-      registration: 'HR 26 BX 5678',
-      type: 'Open Body 14ft',
-      status: 'pending',
-      driver: 'Not Assigned',
-      lastInspection: '1 week ago',
-    },
-    {
-      id: 'TRK-003',
-      registration: 'MH 12 CD 9012',
-      type: 'Trailer 32ft',
-      status: 'active',
-      driver: 'Suresh Reddy',
-      lastInspection: 'Today',
-    },
-  ];
+interface FleetScreenProps {
+  navigation?: any;
+}
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return '#10B981';
-      case 'pending': return '#F59E0B';
-      case 'expired': return '#EF4444';
-      default: return '#6B7280';
+export default function FleetScreen({ navigation }: FleetScreenProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [trucks, setTrucks] = useState(mockTrucks);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // TODO: Call GET /operator/trucks API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Failed to refresh trucks:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 2000);
-  }, []);
+  const handleTruckPress = (truckId: string) => {
+    console.log('Navigate to truck details:', truckId);
+    // TODO: Navigate to truck detail screen
+  };
+
+  const handleManageTruck = (truckId: string) => {
+    console.log('Manage truck:', truckId);
+    // TODO: Navigate to truck management screen
+  };
+
+  const renderTruck = ({ item }: { item: typeof mockTrucks[0] }) => (
+    <TruckCard
+      id={item.id}
+      registrationNumber={item.registrationNumber}
+      vehicleType={item.vehicleType}
+      capacityTons={item.capacityTons}
+      bodyType={item.bodyType}
+      status={item.status}
+      inspectionDue={item.inspectionDue}
+      onPress={() => handleTruckPress(item.id)}
+      onViewDetails={() => handleTruckPress(item.id)}
+      onManage={() => handleManageTruck(item.id)}
+    />
+  );
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Fleet Summary: 5/10 Trucks</Text>
-        <TouchableOpacity style={styles.addButton}>
+        <View>
+          <Text style={styles.headerTitle}>My Fleet</Text>
+          <Text style={styles.headerSubtitle}>{trucks.length} / 10 Trucks</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => console.log('Add new truck')}
+        >
           <Text style={styles.addButtonText}>+ Add Truck</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
+      {/* Trucks List */}
+      <FlatList
+        data={trucks}
+        renderItem={renderTruck}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={RodistaaColors.primary.main}
+          />
         }
-      >
-        {mockTrucks.map((truck) => (
-          <View key={truck.id} style={styles.truckCard}>
-            <View style={styles.truckHeader}>
-              <View>
-                <Text style={styles.registration}>{truck.registration}</Text>
-                <Text style={styles.truckId}>{truck.id}</Text>
-              </View>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(truck.status) }]}>
-                <Text style={styles.statusText}>{truck.status.toUpperCase()}</Text>
-              </View>
-            </View>
-
-            <View style={styles.truckDetails}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Type:</Text>
-                <Text style={styles.detailValue}>{truck.type}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Driver:</Text>
-                <Text style={styles.detailValue}>{truck.driver}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Last Inspection:</Text>
-                <Text style={styles.detailValue}>{truck.lastInspection}</Text>
-              </View>
-            </View>
-
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>🔍 Inspect</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>👤 Assign Driver</Text>
-              </TouchableOpacity>
-            </View>
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No trucks yet</Text>
+            <Text style={styles.emptySubtext}>Add your first truck to get started</Text>
           </View>
-        ))}
-      </ScrollView>
+        }
+      />
     </View>
   );
 }
@@ -112,104 +160,51 @@ export default function FleetScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: RodistaaColors.background.default,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: RodistaaColors.background.paper,
+    padding: RodistaaSpacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: RodistaaColors.border.light,
   },
-  headerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+  headerTitle: {
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
+  },
+  headerSubtitle: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
   addButton: {
-    backgroundColor: '#C90D0D',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
+    backgroundColor: RodistaaColors.primary.main,
+    paddingHorizontal: RodistaaSpacing.lg,
+    paddingVertical: RodistaaSpacing.md,
+    borderRadius: RodistaaSpacing.borderRadius.md,
   },
   addButtonText: {
-    color: '#fff',
+    ...MobileTextStyles.body,
+    color: RodistaaColors.primary.contrast,
     fontWeight: '600',
-    fontSize: 14,
   },
-  scrollView: {
-    flex: 1,
+  list: {
+    padding: RodistaaSpacing.lg,
   },
-  truckCard: {
-    backgroundColor: '#fff',
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  truckHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  registration: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    fontFamily: 'monospace',
-  },
-  truckId: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'monospace',
-    marginTop: 4,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  truckDetails: {
-    marginBottom: 16,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    padding: 12,
-    borderRadius: 8,
+  empty: {
     alignItems: 'center',
+    padding: RodistaaSpacing.xxxl,
   },
-  actionButtonText: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
+  emptyText: {
+    ...MobileTextStyles.h4,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.sm,
+  },
+  emptySubtext: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.disabled,
   },
 });
-

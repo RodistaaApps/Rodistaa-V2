@@ -1,106 +1,227 @@
-import React from 'react';
+/**
+ * Operator Home Screen - Dashboard with Full KPIs
+ * Uses Rodistaa Design System
+ */
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import {
+  RCard,
+  RodistaaColors,
+  MobileTextStyles,
+  RodistaaSpacing,
+  RNShadowStyles,
+} from '@rodistaa/design-system';
 
-export default function HomeScreen() {
-  const [refreshing, setRefreshing] = React.useState(false);
+interface HomeScreenProps {
+  navigation?: any;
+}
 
-  const onRefresh = React.useCallback(() => {
+export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    activeTrucks: 5,
+    activeShipments: 8,
+    activeBids: 12,
+    pendingInspections: 3,
+    winsToday: 2,
+    mtdEarnings: 145000,
+    pendingPayments: 45000,
+    completedShipments: 234,
+  });
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 2000);
-  }, []);
+    try {
+      // TODO: Call GET /operator/dashboard API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mock refresh
+    } catch (error) {
+      console.error('Failed to refresh dashboard:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const QuickActionCard = ({ icon, title, onPress }: any) => (
+    <TouchableOpacity
+      style={styles.actionCard}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.actionIcon}>{icon}</Text>
+      <Text style={styles.actionText}>{title}</Text>
+      <Text style={styles.actionArrow}>›</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={RodistaaColors.primary.main}
+        />
       }
     >
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome back! 👋</Text>
+        <Text style={styles.greeting}>Welcome back, Operator! 👋</Text>
         <Text style={styles.date}>
-          {new Date().toLocaleDateString('en-IN', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          {new Date().toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
           })}
         </Text>
       </View>
 
-      {/* Stats Cards */}
-      <View style={styles.statsContainer}>
-        <View style={[styles.statCard, { backgroundColor: '#DBEAFE' }]}>
-          <Text style={styles.statValue}>5</Text>
+      {/* Primary KPIs */}
+      <View style={styles.statsGrid}>
+        <RCard style={[styles.statCard, { backgroundColor: '#DBEAFE' }]}>
+          <Text style={styles.statIcon}>🚛</Text>
+          <Text style={styles.statValue}>{dashboardData.activeTrucks}</Text>
           <Text style={styles.statLabel}>Active Trucks</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
-          <Text style={styles.statValue}>3</Text>
+        </RCard>
+
+        <RCard style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
+          <Text style={styles.statIcon}>📦</Text>
+          <Text style={styles.statValue}>{dashboardData.activeShipments}</Text>
           <Text style={styles.statLabel}>Active Shipments</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
-          <Text style={styles.statValue}>2</Text>
+        </RCard>
+
+        <RCard style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
+          <Text style={styles.statIcon}>💰</Text>
+          <Text style={styles.statValue}>{dashboardData.activeBids}</Text>
           <Text style={styles.statLabel}>Active Bids</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#FED7AA' }]}>
-          <Text style={styles.statValue}>1</Text>
+        </RCard>
+
+        <RCard style={[styles.statCard, { backgroundColor: '#FED7AA' }]}>
+          <Text style={styles.statIcon}>🔍</Text>
+          <Text style={styles.statValue}>{dashboardData.pendingInspections}</Text>
           <Text style={styles.statLabel}>Pending Inspections</Text>
+        </RCard>
+      </View>
+
+      {/* Financial KPIs */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Financial Summary</Text>
+        <View style={styles.financialGrid}>
+          <View style={styles.financialItem}>
+            <Text style={styles.financialLabel}>Wins Today</Text>
+            <Text style={styles.financialValue}>{dashboardData.winsToday}</Text>
+          </View>
+          <View style={styles.financialItem}>
+            <Text style={styles.financialLabel}>MTD Earnings</Text>
+            <Text style={styles.financialValue}>
+              ₹{(dashboardData.mtdEarnings / 1000).toFixed(1)}K
+            </Text>
+          </View>
+          <View style={styles.financialItem}>
+            <Text style={styles.financialLabel}>Pending Payments</Text>
+            <Text style={[styles.financialValue, { color: '#F59E0B' }]}>
+              ₹{(dashboardData.pendingPayments / 1000).toFixed(1)}K
+            </Text>
+          </View>
+          <View style={styles.financialItem}>
+            <Text style={styles.financialLabel}>Completed</Text>
+            <Text style={styles.financialValue}>{dashboardData.completedShipments}</Text>
+          </View>
         </View>
+      </View>
+
+      {/* Alerts */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Alerts & Notifications</Text>
+        <RCard style={[styles.alertCard, { borderLeftColor: '#EF4444' }]}>
+          <Text style={styles.alertIcon}>⚠️</Text>
+          <View style={styles.alertContent}>
+            <Text style={styles.alertTitle}>Document Expiring Soon</Text>
+            <Text style={styles.alertText}>RC for DL 01 AB 1234 expires in 15 days</Text>
+          </View>
+        </RCard>
+        <RCard style={[styles.alertCard, { borderLeftColor: '#F59E0B' }]}>
+          <Text style={styles.alertIcon}>🔍</Text>
+          <View style={styles.alertContent}>
+            <Text style={styles.alertTitle}>Inspection Pending</Text>
+            <Text style={styles.alertText}>2 trucks need inspection this week</Text>
+          </View>
+        </RCard>
       </View>
 
       {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsGrid}>
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>🚛</Text>
-            <Text style={styles.actionText}>Add New Truck</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>📦</Text>
-            <Text style={styles.actionText}>Browse Bookings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>🔍</Text>
-            <Text style={styles.actionText}>Daily Inspection</Text>
-          </TouchableOpacity>
-        </View>
+        <QuickActionCard
+          icon="🚛"
+          title="Add New Truck"
+          onPress={() => navigation?.navigate('AddTruck')}
+        />
+        <QuickActionCard
+          icon="📦"
+          title="Browse Bookings"
+          onPress={() => navigation?.navigate('Bookings')}
+        />
+        <QuickActionCard
+          icon="🔍"
+          title="Daily Inspection"
+          onPress={() => navigation?.navigate('Inspection')}
+        />
+        <QuickActionCard
+          icon="💵"
+          title="View Wallet"
+          onPress={() => navigation?.navigate('Wallet')}
+        />
       </View>
 
       {/* Recent Activity */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <View style={styles.activityList}>
-          <View style={styles.activityItem}>
-            <View style={[styles.activityDot, { backgroundColor: '#10B981' }]} />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Shipment SHP-001 delivered</Text>
-              <Text style={styles.activityTime}>2 hours ago</Text>
-            </View>
+        <RCard style={styles.activityCard}>
+          <View style={[styles.activityDot, { backgroundColor: '#10B981' }]} />
+          <View style={styles.activityContent}>
+            <Text style={styles.activityTitle}>Shipment SHP-001 Delivered</Text>
+            <Text style={styles.activityDescription}>
+              DL 01 AB 1234 completed delivery to Mumbai
+            </Text>
+            <Text style={styles.activityTime}>2 hours ago</Text>
           </View>
-          <View style={styles.activityItem}>
-            <View style={[styles.activityDot, { backgroundColor: '#3B82F6' }]} />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Bid accepted for BKG-002</Text>
-              <Text style={styles.activityTime}>5 hours ago</Text>
-            </View>
+        </RCard>
+
+        <RCard style={styles.activityCard}>
+          <View style={[styles.activityDot, { backgroundColor: '#3B82F6' }]} />
+          <View style={styles.activityContent}>
+            <Text style={styles.activityTitle}>Bid Accepted</Text>
+            <Text style={styles.activityDescription}>
+              Your bid of ₹48,000 for BKG-002 was accepted
+            </Text>
+            <Text style={styles.activityTime}>5 hours ago</Text>
           </View>
-          <View style={styles.activityItem}>
-            <View style={[styles.activityDot, { backgroundColor: '#F59E0B' }]} />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Inspection completed for DL01AB1234</Text>
-              <Text style={styles.activityTime}>1 day ago</Text>
-            </View>
+        </RCard>
+
+        <RCard style={styles.activityCard}>
+          <View style={[styles.activityDot, { backgroundColor: '#F59E0B' }]} />
+          <View style={styles.activityContent}>
+            <Text style={styles.activityTitle}>Inspection Completed</Text>
+            <Text style={styles.activityDescription}>
+              Daily inspection for HR 26 BX 5678 marked as passed
+            </Text>
+            <Text style={styles.activityTime}>1 day ago</Text>
           </View>
-        </View>
+        </RCard>
       </View>
+
+      <View style={{ height: RodistaaSpacing.xl }} />
     </ScrollView>
   );
 }
@@ -108,112 +229,157 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: RodistaaColors.background.default,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: RodistaaColors.background.default,
+    padding: RodistaaSpacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: RodistaaColors.border.light,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    ...MobileTextStyles.h2,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   date: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 16,
-    gap: 12,
+    padding: RodistaaSpacing.md,
+    gap: RodistaaSpacing.md,
   },
   statCard: {
     flex: 1,
-    minWidth: 150,
-    padding: 16,
-    borderRadius: 12,
+    minWidth: '45%',
+    padding: RodistaaSpacing.lg,
     alignItems: 'center',
+    ...RNShadowStyles.sm,
+  },
+  statIcon: {
+    fontSize: 40,
+    marginBottom: RodistaaSpacing.sm,
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    ...MobileTextStyles.h1,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.secondary,
     textAlign: 'center',
   },
   section: {
-    padding: 20,
+    padding: RodistaaSpacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.md,
   },
-  actionsGrid: {
+  financialGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: RodistaaSpacing.md,
+  },
+  financialItem: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: RodistaaColors.background.paper,
+    padding: RodistaaSpacing.lg,
+    borderRadius: RodistaaSpacing.borderRadius.md,
+    ...RNShadowStyles.sm,
+  },
+  financialLabel: {
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.xs,
+  },
+  financialValue: {
+    ...MobileTextStyles.h3,
+    color: RodistaaColors.text.primary,
+    fontWeight: 'bold',
+  },
+  alertCard: {
+    flexDirection: 'row',
+    padding: RodistaaSpacing.lg,
+    marginBottom: RodistaaSpacing.md,
+    borderLeftWidth: 4,
+    ...RNShadowStyles.sm,
+  },
+  alertIcon: {
+    fontSize: 24,
+    marginRight: RodistaaSpacing.md,
+  },
+  alertContent: {
+    flex: 1,
+  },
+  alertTitle: {
+    ...MobileTextStyles.body,
+    fontWeight: '600',
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs,
+  },
+  alertText: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
   },
   actionCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    minWidth: 100,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: RodistaaColors.background.paper,
+    padding: RodistaaSpacing.lg,
+    borderRadius: RodistaaSpacing.borderRadius.lg,
+    marginBottom: RodistaaSpacing.md,
+    ...RNShadowStyles.sm,
   },
   actionIcon: {
-    fontSize: 32,
-    marginBottom: 8,
+    fontSize: 28,
+    marginRight: RodistaaSpacing.md,
   },
   actionText: {
-    fontSize: 12,
-    color: '#374151',
-    textAlign: 'center',
+    flex: 1,
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.primary,
+    fontWeight: '600',
   },
-  activityList: {
-    gap: 12,
+  actionArrow: {
+    fontSize: 24,
+    color: RodistaaColors.text.secondary,
   },
-  activityItem: {
+  activityCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    padding: RodistaaSpacing.lg,
+    marginBottom: RodistaaSpacing.md,
+    ...RNShadowStyles.sm,
   },
   activityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginTop: 6,
-    marginRight: 12,
+    marginRight: RodistaaSpacing.md,
   },
   activityContent: {
     flex: 1,
   },
   activityTitle: {
-    fontSize: 14,
+    ...MobileTextStyles.body,
+    color: RodistaaColors.text.primary,
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
+    marginBottom: RodistaaSpacing.xs,
+  },
+  activityDescription: {
+    ...MobileTextStyles.bodySmall,
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.xs,
   },
   activityTime: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    ...MobileTextStyles.caption,
+    color: RodistaaColors.text.disabled,
   },
 });
-
