@@ -160,29 +160,33 @@ const TrucksListPage: React.FC = () => {
       title: "Registration",
       dataIndex: "registration",
       key: "registration",
-      width: 150,
+      width: 140,
       fixed: "left" as const,
       render: (reg: string, record: Truck) => (
-        <Space direction="vertical" size={0}>
-          <a
-            style={{
-              fontFamily: "monospace",
-              fontWeight: 600,
-              color: "#1890ff",
-            }}
-          >
-            {reg}
-          </a>
-          <span
+        <div style={{ paddingLeft: "4px" }}>
+          <div>
+            <a
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 600,
+                color: "#1890ff",
+                fontSize: "13px",
+              }}
+            >
+              {reg}
+            </a>
+          </div>
+          <div
             style={{
               fontSize: "11px",
               color: textSecondary,
               fontFamily: "monospace",
+              marginTop: "2px",
             }}
           >
             {record.id}
-          </span>
-        </Space>
+          </div>
+        </div>
       ),
     },
     {

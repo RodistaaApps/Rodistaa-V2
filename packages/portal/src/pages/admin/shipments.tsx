@@ -155,11 +155,18 @@ const ShipmentsPage: React.FC = () => {
       title: "Shipment ID",
       dataIndex: "id",
       key: "id",
-      width: 130,
+      width: 110,
       fixed: "left" as const,
       render: (id: string) => (
         <a
-          style={{ fontFamily: "monospace", fontWeight: 600, color: "#1890ff" }}
+          style={{
+            fontFamily: "monospace",
+            fontWeight: 600,
+            color: "#1890ff",
+            fontSize: "13px",
+            paddingLeft: "4px",
+            display: "inline-block",
+          }}
           onClick={() => setSelectedShipmentId(id)}
         >
           {id}

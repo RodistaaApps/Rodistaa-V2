@@ -213,27 +213,30 @@ const TicketsPage: React.FC = () => {
       title: "Ticket ID",
       dataIndex: "id",
       key: "id",
-      width: 120,
+      width: 110,
       fixed: "left" as const,
       render: (id: string, record: Ticket) => (
-        <Space direction="vertical" size={0}>
-          <a
-            style={{
-              fontFamily: "monospace",
-              fontWeight: 600,
-              color: "#1890ff",
-            }}
-            onClick={() => setSelectedTicketId(id)}
-          >
-            {id}
-          </a>
+        <div style={{ paddingLeft: "4px" }}>
+          <div>
+            <a
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 600,
+                color: "#1890ff",
+                fontSize: "13px",
+              }}
+              onClick={() => setSelectedTicketId(id)}
+            >
+              {id}
+            </a>
+          </div>
           <Tag
             color={getPriorityColor(record.priority)}
-            style={{ fontSize: "10px" }}
+            style={{ fontSize: "10px", marginTop: "4px" }}
           >
             {record.priority}
           </Tag>
-        </Space>
+        </div>
       ),
     },
     {
