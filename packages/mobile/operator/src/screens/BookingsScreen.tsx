@@ -11,12 +11,12 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { RCard } from '../components/RCard';
 import {
-  LoadCard,
   RodistaaColors,
   MobileTextStyles,
   RodistaaSpacing,
-} from '@rodistaa/design-system';
+} from '../theme/colors';
 
 const mockBookings = [
   {
@@ -113,16 +113,51 @@ export default function BookingsScreen({ navigation }: BookingsScreenProps) {
   };
 
   const renderBooking = ({ item }: { item: typeof mockBookings[0] }) => (
-    <LoadCard
-      id={item.id}
-      pickup={item.pickup}
-      drop={item.drop}
-      tonnage={item.tonnage}
-      priceRange={item.priceRange}
-      status={item.status}
-      bidCount={item.bidCount}
+    <TouchableOpacity
       onPress={() => handleBookingPress(item.id)}
-    />
+      activeOpacity={0.7}
+      style={{ marginBottom: RodistaaSpacing.md }}
+    >
+      <RCard>
+        <View style={styles.bookingHeader}>
+          <Text style={styles.bookingId}>{item.id}</Text>
+          <View style={styles.bidsBadge}>
+            <Text style={styles.bidsText}>{item.bidCount} bids</Text>
+          </View>
+        </View>
+
+        <View style={styles.route}>
+          <Text style={styles.routeText}>
+            {item.pickup.city} → {item.drop.city}
+          </Text>
+          <Text style={styles.routeDetails}>
+            {item.distance} km • {item.tonnage} MT • {item.material}
+          </Text>
+        </View>
+
+        <View style={styles.bookingDetails}>
+          <View style={styles.bookingDetailItem}>
+            <Text style={styles.bookingLabel}>Pickup</Text>
+            <Text style={styles.bookingValue}>
+              {new Date(item.pickupDate).toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+              })}
+            </Text>
+          </View>
+          <View style={styles.bookingDetailItem}>
+            <Text style={styles.bookingLabel}>Amount</Text>
+            <Text style={styles.amountText}>
+              ₹{(item.priceRange.min / 1000).toFixed(0)}K - ₹{(item.priceRange.max / 1000).toFixed(0)}K
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.bidButton}>
+          <Text style={styles.bidButtonText}>Place Bid</Text>
+        </TouchableOpacity>
+      </RCard>
+    </TouchableOpacity>
   );
 
   return (
@@ -243,5 +278,75 @@ const styles = StyleSheet.create({
   emptySubtext: {
     ...MobileTextStyles.bodySmall,
     color: RodistaaColors.text.disabled,
+  },
+  bookingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookingId: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1E40AF',
+    fontFamily: 'monospace',
+  },
+  bidsBadge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  bidsText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    fontWeight: '600',
+  },
+  route: {
+    marginBottom: 16,
+  },
+  routeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: RodistaaColors.text.primary,
+    marginBottom: 4,
+  },
+  routeDetails: {
+    fontSize: 13,
+    color: RodistaaColors.text.secondary,
+  },
+  bookingDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  bookingDetailItem: {
+    flex: 1,
+  },
+  bookingLabel: {
+    fontSize: 11,
+    color: RodistaaColors.text.secondary,
+    marginBottom: 4,
+  },
+  bookingValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: RodistaaColors.text.primary,
+  },
+  amountText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#10B981',
+  },
+  bidButton: {
+    backgroundColor: RodistaaColors.primary.main,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  bidButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });

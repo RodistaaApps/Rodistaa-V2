@@ -12,13 +12,13 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { RCard } from '../components/RCard';
 import {
-  RCard,
   RodistaaColors,
   MobileTextStyles,
   RodistaaSpacing,
   RNShadowStyles,
-} from '@rodistaa/design-system';
+} from '../theme/colors';
 
 interface HomeScreenProps {
   navigation?: any;

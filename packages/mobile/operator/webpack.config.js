@@ -11,14 +11,29 @@ module.exports = {
   resolve: {
     alias: {
       'react-native$': 'react-native-web',
+      '@rodistaa/design-system': path.resolve(__dirname, '../../design-system/src'),
+      '@rodistaa/app-shared': path.resolve(__dirname, '../../app-shared/src'),
+      '@rodistaa/mobile-shared': path.resolve(__dirname, '../shared/src'),
     },
     extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js'],
+    modules: [
+      'node_modules',
+      path.resolve(__dirname, '../../design-system/src'),
+      path.resolve(__dirname, '../../app-shared/src'),
+      path.resolve(__dirname, '../shared/src'),
+    ],
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules/,
+        exclude: /node_modules(?!\/@rodistaa)/,
+        include: [
+          path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, '../../design-system/src'),
+          path.resolve(__dirname, '../../app-shared/src'),
+          path.resolve(__dirname, '../shared/src'),
+        ],
         use: {
           loader: 'babel-loader',
           options: {
