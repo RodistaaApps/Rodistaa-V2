@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { useTheme } from '@/contexts/ThemeContext';
+import { BookingDetailPanel } from '@/modules/bookings/BookingDetailPanel';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -60,6 +61,7 @@ const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [total, setTotal] = useState(0);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 25,
@@ -162,7 +164,10 @@ const BookingsPage: React.FC = () => {
       width: 130,
       fixed: 'left' as const,
       render: (id: string) => (
-        <a style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}>
+        <a 
+          style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}
+          onClick={() => setSelectedBookingId(id)}
+        >
           {id}
         </a>
       ),
@@ -396,6 +401,14 @@ const BookingsPage: React.FC = () => {
             scroll={{ x: 1600 }}
           />
         </Card>
+
+        {/* Booking Detail Panel */}
+        <BookingDetailPanel
+          bookingId={selectedBookingId}
+          open={!!selectedBookingId}
+          onClose={() => setSelectedBookingId(null)}
+          theme={theme}
+        />
       </div>
     </AdminLayout>
   );

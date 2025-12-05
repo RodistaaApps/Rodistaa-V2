@@ -24,6 +24,7 @@ import {
 } from '@ant-design/icons';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { useTheme } from '@/contexts/ThemeContext';
+import { ShipmentDetailPanel } from '@/modules/shipments/ShipmentDetailPanel';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -56,6 +57,7 @@ const ShipmentsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [total, setTotal] = useState(0);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 25,
@@ -144,7 +146,10 @@ const ShipmentsPage: React.FC = () => {
       width: 130,
       fixed: 'left' as const,
       render: (id: string) => (
-        <a style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}>
+        <a 
+          style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}
+          onClick={() => setSelectedShipmentId(id)}
+        >
           {id}
         </a>
       ),
@@ -326,6 +331,14 @@ const ShipmentsPage: React.FC = () => {
             scroll={{ x: 1500 }}
           />
         </Card>
+
+        {/* Shipment Detail Panel */}
+        <ShipmentDetailPanel
+          shipmentId={selectedShipmentId}
+          open={!!selectedShipmentId}
+          onClose={() => setSelectedShipmentId(null)}
+          theme={theme}
+        />
       </div>
     </AdminLayout>
   );
