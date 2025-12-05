@@ -499,27 +499,7 @@ const TicketsPage: React.FC = () => {
 
         {/* Table */}
         <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
-          <style jsx global>{`
-            .tickets-table .ant-table-selection-column {
-              width: 40px !important;
-              min-width: 40px !important;
-              max-width: 40px !important;
-              padding: 0 8px !important;
-            }
-            .tickets-table td.ant-table-cell.ant-table-selection-column,
-            .tickets-table th.ant-table-cell.ant-table-selection-column {
-              width: 40px !important;
-              min-width: 40px !important;
-              padding-left: 12px !important;
-              padding-right: 0px !important;
-            }
-            .tickets-table .ant-table-tbody > tr > td:nth-child(2),
-            .tickets-table .ant-table-thead > tr > th:nth-child(2) {
-              padding-left: 8px !important;
-            }
-          `}</style>
           <Table
-            className="tickets-table"
             columns={columns}
             dataSource={tickets}
             rowKey="id"
