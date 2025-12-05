@@ -89,16 +89,40 @@ const OperatorDetailPage: React.FC = () => {
         ledger_balance: 45000.0,
         credit_limit: 100000,
         last_active: "2025-12-04T10:15:00Z",
+        trucks: { total: 15, active: 12, blocked: 0 },
+        active_bids: 4,
+        pending_inspections: 2,
         metrics: {
-          total_trucks: 15,
-          active_trucks: 12,
-          blocked_trucks: 0,
-          total_bids: 45,
-          won_bids: 28,
-          active_shipments: 8,
+          trucks: { total: 15, active: 12, blocked: 0 },
+          active_bids: 4,
           completed_shipments: 156,
-          pending_inspections: 2,
         },
+        trucks_list: {
+          total: 15,
+          items: [],
+        },
+        bids: {
+          total: 45,
+          items: [],
+        },
+        shipments: {
+          total: 164,
+          items: [],
+        },
+        drivers: {
+          total: 18,
+          items: [],
+        },
+        inspections: {
+          pending: 2,
+          items: [],
+        },
+        ledger: {
+          balance: 45000.0,
+        },
+        acs_flags: [],
+        recent_activities: [],
+        documents: [],
         acs_flags_count: 0,
         created_at: "2023-03-20T08:00:00Z",
       };

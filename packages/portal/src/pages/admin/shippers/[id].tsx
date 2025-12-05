@@ -90,12 +90,25 @@ const ShipperDetailPage: React.FC = () => {
         credit_limit: 50000,
         last_active: "2025-12-04T09:34:00Z",
         metrics: {
-          total_bookings: 12,
-          active_bookings: 3,
+          bookings: 12,
           completed_shipments: 10,
-          cancelled_bookings: 0,
+          open_shipments: 3,
         },
-        acs_flags_count: 1,
+        bookings: {
+          total: 12,
+          items: [],
+        },
+        shipments: {
+          total: 13,
+          items: [],
+        },
+        ledger: {
+          balance: 12500.5,
+        },
+        acs_flags: [],
+        recent_activities: [],
+        documents: [],
+        acs_flags_count: 0,
         created_at: "2024-06-15T10:00:00Z",
       };
 
