@@ -1,6 +1,7 @@
 import { AppRegistry } from 'react-native';
-import { name as appName } from './app.json';
 import App from './App';
+
+const appName = 'RodistaaOperator';
 
 // Register the app for web
 AppRegistry.registerComponent(appName, () => App);

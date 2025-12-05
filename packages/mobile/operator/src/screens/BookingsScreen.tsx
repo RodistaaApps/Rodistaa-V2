@@ -82,7 +82,7 @@ export default function BookingsScreen() {
           <View key={booking.id} style={styles.bookingCard}>
             <View style={styles.bookingHeader}>
               <Text style={styles.bookingId}>{booking.id}</Text>
-              <View style={styles.bidsB adge}>
+              <View style={styles.bidsBadge}>
                 <Text style={styles.bidsText}>{booking.bids} bids</Text>
               </View>
             </View>
