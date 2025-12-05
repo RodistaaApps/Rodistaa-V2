@@ -160,10 +160,8 @@ const TrucksListPage: React.FC = () => {
       title: "Registration",
       dataIndex: "registration",
       key: "registration",
-      width: 140,
-      fixed: "left" as const,
       render: (reg: string, record: Truck) => (
-        <div style={{ paddingLeft: "4px" }}>
+        <div style={{ minWidth: "120px" }}>
           <div>
             <a
               style={{
@@ -192,9 +190,8 @@ const TrucksListPage: React.FC = () => {
     {
       title: "Operator",
       key: "operator",
-      width: 180,
       render: (_: any, record: Truck) => (
-        <div>
+        <div style={{ minWidth: "140px" }}>
           <div style={{ color: textPrimary, fontWeight: 500 }}>
             {record.operator_name}
           </div>
@@ -213,9 +210,8 @@ const TrucksListPage: React.FC = () => {
     {
       title: "Type & Capacity",
       key: "type",
-      width: 160,
       render: (_: any, record: Truck) => (
-        <div>
+        <div style={{ minWidth: "130px" }}>
           <div style={{ color: textPrimary }}>{record.truck_type}</div>
           <div style={{ fontSize: "11px", color: textSecondary }}>
             {record.capacity_mt} MT
@@ -227,7 +223,6 @@ const TrucksListPage: React.FC = () => {
       title: "RTO",
       dataIndex: "rto_code",
       key: "rto_code",
-      width: 80,
       render: (code: string) => (
         <Tag style={{ fontFamily: "monospace", fontWeight: 600 }}>{code}</Tag>
       ),
@@ -236,7 +231,6 @@ const TrucksListPage: React.FC = () => {
       title: "Compliance",
       dataIndex: "compliance_status",
       key: "compliance_status",
-      width: 120,
       render: (status: string) => (
         <Tag
           color={getComplianceColor(status)}
@@ -258,7 +252,6 @@ const TrucksListPage: React.FC = () => {
       title: "RC Expiry",
       dataIndex: "rc_expiry",
       key: "rc_expiry",
-      width: 120,
       render: (date: string) => {
         const isExpiringSoon = dayjs(date).diff(dayjs(), "day") < 30;
         const isExpired = dayjs(date).isBefore(dayjs());
@@ -272,6 +265,7 @@ const TrucksListPage: React.FC = () => {
                     ? "#F59E0B"
                     : textPrimary,
                 fontWeight: isExpired || isExpiringSoon ? 600 : 400,
+                whiteSpace: "nowrap",
               }}
             >
               {dayjs(date).format("DD MMM YY")}
@@ -284,7 +278,6 @@ const TrucksListPage: React.FC = () => {
       title: "Insurance",
       dataIndex: "insurance_expiry",
       key: "insurance_expiry",
-      width: 120,
       render: (date: string) => {
         const isExpiringSoon = dayjs(date).diff(dayjs(), "day") < 30;
         const isExpired = dayjs(date).isBefore(dayjs());
@@ -298,6 +291,7 @@ const TrucksListPage: React.FC = () => {
                     ? "#F59E0B"
                     : textPrimary,
                 fontWeight: isExpired || isExpiringSoon ? 600 : 400,
+                whiteSpace: "nowrap",
               }}
             >
               {dayjs(date).format("DD MMM YY")}
@@ -310,7 +304,6 @@ const TrucksListPage: React.FC = () => {
       title: "Total Trips",
       dataIndex: "total_trips",
       key: "total_trips",
-      width: 100,
       align: "right" as const,
       render: (trips: number) => (
         <span style={{ color: textPrimary, fontWeight: 600 }}>{trips}</span>
@@ -320,11 +313,10 @@ const TrucksListPage: React.FC = () => {
       title: "Last Trip",
       dataIndex: "last_trip_date",
       key: "last_trip_date",
-      width: 120,
       render: (date: string | null) =>
         date ? (
           <Tooltip title={dayjs(date).format("DD MMM YYYY, HH:mm")}>
-            <span style={{ color: textSecondary }}>
+            <span style={{ color: textSecondary, whiteSpace: "nowrap" }}>
               {dayjs(date).fromNow()}
             </span>
           </Tooltip>
@@ -481,7 +473,8 @@ const TrucksListPage: React.FC = () => {
                 limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ y: 600, x: 1400 }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
           />
         </Card>
       </div>
