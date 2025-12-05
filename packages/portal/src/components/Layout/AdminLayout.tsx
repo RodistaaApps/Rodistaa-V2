@@ -97,14 +97,18 @@ export function AdminLayout({
       ],
     },
     { key: "/admin/kyc", icon: <IdcardOutlined />, label: "KYC Management" },
-    { key: "/admin/fleet", icon: <CarOutlined />, label: "Fleet Management" },
-    { key: "/admin/bookings", icon: <BookOutlined />, label: "Bookings" },
-    { key: "/admin/shipments", icon: <TeamOutlined />, label: "Shipments" },
-    {
-      key: "/admin/overrides",
-      icon: <FileProtectOutlined />,
-      label: "Override Requests",
-    },
+  { key: "/admin/fleet", icon: <CarOutlined />, label: "Fleet Management" },
+  { key: "/admin/bookings", icon: <BookOutlined />, label: "Bookings" },
+  { key: "/admin/shipments", icon: <TeamOutlined />, label: "Shipments" },
+  {
+    key: "operations-group",
+    icon: <FileProtectOutlined />,
+    label: "Operations",
+    children: [
+      { key: "/admin/tickets", icon: <FileProtectOutlined />, label: "Support Tickets" },
+      { key: "/admin/overrides", icon: <FileProtectOutlined />, label: "Override Requests" },
+    ],
+  },
     {
       key: "/admin/controls",
       icon: <SettingOutlined />,
