@@ -64,7 +64,7 @@ const BookingsPage: React.FC = () => {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 25,
+    limit: 100,
     status: undefined as string | undefined,
     search: '',
   });
@@ -344,7 +344,7 @@ const BookingsPage: React.FC = () => {
             />
             <Button 
               icon={<FilterOutlined />}
-              onClick={() => setFilters({ page: 1, limit: 25, status: undefined, search: '' })}
+              onClick={() => setFilters({ page: 1, limit: 100, status: undefined, search: '' })}
             >
               Clear Filters
             </Button>
@@ -379,6 +379,8 @@ const BookingsPage: React.FC = () => {
             dataSource={bookings}
             rowKey="id"
             loading={loading}
+            virtual
+            sticky
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys as string[]),
@@ -388,17 +390,18 @@ const BookingsPage: React.FC = () => {
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
-              showTotal: (total) => `Total ${total} bookings`,
+              showQuickJumper: true,
+              pageSizeOptions: ['50', '100', '200', '500'],
+              showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} bookings`,
             }}
             onChange={(pagination) => {
               setFilters(prev => ({
                 ...prev,
                 page: pagination.current || 1,
-                limit: pagination.pageSize || 25,
+                limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ x: 1600 }}
+            scroll={{ y: 600, x: 1600 }}
           />
         </Card>
 

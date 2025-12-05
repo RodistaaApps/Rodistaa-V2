@@ -60,7 +60,7 @@ const ShipmentsPage: React.FC = () => {
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 25,
+    limit: 100,
     status: undefined as string | undefined,
     search: '',
   });
@@ -301,7 +301,7 @@ const ShipmentsPage: React.FC = () => {
                 { label: 'Exception', value: 'exception' },
               ]}
             />
-            <Button icon={<FilterOutlined />} onClick={() => setFilters({ page: 1, limit: 25, status: undefined, search: '' })}>
+            <Button icon={<FilterOutlined />} onClick={() => setFilters({ page: 1, limit: 100, status: undefined, search: '' })}>
               Clear
             </Button>
           </Space>
@@ -313,22 +313,25 @@ const ShipmentsPage: React.FC = () => {
             dataSource={shipments}
             rowKey="id"
             loading={loading}
+            virtual
+            sticky
             pagination={{
               current: filters.page,
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
-              showTotal: (total) => `Total ${total} shipments`,
+              showQuickJumper: true,
+              pageSizeOptions: ['50', '100', '200', '500'],
+              showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} shipments`,
             }}
             onChange={(pagination) => {
               setFilters(prev => ({
                 ...prev,
                 page: pagination.current || 1,
-                limit: pagination.pageSize || 25,
+                limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ x: 1500 }}
+            scroll={{ y: 600, x: 1500 }}
           />
         </Card>
 

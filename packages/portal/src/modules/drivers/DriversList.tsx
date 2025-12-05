@@ -31,7 +31,7 @@ export function DriversList({
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [total, setTotal] = useState(0);
   const [params, setParams] = useState<DriversListParams>({
-    limit: 25,
+    limit: 100,
     offset: 0,
     sort: "last_ping",
     order: "desc",
@@ -427,7 +427,7 @@ export function DriversList({
           icon={<FilterOutlined />}
           onClick={() =>
             setParams({
-              limit: 25,
+              limit: 100,
               offset: 0,
               sort: "last_ping",
               order: "desc",

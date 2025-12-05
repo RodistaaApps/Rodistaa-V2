@@ -68,7 +68,7 @@ const TicketsPage: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 25,
+    limit: 100,
     status: undefined as string | undefined,
     priority: undefined as string | undefined,
     search: '',
@@ -391,7 +391,7 @@ const TicketsPage: React.FC = () => {
             />
             <Button
               icon={<FilterOutlined />}
-              onClick={() => setFilters({ page: 1, limit: 25, status: undefined, priority: undefined, search: '' })}
+              onClick={() => setFilters({ page: 1, limit: 100, status: undefined, priority: undefined, search: '' })}
             >
               Clear
             </Button>
@@ -422,6 +422,8 @@ const TicketsPage: React.FC = () => {
             dataSource={tickets}
             rowKey="id"
             loading={loading}
+            virtual
+            sticky
             rowSelection={{
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys as string[]),
@@ -431,17 +433,18 @@ const TicketsPage: React.FC = () => {
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
-              showTotal: (total) => `Total ${total} tickets`,
+              showQuickJumper: true,
+              pageSizeOptions: ['50', '100', '200', '500'],
+              showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} tickets`,
             }}
             onChange={(pagination) => {
               setFilters(prev => ({
                 ...prev,
                 page: pagination.current || 1,
-                limit: pagination.pageSize || 25,
+                limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ x: 1400 }}
+            scroll={{ y: 600, x: 1400 }}
           />
         </Card>
       </div>
