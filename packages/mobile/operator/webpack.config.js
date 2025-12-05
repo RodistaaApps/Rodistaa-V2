@@ -27,19 +27,13 @@ module.exports = {
     rules: [
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules(?!\/@rodistaa)/,
-        include: [
-          path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, '../../design-system/src'),
-          path.resolve(__dirname, '../../app-shared/src'),
-          path.resolve(__dirname, '../shared/src'),
-        ],
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
             presets: [
-              '@babel/preset-env',
-              '@babel/preset-react',
+              ['@babel/preset-env', { targets: { esmodules: true } }],
+              ['@babel/preset-react', { runtime: 'automatic' }],
               '@babel/preset-typescript',
             ],
             plugins: ['react-native-web'],
