@@ -39,6 +39,7 @@ import {
   UserOutlined,
   SafetyOutlined,
   DownloadOutlined,
+  CarOutlined,
 } from '@ant-design/icons';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { useTheme } from '@/contexts/ThemeContext';
