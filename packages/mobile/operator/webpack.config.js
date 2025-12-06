@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './index.web.js',
@@ -14,6 +15,8 @@ module.exports = {
       '@rodistaa/design-system': path.resolve(__dirname, '../../design-system/src'),
       '@rodistaa/app-shared': path.resolve(__dirname, '../../app-shared/src'),
       '@rodistaa/mobile-shared': path.resolve(__dirname, '../shared/src'),
+      // Mock optional dependencies that may not be installed
+      'react-native-reanimated': path.resolve(__dirname, 'src/utils/reanimated-stub.js'),
     },
     extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js'],
     modules: [
@@ -22,6 +25,10 @@ module.exports = {
       path.resolve(__dirname, '../../app-shared/src'),
       path.resolve(__dirname, '../shared/src'),
     ],
+    fallback: {
+      // Provide empty fallbacks for optional native modules
+      'react-native-reanimated': false,
+    },
   },
   module: {
     rules: [
@@ -52,6 +59,18 @@ module.exports = {
       template: './public/index.html',
       title: 'Rodistaa Operator',
     }),
+    // Ignore optional dependencies warnings
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^react-native-reanimated$/,
+      contextRegExp: /react-native-gesture-handler/,
+    }),
+  ],
+  // Suppress warnings for optional dependencies
+  ignoreWarnings: [
+    {
+      module: /react-native-gesture-handler/,
+      message: /react-native-reanimated/,
+    },
   ],
   devServer: {
     port: 3002,
