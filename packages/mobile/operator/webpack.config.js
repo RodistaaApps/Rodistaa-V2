@@ -31,6 +31,7 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
+            configFile: false, // Don't use babel.config.js
             presets: [
               ['@babel/preset-env', { targets: { esmodules: true } }],
               ['@babel/preset-react', { runtime: 'automatic' }],
