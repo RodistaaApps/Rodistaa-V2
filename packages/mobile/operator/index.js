@@ -1,4 +1,5 @@
-import { registerRootComponent } from 'expo';
+import { AppRegistry } from 'react-native';
 import App from './App';
 
-registerRootComponent(App);
+// MainActivity.getMainComponentName() returns "main"
+AppRegistry.registerComponent('main', () => App);
