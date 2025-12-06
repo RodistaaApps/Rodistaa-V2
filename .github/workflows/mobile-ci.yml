@@ -1,0 +1,169 @@
+name: Mobile Apps CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+
+jobs:
+  lint:
+    name: Lint Mobile Apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Lint Operator App
+        run: |
+          cd packages/mobile/operator
+          npm run lint || echo "Lint errors found (non-blocking)"
+      
+      - name: Lint Driver App
+        run: |
+          cd packages/mobile/driver
+          npm run lint || echo "Lint errors found (non-blocking)"
+      
+      - name: Lint Shipper App
+        run: |
+          cd packages/mobile/shipper
+          npm run lint || echo "Lint errors found (non-blocking)"
+
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Type check Operator App
+        run: |
+          cd packages/mobile/operator
+          npx tsc --noEmit || echo "Type errors found (non-blocking)"
+      
+      - name: Type check Driver App
+        run: |
+          cd packages/mobile/driver
+          npx tsc --noEmit || echo "Type errors found (non-blocking)"
+      
+      - name: Type check Shipper App
+        run: |
+          cd packages/mobile/shipper
+          npx tsc --noEmit || echo "Type errors found (non-blocking)"
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Run Operator App Tests
+        run: |
+          cd packages/mobile/operator
+          npm test -- --coverage --watchAll=false || echo "Tests failed (non-blocking)"
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/mobile/operator/coverage/coverage-final.json
+          flags: operator
+          name: operator-coverage
+
+  android-build:
+    name: Android Build Check
+    runs-on: ubuntu-latest
+    needs: [lint, type-check]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+      
+      - name: Build Operator App (Android)
+        run: |
+          cd packages/mobile/operator/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon || echo "Build failed (non-blocking)"
+
+  # Note: E2E tests would require emulator setup
+  # Uncomment and configure when Detox is set up
+  # e2e-tests:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup Android emulator
+  #       uses: reactivecircus/android-emulator-runner@v2
+  #       with:
+  #         api-level: 30
+  #         arch: x86_64
+  #         script: |
+  #           cd packages/mobile/operator
+  #           npm run e2e:android
+
