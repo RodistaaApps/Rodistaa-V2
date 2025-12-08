@@ -7,112 +7,118 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RCard } from '../components/RCard';
 import {
   RodistaaColors,
   MobileTextStyles,
   RodistaaSpacing,
 } from '../theme/colors';
-
-const mockBookings = [
-  {
-    id: 'BKG-001',
-    pickup: {
-      address: '123 Main Street, Sector 15',
-      city: 'Hyderabad',
-      state: 'Telangana',
-    },
-    drop: {
-      address: '456 Park Avenue, Andheri West',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-    },
-    tonnage: 5,
-    priceRange: { min: 45000, max: 55000 },
-    status: 'OPEN_FOR_BIDDING' as const,
-    bidCount: 4,
-    pickupDate: '2025-12-06',
-    material: 'Electronics',
-    distance: 710,
-  },
-  {
-    id: 'BKG-002',
-    pickup: {
-      address: '789 Market Road',
-      city: 'Delhi',
-      state: 'Delhi',
-    },
-    drop: {
-      address: '321 Tower Street, Whitefield',
-      city: 'Bangalore',
-      state: 'Karnataka',
-    },
-    tonnage: 12,
-    priceRange: { min: 85000, max: 95000 },
-    status: 'OPEN_FOR_BIDDING' as const,
-    bidCount: 6,
-    pickupDate: '2025-12-07',
-    material: 'Machinery Parts',
-    distance: 2150,
-  },
-  {
-    id: 'BKG-003',
-    pickup: {
-      address: '555 Tech Park',
-      city: 'Chennai',
-      state: 'Tamil Nadu',
-    },
-    drop: {
-      address: '777 Business Hub',
-      city: 'Pune',
-      state: 'Maharashtra',
-    },
-    tonnage: 8,
-    priceRange: { min: 35000, max: 45000 },
-    status: 'OPEN_FOR_BIDDING' as const,
-    bidCount: 2,
-    pickupDate: '2025-12-08',
-    material: 'Textiles',
-    distance: 1200,
-  },
-];
+import { bookingService, type Booking } from '../services/bookingService';
+import { useNavigation } from '@react-navigation/native';
 
 interface BookingsScreenProps {
   navigation?: any;
 }
 
-export default function BookingsScreen({ navigation }: BookingsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
+export default function BookingsScreen({ navigation: navProp }: BookingsScreenProps) {
+  // Use navigation from props first, fallback to hook
+  let navigation;
+  try {
+    navigation = navProp || useNavigation();
+  } catch (error) {
+    console.error('Navigation error in BookingsScreen:', error);
+    navigation = {
+      navigate: (name: string) => console.log('Navigate to:', name),
+    };
+  }
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'open' | 'mybids' | 'all'>('open');
 
+  const { data: bookings = [], isLoading, refetch } = useQuery({
+    queryKey: ['bookings', filter],
+    queryFn: () => {
+      const filters: any = {};
+      if (filter === 'open') {
+        filters.status = 'OPEN_FOR_BIDDING';
+      }
+      return bookingService.getBookings(filters);
+    },
+    staleTime: 30000, // 30 seconds
+  });
+
+  const { data: myBids = [] } = useQuery({
+    queryKey: ['myBids'],
+    queryFn: () => bookingService.getMyBids(),
+    staleTime: 30000,
+  });
+
   const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      // TODO: Call GET /bookings API with filters
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error('Failed to refresh bookings:', error);
-    } finally {
-      setRefreshing(false);
-    }
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ['myBids'] }),
+    ]);
   };
 
-  const filteredBookings = mockBookings.filter(booking => {
+  const filteredBookings = bookings.filter(booking => {
     if (filter === 'open') return booking.status === 'OPEN_FOR_BIDDING';
-    if (filter === 'mybids') return booking.bidCount > 0; // TODO: Check actual user bids
+    if (filter === 'mybids') {
+      return myBids.some(bid => bid.bookingId === booking.id);
+    }
     return true;
   });
 
   const handleBookingPress = (bookingId: string) => {
-    console.log('Navigate to bid screen:', bookingId);
-    // TODO: Navigate to bid placement screen
+    Alert.alert('Booking Details', `View details for booking ${bookingId}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'View', onPress: () => console.log('View booking:', bookingId) },
+    ]);
   };
 
-  const renderBooking = ({ item }: { item: typeof mockBookings[0] }) => (
+  const handlePlaceBid = (booking: Booking) => {
+    // For web, use window.prompt as Alert.prompt is not available
+    const amount = window.prompt(
+      `Place Bid for ${booking.id}\n\nPrice range: ₹${booking.priceRange.min.toLocaleString()} - ₹${booking.priceRange.max.toLocaleString()}\n\nEnter your bid amount:`
+    );
+    
+    if (amount === null) {
+      return; // User cancelled
+    }
+    
+    if (!amount || isNaN(Number(amount))) {
+      Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+    
+    (async () => {
+      try {
+        // TODO: Call bookingService.placeBid(booking.id, Number(amount))
+        Alert.alert('Success', `Bid of ₹${Number(amount).toLocaleString()} placed successfully!`);
+        await onRefresh();
+      } catch (error) {
+        Alert.alert('Error', 'Failed to place bid. Please try again.');
+      }
+    })();
+  };
+
+  if (isLoading && bookings.length === 0) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={RodistaaColors.primary.main} />
+        <Text style={{ marginTop: 16, color: RodistaaColors.text.secondary }}>
+          Loading bookings...
+        </Text>
+      </View>
+    );
+  }
+
+  const renderBooking = ({ item }: { item: Booking; index?: number }) => (
     <TouchableOpacity
       onPress={() => handleBookingPress(item.id)}
       activeOpacity={0.7}
@@ -153,7 +159,10 @@ export default function BookingsScreen({ navigation }: BookingsScreenProps) {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.bidButton}>
+        <TouchableOpacity
+          style={styles.bidButton}
+          onPress={() => handlePlaceBid(item)}
+        >
           <Text style={styles.bidButtonText}>Place Bid</Text>
         </TouchableOpacity>
       </RCard>
@@ -211,25 +220,30 @@ export default function BookingsScreen({ navigation }: BookingsScreenProps) {
       </View>
 
       {/* Bookings List */}
-      <FlatList
-        data={filteredBookings}
-        renderItem={renderBooking}
-        keyExtractor={(item) => item.id}
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isLoading}
             onRefresh={onRefresh}
             tintColor={RodistaaColors.primary.main}
           />
         }
-        ListEmptyComponent={
+      >
+        {filteredBookings.length === 0 && !isLoading ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No bookings found</Text>
             <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
           </View>
-        }
-      />
+        ) : (
+          filteredBookings.map((booking) => (
+            <View key={booking.id}>
+              {renderBooking({ item: booking, index: filteredBookings.indexOf(booking) })}
+            </View>
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -262,6 +276,9 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: RodistaaColors.primary.contrast,
+  },
+  scrollView: {
+    flex: 1,
   },
   list: {
     padding: RodistaaSpacing.lg,

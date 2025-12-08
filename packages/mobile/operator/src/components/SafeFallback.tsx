@@ -3,14 +3,15 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
-import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '../theme/colors';
+// Import tokens directly from design system (components excluded from web build)
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system/tokens';
 
 interface SafeFallbackProps {
   error?: Error;
   onSendLogs?: () => void;
 }
 
-export const SafeFallback: React.FC<SafeFallbackProps> = ({ error, onSendLogs }) => {
+const SafeFallback: React.FC<SafeFallbackProps> = ({ error, onSendLogs }) => {
   const handleSendLogs = () => {
     // Write error to logs directory
     const logData = {
@@ -132,3 +133,4 @@ const styles = StyleSheet.create({
   },
 });
 
+export default SafeFallback;

@@ -1,21 +1,26 @@
+/**
+ * Jest Configuration for Operator App
+ */
+
 module.exports = {
   preset: 'react-native',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   transform: {
-    '^.+\\.(js|ts|tsx)$': 'babel-jest',
+    '^.+\\.(ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
   },
-  testMatch: [
-    '**/__tests__/**/*.(ts|tsx|js)',
-    '**/*.(test|spec).(ts|tsx|js)',
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-native|@react-native|@react-navigation|@tanstack)/)',
   ],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
+  testMatch: ['**/__tests__/**/*.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
+    '!src/**/*.stories.{ts,tsx}',
   ],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^@rodistaa/mobile-shared$': '<rootDir>/../shared/src',
+    '^@rodistaa/design-system$': '<rootDir>/../../design-system/src',
+  },
 };
-

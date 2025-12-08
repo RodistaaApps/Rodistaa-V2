@@ -34,7 +34,11 @@ module.exports = {
     rules: [
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules/,
+        exclude: [
+          /node_modules\/(?!(@rodistaa|react-native|@react-native)\/).*/,
+          // Exclude design-system components directory for web builds (only use tokens)
+          path.resolve(__dirname, '../../design-system/src/components'),
+        ],
         use: {
           loader: 'babel-loader',
           options: {

@@ -137,9 +137,27 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
-    def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
-    def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
+    // Force compatible androidx versions for compileSdk 33
+    implementation("androidx.appcompat:appcompat:1.6.1") {
+        version {
+            strictly '1.6.1'
+        }
+    }
+    implementation("androidx.core:core:1.10.1") {
+        version {
+            strictly '1.10.1'
+        }
+    }
+    implementation("androidx.core:core-ktx:1.10.1") {
+        version {
+            strictly '1.10.1'
+        }
+    }
+
+    // React Native image format support (no Expo)
+    def isGifEnabled = (findProperty('android.imageFormat.gif') ?: "true") == "true";
+    def isWebpEnabled = (findProperty('android.imageFormat.webp') ?: "true") == "true";
+    def isWebpAnimatedEnabled = (findProperty('android.imageFormat.webp.animated') ?: "false") == "true";
     def frescoVersion = rootProject.ext.frescoVersion
 
     // If your app supports Android versions before Ice Cream Sandwich (API level 14)

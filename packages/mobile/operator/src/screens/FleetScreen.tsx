@@ -2,15 +2,18 @@
  * Fleet Screen - Full truck management with design system TruckCard
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RCard } from '../components/RCard';
 import {
   RodistaaColors,
@@ -18,88 +21,80 @@ import {
   RodistaaSpacing,
   RNShadowStyles,
 } from '../theme/colors';
-
-const mockTrucks = [
-  {
-    id: '1',
-    registrationNumber: 'DL 01 AB 1234',
-    vehicleType: 'Container 20ft',
-    capacityTons: 10,
-    bodyType: 'Container',
-    status: 'ACTIVE' as const,
-    inspectionDue: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
-    driver: 'Ramesh Kumar',
-  },
-  {
-    id: '2',
-    registrationNumber: 'HR 26 BX 5678',
-    vehicleType: 'Open Body 14ft',
-    capacityTons: 7.5,
-    bodyType: 'Open Body',
-    status: 'PENDING_INSPECTION' as const,
-    inspectionDue: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    driver: null,
-  },
-  {
-    id: '3',
-    registrationNumber: 'MH 12 CD 9012',
-    vehicleType: 'Trailer 32ft',
-    capacityTons: 25,
-    bodyType: 'Trailer',
-    status: 'ACTIVE' as const,
-    inspectionDue: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    driver: 'Suresh Reddy',
-  },
-  {
-    id: '4',
-    registrationNumber: 'GJ 05 EF 3456',
-    vehicleType: 'Tanker',
-    capacityTons: 20,
-    bodyType: 'Tanker',
-    status: 'BLOCKED' as const,
-    inspectionDue: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    driver: null,
-  },
-  {
-    id: '5',
-    registrationNumber: 'KA 01 GH 7890',
-    vehicleType: 'Container 20ft',
-    capacityTons: 10,
-    bodyType: 'Container',
-    status: 'ACTIVE' as const,
-    inspectionDue: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-    driver: 'Vijay Kumar',
-  },
-];
+import { truckService, type Truck } from '../services/truckService';
+import { useNavigation } from '@react-navigation/native';
 
 interface FleetScreenProps {
   navigation?: any;
 }
 
-export default function FleetScreen({ navigation }: FleetScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [trucks, setTrucks] = useState(mockTrucks);
+export default function FleetScreen({ navigation: navProp }: FleetScreenProps) {
+  // Use navigation from props first, fallback to hook
+  let navigation;
+  try {
+    navigation = navProp || useNavigation();
+  } catch (error) {
+    console.error('Navigation error in FleetScreen:', error);
+    navigation = {
+      navigate: (name: string) => console.log('Navigate to:', name),
+    };
+  }
+  const queryClient = useQueryClient();
+
+  const { data: trucks = [], isLoading, refetch, error } = useQuery({
+    queryKey: ['trucks'],
+    queryFn: async () => {
+      console.log('Fetching trucks...');
+      const data = await truckService.getTrucks();
+      console.log('Trucks fetched:', data);
+      return data;
+    },
+    staleTime: 30000, // 30 seconds
+  });
+
+  React.useEffect(() => {
+    console.log('FleetScreen - trucks:', trucks);
+    console.log('FleetScreen - isLoading:', isLoading);
+    console.log('FleetScreen - error:', error);
+  }, [trucks, isLoading, error]);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      // TODO: Call GET /operator/trucks API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error('Failed to refresh trucks:', error);
-    } finally {
-      setRefreshing(false);
-    }
+    await refetch();
   };
 
   const handleTruckPress = (truckId: string) => {
-    console.log('Navigate to truck details:', truckId);
-    // TODO: Navigate to truck detail screen
+    Alert.alert('Truck Details', `View details for truck ${truckId}`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'View', onPress: () => console.log('Navigate to truck details:', truckId) },
+    ]);
   };
 
   const handleManageTruck = (truckId: string) => {
-    console.log('Manage truck:', truckId);
-    // TODO: Navigate to truck management screen
+    Alert.alert('Manage Truck', `Manage truck ${truckId}`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Manage', onPress: () => console.log('Manage truck:', truckId) },
+    ]);
+  };
+
+  const handleInspect = (truckId: string) => {
+    Alert.alert('Inspection', `Start inspection for truck ${truckId}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Start', onPress: () => console.log('Start inspection:', truckId) },
+    ]);
+  };
+
+  const handleAssignDriver = (truckId: string) => {
+    Alert.alert('Assign Driver', `Assign driver to truck ${truckId}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Assign', onPress: () => console.log('Assign driver:', truckId) },
+    ]);
+  };
+
+  const handleAddTruck = () => {
+    Alert.alert('Add Truck', 'Add a new truck to your fleet', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Continue', onPress: () => console.log('Add new truck') },
+    ]);
   };
 
   const getStatusColor = (status: string) => {
@@ -111,7 +106,31 @@ export default function FleetScreen({ navigation }: FleetScreenProps) {
     }
   };
 
-  const renderTruck = ({ item }: { item: typeof mockTrucks[0] }) => (
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ color: RodistaaColors.error.main, marginBottom: 8 }}>
+          Error loading fleet: {error instanceof Error ? error.message : 'Unknown error'}
+        </Text>
+        <TouchableOpacity onPress={() => refetch()}>
+          <Text style={{ color: RodistaaColors.primary.main }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (isLoading && trucks.length === 0) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={RodistaaColors.primary.main} />
+        <Text style={{ marginTop: 16, color: RodistaaColors.text.secondary }}>
+          Loading fleet...
+        </Text>
+      </View>
+    );
+  }
+
+  const renderTruck = ({ item }: { item: Truck; index?: number }) => (
     <TouchableOpacity
       onPress={() => handleTruckPress(item.id)}
       activeOpacity={0.7}
@@ -146,10 +165,16 @@ export default function FleetScreen({ navigation }: FleetScreenProps) {
           </View>
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => console.log('Inspect')}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => handleInspect(item.id)}
+          >
             <Text style={styles.actionBtnText}>🔍 Inspect</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => console.log('Assign')}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => handleAssignDriver(item.id)}
+          >
             <Text style={styles.actionBtnText}>👤 Assign Driver</Text>
           </TouchableOpacity>
         </View>
@@ -165,34 +190,36 @@ export default function FleetScreen({ navigation }: FleetScreenProps) {
           <Text style={styles.headerTitle}>My Fleet</Text>
           <Text style={styles.headerSubtitle}>{trucks.length} / 10 Trucks</Text>
         </View>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => console.log('Add new truck')}
-        >
+        <TouchableOpacity style={styles.addButton} onPress={handleAddTruck}>
           <Text style={styles.addButtonText}>+ Add Truck</Text>
         </TouchableOpacity>
       </View>
 
       {/* Trucks List */}
-      <FlatList
-        data={trucks}
-        renderItem={renderTruck}
-        keyExtractor={(item) => item.id}
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isLoading}
             onRefresh={onRefresh}
             tintColor={RodistaaColors.primary.main}
           />
         }
-        ListEmptyComponent={
+      >
+        {trucks.length === 0 && !isLoading ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No trucks yet</Text>
             <Text style={styles.emptySubtext}>Add your first truck to get started</Text>
           </View>
-        }
-      />
+        ) : (
+          trucks.map((truck) => (
+            <View key={truck.id}>
+              {renderTruck({ item: truck, index: trucks.indexOf(truck) })}
+            </View>
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -230,6 +257,9 @@ const styles = StyleSheet.create({
     ...MobileTextStyles.body,
     color: RodistaaColors.primary.contrast,
     fontWeight: '600',
+  },
+  scrollView: {
+    flex: 1,
   },
   list: {
     padding: RodistaaSpacing.lg,

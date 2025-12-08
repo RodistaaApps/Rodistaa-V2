@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -10,6 +11,20 @@ import ShipmentsScreen from '../screens/ShipmentsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+
+// Wrap each screen to catch errors and ensure rendering
+const SafeScreen = (Component: React.ComponentType<any>, screenName: string) => {
+  return (props: any) => (
+    <ScreenWrapper screenName={screenName}>
+      <Component {...props} />
+    </ScreenWrapper>
+  );
+};
+
+// Tab icon component that works on web and native
+const TabIcon = ({ emoji }: { emoji: string }) => (
+  <Text style={{ fontSize: 20 }}>{emoji}</Text>
+);
 
 export default function MainTabs() {
   return (
@@ -33,47 +48,47 @@ export default function MainTabs() {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeScreen}
+        component={SafeScreen(HomeScreen, 'HomeScreen')}
         options={{
           title: 'Dashboard',
           tabBarLabel: 'Home',
-          tabBarIcon: () => <span style={{ fontSize: 20 }}>🏠</span>,
+          tabBarIcon: ({ color, size }) => <TabIcon emoji="🏠" />,
         }}
       />
       <Tab.Screen 
         name="Fleet" 
-        component={FleetScreen}
+        component={SafeScreen(FleetScreen, 'FleetScreen')}
         options={{
           title: 'My Fleet',
           tabBarLabel: 'Fleet',
-          tabBarIcon: () => <span style={{ fontSize: 20 }}>🚛</span>,
+          tabBarIcon: ({ color, size }) => <TabIcon emoji="🚛" />,
         }}
       />
       <Tab.Screen 
         name="Bookings" 
-        component={BookingsScreen}
+        component={SafeScreen(BookingsScreen, 'BookingsScreen')}
         options={{
           title: 'Available Bookings',
           tabBarLabel: 'Bookings',
-          tabBarIcon: () => <span style={{ fontSize: 20 }}>📦</span>,
+          tabBarIcon: ({ color, size }) => <TabIcon emoji="📦" />,
         }}
       />
       <Tab.Screen 
         name="Shipments" 
-        component={ShipmentsScreen}
+        component={SafeScreen(ShipmentsScreen, 'ShipmentsScreen')}
         options={{
           title: 'Active Shipments',
           tabBarLabel: 'Shipments',
-          tabBarIcon: () => <span style={{ fontSize: 20 }}>🚚</span>,
+          tabBarIcon: ({ color, size }) => <TabIcon emoji="🚚" />,
         }}
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileScreen}
+        component={SafeScreen(ProfileScreen, 'ProfileScreen')}
         options={{
           title: 'My Profile',
           tabBarLabel: 'Profile',
-          tabBarIcon: () => <span style={{ fontSize: 20 }}>👤</span>,
+          tabBarIcon: ({ color, size }) => <TabIcon emoji="👤" />,
         }}
       />
     </Tab.Navigator>

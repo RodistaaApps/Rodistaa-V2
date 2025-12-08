@@ -6,37 +6,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { shipmentService, type Shipment } from '../services/shipmentService';
+import { RodistaaColors, MobileTextStyles } from '../theme/colors';
 
 export default function ShipmentsScreen() {
-  const [refreshing, setRefreshing] = React.useState(false);
+  const queryClient = useQueryClient();
 
-  const mockShipments = [
-    {
-      id: 'SHP-001',
-      bookingId: 'BKG-002',
-      status: 'in_transit',
-      progress: 65,
-      from: 'Delhi',
-      to: 'Bangalore',
-      truck: 'DL 01 AB 1234',
-      driver: 'Ramesh Kumar',
-      eta: '2 hours',
-      lastUpdate: '15 mins ago',
-    },
-    {
-      id: 'SHP-002',
-      bookingId: 'BKG-005',
-      status: 'pending',
-      progress: 0,
-      from: 'Mumbai',
-      to: 'Pune',
-      truck: 'MH 12 CD 9012',
-      driver: 'Suresh Reddy',
-      eta: '—',
-      lastUpdate: '1 day ago',
-    },
-  ];
+  const { data: shipments = [], isLoading, refetch } = useQuery({
+    queryKey: ['shipments'],
+    queryFn: () => shipmentService.getShipments(),
+    staleTime: 30000, // 30 seconds
+  });
+
+  const onRefresh = React.useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,19 +35,39 @@ export default function ShipmentsScreen() {
     }
   };
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 2000);
-  }, []);
+  const handleTrack = (shipmentId: string) => {
+    Alert.alert('Track Shipment', `Track shipment ${shipmentId}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Track', onPress: () => console.log('Track shipment:', shipmentId) },
+    ]);
+  };
+
+  const handleReplaceDriver = (shipmentId: string) => {
+    Alert.alert('Replace Driver', `Replace driver for shipment ${shipmentId}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Replace', onPress: () => console.log('Replace driver:', shipmentId) },
+    ]);
+  };
+
+  if (isLoading && shipments.length === 0) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={RodistaaColors.primary.main} />
+        <Text style={{ marginTop: 16, color: RodistaaColors.text.secondary }}>
+          Loading shipments...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
       }
     >
-      {mockShipments.map((shipment) => (
+      {shipments.map((shipment: Shipment) => (
         <View key={shipment.id} style={styles.shipmentCard}>
           <View style={styles.shipmentHeader}>
             <View>
@@ -112,10 +120,16 @@ export default function ShipmentsScreen() {
 
           {/* Actions */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleTrack(shipment.id)}
+            >
               <Text style={styles.actionButtonText}>📍 Track</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleReplaceDriver(shipment.id)}
+            >
               <Text style={styles.actionButtonText}>🔄 Replace Driver</Text>
             </TouchableOpacity>
           </View>

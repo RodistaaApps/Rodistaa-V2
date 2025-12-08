@@ -1,22 +1,19 @@
-// Jest setup file for React Native tests
+/**
+ * Jest Setup for Operator App Tests
+ */
+
 import '@testing-library/jest-native/extend-expect';
 
 // Mock React Native modules
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 
-// Mock gesture handler
-jest.mock('react-native-gesture-handler', () => {
-  const View = require('react-native').View;
-  return {
-    GestureHandlerRootView: View,
-  };
-});
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
 
-// Mock safe area context
-jest.mock('react-native-safe-area-context', () => {
-  const View = require('react-native').View;
-  return {
-    SafeAreaProvider: ({ children }) => children,
-  };
-});
-
+// Mock NetInfo
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn(() => Promise.resolve({ isConnected: true, type: 'wifi' })),
+  addEventListener: jest.fn(() => jest.fn()),
+}));

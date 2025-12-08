@@ -1,233 +1,216 @@
-# Rodistaa Truck Master Service
+# Rodistaa Truck Master - Body Length & Tyre Count Onboarding
 
-Production-ready truck master information service with VAHAN verification, compliance checking, and frontend components.
+Production-ready module for truck onboarding with mandatory body length and tyre count collection, VAHAN verification, flagging, and franchise photo verification workflows.
 
-## Overview
+## Features
 
-This service provides:
-- **Truck Onboarding**: Operator enters RC number, stores encrypted RC copy, marks as PENDING_VERIFICATION
-- **VAHAN Verification**: Nightly batch job with failover (Parivahan → Surepass → Backup)
-- **Compliance Engine**: Rule-based compliance checking with 7-day cache TTL
-- **Frontend Components**: React components for onboarding, detail view, search, and HQ ticketing
-- **HQ Ticketing**: Discrepancy tracking and resolution workflow
+- **Mandatory Dimensions**: Body length (ft) and tyre count collection during onboarding
+- **VAHAN Verification**: Nightly batch verification with Parivahan (primary) → Surepass (fallback)
+- **Flagging System**: Non-blocking flags for unusual configurations with escalation rules
+- **Franchise Photo Verification**: Task assignment and photo verification workflows
+- **Admin Dashboard**: Flag management, override actions, and ticket creation
+- **Audit Trail**: Complete audit logging with 7-year retention
+- **Security**: Encrypted RC copies, hashed chassis/engine numbers
 
-## Installation
+## Tech Stack
+
+- **Backend**: Node.js 18+, TypeScript, Fastify, PostgreSQL
+- **Frontend**: React (TypeScript), React Native compatible
+- **Testing**: Jest, React Testing Library
+- **Security**: AES-256-GCM encryption, SHA256 hashing
+
+## Environment Variables
 
 ```bash
-cd packages/truck-master
-pnpm install
-```
-
-## Database Setup
-
-### Environment Variables
-
-Create a `.env` file:
-
-```env
+# Database
 DATABASE_URL=postgresql://user:password@localhost:5432/rodistaa
-ENCRYPTION_KEY=your-32-byte-encryption-key-here
+
+# Encryption (REQUIRED)
+ENCRYPTION_KEY=your-32-byte-encryption-key-here-!!
+
+# JWT
 JWT_SECRET=your-jwt-secret-key
 
-# VAHAN Provider Credentials
-VAHAN_PARIVAHAN_API_KEY=your_parivahan_key (if available)
-VAHAN_SUREPASS_API_KEY=your_surepass_key
-VAHAN_BACKUP_API_KEY=your_backup_key
+# VAHAN Providers (Optional - will use mocks if not provided)
+PARIVAHAN_API_KEY=your-parivahan-key
+PARIVAHAN_BASE_URL=https://api.parivahan.gov.in
+SUREPASS_API_KEY=your-surepass-key
+SUREPASS_BASE_URL=https://api.surepass.io
+
+# Franchise
+DEFAULT_FRANCHISE_ID=FRANCHISE_001
+
+# Server
+PORT=3001
 ```
 
-### Run Migrations
+## Setup
 
-```bash
-# Run database migrations
-pnpm run migrate
-```
-
-### Seed OEM Data
-
-```bash
-# Seed OEM model mappings
-pnpm run migrate:seed
-```
-
-## Running the Service
+### 1. Install Dependencies
 
 ```bash
-# Development
-pnpm run dev
-
-# Production
-pnpm run build
-pnpm start
+npm install
 ```
 
-The service will start on port 3001 (configurable via `PORT` environment variable).
+### 2. Run Migrations
 
-## API Endpoints
-
-### Create Truck
-```
-POST /api/operator/:operatorId/trucks
-Body: {
-  rc_number: string;
-  nickname?: string;
-  rc_copy?: string; // Base64 encoded
-  is_tractor?: boolean;
-  is_trailer?: boolean;
-  legal_authorization_accepted?: boolean;
-}
+```bash
+npm run migrate
 ```
 
-### List Operator Trucks
-```
-GET /api/operator/:operatorId/trucks
+This runs `migrations/001_create_truck_master_schema.sql` and `migrations/002_add_truck_dimensions.sql`.
+
+### 3. Seed OEM Data
+
+```bash
+npm run migrate:seed
 ```
 
-### Get Truck Master Detail
-```
-GET /api/trucks/:rc
+This loads `data/oem_model_bodylength_seed.sql` with typical tyre/length mappings.
+
+### 4. Start Backend
+
+```bash
+npm start
 ```
 
-### Raise Ticket
-```
-POST /api/trucks/:rc/raise-ticket
-Body: {
-  ticket_type: string;
-  payload: any;
-}
+Or for development:
+
+```bash
+npm run dev
 ```
 
-### Get Tickets (HQ)
+### 5. Run Tests
+
+```bash
+npm test
 ```
-GET /api/tickets?status=OPEN&type=PROVIDER_MISMATCH&limit=100
+
+With coverage:
+
+```bash
+npm run test:coverage
 ```
+
+## API Documentation
+
+See [docs/api_truck_master.md](./docs/api_truck_master.md) for complete API documentation.
+
+### Key Endpoints
+
+- `POST /api/operator/:operatorId/trucks` - Create truck with dimensions
+- `GET /api/operator/:operatorId/trucks` - List trucks with filters
+- `GET /api/trucks/:truckId` - Get truck details with flags and snapshots
+- `POST /api/franchise/verify/:truckId` - Franchise photo verification
+- `GET /api/admin/flags/dashboard` - Admin flag dashboard
+- `POST /api/admin/trucks/:truckId/override` - Admin override actions
+
+## Database Schema
+
+### operator_trucks
+- `tyre_count` (SMALLINT) - Allowed: 6,10,12,14,16,18,20,22
+- `body_length_ft` (SMALLINT) - Allowed: 12-45 ft (see ALLOWED_BODY_LENGTHS)
+- `body_type` (TEXT) - OPEN/CONTAINER/FLATBED/LOWBED/TRAILER/OTHER
+- `flags` (JSONB) - Active flags array
+- `flags_history` (JSONB) - Append-only history
+- `vahan_snapshot` (JSONB) - Latest VAHAN verification data
+- `rc_copy_bytea` (BYTEA) - Encrypted RC copy
+
+### franchise_tasks
+- Photo verification tasks with due dates (48h SLA)
+
+### admin_tickets
+- HQ tickets for escalations and discrepancies
+
+### operator_truck_flags
+- Flag history with resolution tracking
+
+## Flag Codes
+
+- `LENGTH_MISMATCH_WARNING` - Body length outside typical range (non-blocking)
+- `TYRE_COUNT_UNUSUAL` - Tyre count unusual for maker/model
+- `REQUIRES_PHOTO_VERIFICATION` - Requires franchise photo verification
+- `PAYLOAD_TYRE_MISMATCH` - Payload inconsistent with tyre count/GVW
+- `PERSISTENT_MISMATCH` - Same flag 3+ times (escalates to HQ)
+- `VAHAN_DISCREPANCY` - Provider vs operator-declared mismatch
+- `DUPLICATE_CHASSIS` - Chassis number already registered
+- `DUPLICATE_ENGINE` - Engine number already registered
 
 ## Batch Worker
 
-The nightly batch worker verifies trucks with expired cache or pending verification:
+Nightly batch worker processes pending trucks:
 
-```typescript
-import { BatchWorker, VahanClient } from '@rodistaa/truck-master';
-
-const vahanClient = new VahanClient({
-  parivahan: { apiKey: process.env.VAHAN_PARIVAHAN_API_KEY },
-  surepass: { apiKey: process.env.VAHAN_SUREPASS_API_KEY },
-  backup: { apiKey: process.env.VAHAN_BACKUP_API_KEY },
-});
-
-const batchWorker = new BatchWorker(vahanClient, {
-  concurrency: 10,
-  batchSize: 100,
-});
-
-// Run nightly
-const result = await batchWorker.runBatchVerification();
+```bash
+# Run manually
+node -r dotenv/config dist/jobs/batchWorker.js
 ```
 
-Schedule this to run nightly via cron or job scheduler.
+Or schedule via cron:
+
+```bash
+0 2 * * * cd /path/to/truck-master && npm run batch-worker
+```
+
+See [docs/batch_worker_runbook.md](./docs/batch_worker_runbook.md) for configuration and monitoring.
 
 ## Frontend Components
 
-### TruckOnboardForm
-Mobile-first onboarding form with RC number input, RC copy upload, and tractor/trailer toggle.
-
-### TruckDetailCard
-Displays truck master info with tabs: Overview, VAHAN Snapshot, Inference, Compliance History, Links, Tickets.
-
-### TruckSearchFilter
-Client-facing search filters for category (Small/Medium/Heavy/Super Heavy/Trailer) and body type.
-
-### HQTicketList
-HQ ticket UI for compliance team to view and resolve discrepancies.
+- `TruckAddForm` - Single-screen onboarding form
+- `TruckDetail` - Truck details with flags and snapshots
+- `FranchiseTasks` - Photo verification task management
+- `FlagToast` - Non-blocking flag notifications
+- `FlagDashboard` - Admin flag management
 
 ## Testing
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run with coverage
-pnpm test:coverage
+# Unit tests
+npm test
 
 # Watch mode
-pnpm test:watch
+npm run test:watch
+
+# Coverage
+npm run test:coverage
+
+# Integration tests
+npm run test:integration
 ```
-
-## Key Rules Implementation
-
-### Blocking Rules
-- **Body Types**: TIPPER, DUMPER, TANKER, COWL, CHASSIS, CAB-CHASSIS (from `config/body_regex.json`)
-- **Emission**: BS3 and below blocked (BS4 and BS6 allowed)
-- **Category**: GOODS-only required
-- **Duplicate Chassis**: Blocked across operators
-- **GPS Heartbeat**: Block if no ping > 60 minutes
-- **Trailer Pairing**: Trailer cannot bid without linked tractor
-
-### Length Constraints
-- **SXL**: Max 20 ft
-- **DXL**: Max 24 ft
-- **TXL**: Max 28 ft
-- **QXL**: Max 32 ft
-- **PXL**: Max 40 ft
-- **HX**: Max 42 ft
-- **TRL**: Max 60 ft
-
-### Permit Rules
-- Blank permit allowed (inconsistent VAHAN fields)
-- Block TEMPORARY, PRIVATE, NON-TRANSPORT permits
-- Block if expiry < 7 days
-
-## Security
-
-- **RC Copy Encryption**: AES-256-GCM encryption at rest
-- **Chassis/Engine Hashing**: SHA256 hashes only stored (no plain text)
-- **JWT Authentication**: Protected API endpoints
-- **Retention**: 7 years for all snapshots and audit logs
-
-## Observability
-
-- **Metrics**: Batch success rate, provider errors, tickets created, blocked counts
-- **Logs**: Provider txn_id, rule reasons, decisions
-- **Audit Trail**: All verification events logged with rules_applied
-
-## Scalability
-
-- Batch worker supports horizontal scaling
-- Concurrency control (configurable)
-- Database job queue ready
-- Supports 10k+ truck verification nightly
-
-## Configuration Files
-
-- `config/body_regex.json` - Blocked body type patterns (editable without code deploy)
-- `config/tyre_gvw_rules.json` - Tyre count vs GVW sanity ranges
-- `data/rodistaa_fleet_matrix.json` - Master fleet classification matrix
 
 ## Documentation
 
-- `docs/api_contract.md` - API specifications
-- `docs/runbook_batch_worker.md` - Batch worker runbook
-- `docs/security.md` - Security policies
-- `docs/acceptance_criteria.md` - Test cases and expected outputs
+- [API Contract](./docs/api_truck_master.md)
+- [Flagging Policy](./docs/flagging_policy.md)
+- [Batch Worker Runbook](./docs/batch_worker_runbook.md)
+- [Franchise SOP](./docs/franchise_sop_for_photo_verification.md)
 
-## Troubleshooting
+## Security Notes
 
-### Migration Errors
-1. Ensure PostgreSQL is running
-2. Database exists and user has CREATE TABLE permissions
-3. Check DATABASE_URL format
+- **RC Copies**: Encrypted at rest using AES-256-GCM
+- **Chassis/Engine**: Hashed with SHA256 for duplicate detection
+- **Retention**: All sensitive data retained for 7 years
+- **Audit Logging**: All admin actions and escalations logged
 
-### VAHAN Provider Failures
-1. Verify API keys in `.env`
-2. Check network connectivity
-3. Review circuit breaker logs
-4. Check provider status pages
+## Production Checklist
 
-### Compliance Cache Issues
-1. Check `cache_expires_at` in `vehicle_compliance_cache`
-2. Verify batch worker is running
-3. Check database connection
+- [ ] Set `ENCRYPTION_KEY` environment variable (32+ bytes)
+- [ ] Configure VAHAN provider API keys
+- [ ] Set up database backups
+- [ ] Configure batch worker cron schedule
+- [ ] Set up monitoring dashboards (Prometheus metrics)
+- [ ] Review and adjust flag severity thresholds
+- [ ] Configure franchise assignment logic
+- [ ] Test photo verification workflow end-to-end
+- [ ] Verify retention policies
 
-## License
+## Support
 
-Proprietary - Rodistaa Internal Use Only
+For issues or questions:
+- Check documentation in `docs/`
+- Review test files for usage examples
+- See API docs for endpoint specifications
 
+---
+
+**Version**: 1.0.0
+**Last Updated**: 2025-01-XX

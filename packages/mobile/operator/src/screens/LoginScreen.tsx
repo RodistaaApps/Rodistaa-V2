@@ -1,3 +1,9 @@
+/**
+ * Login Screen - Operator App
+ * Pure React Native CLI with Rodistaa Design System
+ * Follows UI/UX specifications from design system
+ */
+
 import React, { useState } from 'react';
 import {
   View,
@@ -5,10 +11,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
+// Import tokens directly from design system (components excluded from web build)
+import { RodistaaColors, MobileTextStyles, RodistaaSpacing } from '@rodistaa/design-system/tokens';
 import { SecureStore } from '../utils/storage.web';
 
 interface LoginScreenProps {
@@ -20,32 +29,35 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRequestOTP = async () => {
-    if (phone.length !== 10) {
-      alert('Please enter a valid 10-digit mobile number');
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       // TODO: Call API to request OTP
       await new Promise(resolve => setTimeout(resolve, 1000));
       setStep('otp');
     } catch (error) {
-      alert('Failed to send OTP. Please try again.');
+      setError('Failed to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
-      alert('Please enter a valid 6-digit OTP');
+    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+      setError('Please enter a valid 6-digit OTP');
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       // TODO: Call API to verify OTP
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -57,212 +69,280 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       
       navigation.replace('Main');
     } catch (error) {
-      alert('Invalid OTP. Please try again.');
+      setError('Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>🚛</Text>
-          <Text style={styles.appName}>Rodistaa Operator</Text>
-          <Text style={styles.tagline}>Manage your fleet & shipments</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          {/* Logo Section - Rodistaa Branding */}
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoEmoji}>🚛</Text>
+            <Text style={styles.appName}>Rodistaa</Text>
+            <Text style={styles.tagline}>Operator</Text>
+            <Text style={styles.subTagline}>Manage your fleet & shipments</Text>
+          </View>
+
+          {step === 'phone' ? (
+            /* Phone Number Step */
+            <View style={styles.formContainer}>
+              <Text style={styles.label}>Mobile Number</Text>
+              <View style={styles.phoneInput}>
+                <Text style={styles.prefix}>+91</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 10-digit mobile number"
+                  placeholderTextColor={RodistaaColors.text.disabled}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={(text) => {
+                    setPhone(text);
+                    setError(null);
+                  }}
+                  editable={!loading}
+                  accessibilityLabel="Mobile number input"
+                />
+              </View>
+
+              {error && <Text style={styles.errorText}>{error}</Text>}
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleRequestOTP}
+                disabled={loading}
+                accessibilityLabel="Request OTP button"
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color={RodistaaColors.primary.contrast} />
+                ) : (
+                  <Text style={styles.buttonText}>Request OTP</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* OTP Verification Step */
+            <View style={styles.formContainer}>
+              <Text style={styles.label}>Enter OTP</Text>
+              <Text style={styles.subtitle}>Sent to +91 {phone}</Text>
+              
+              <TextInput
+                style={styles.otpInput}
+                placeholder="000000"
+                placeholderTextColor={RodistaaColors.text.disabled}
+                keyboardType="number-pad"
+                maxLength={6}
+                value={otp}
+                onChangeText={(text) => {
+                  setOtp(text);
+                  setError(null);
+                }}
+                editable={!loading}
+                textAlign="center"
+                accessibilityLabel="OTP input"
+              />
+
+              {error && <Text style={styles.errorText}>{error}</Text>}
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleVerifyOTP}
+                disabled={loading}
+                accessibilityLabel="Verify OTP button"
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color={RodistaaColors.primary.contrast} />
+                ) : (
+                  <Text style={styles.buttonText}>Verify & Login</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => {
+                  setStep('phone');
+                  setError(null);
+                }}
+                disabled={loading}
+                accessibilityLabel="Change phone number"
+                activeOpacity={0.7}
+              >
+                <Text style={styles.backButtonText}>← Change Number</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        {step === 'phone' ? (
-          /* Phone Number Step */
-          <View style={styles.formContainer}>
-            <Text style={styles.label}>Mobile Number</Text>
-            <View style={styles.phoneInput}>
-              <Text style={styles.prefix}>+91</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 10-digit mobile number"
-                keyboardType="phone-pad"
-                maxLength={10}
-                value={phone}
-                onChangeText={setPhone}
-                editable={!loading}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleRequestOTP}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Request OTP</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        ) : (
-          /* OTP Verification Step */
-          <View style={styles.formContainer}>
-            <Text style={styles.label}>Enter OTP</Text>
-            <Text style={styles.subtitle}>Sent to +91 {phone}</Text>
-            
-            <TextInput
-              style={styles.otpInput}
-              placeholder="000000"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={otp}
-              onChangeText={setOtp}
-              editable={!loading}
-              textAlign="center"
-            />
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleVerifyOTP}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Verify & Login</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => setStep('phone')}
-              disabled={loading}
-            >
-              <Text style={styles.backButtonText}>← Change Number</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Rodistaa Trade & Transport © 2025
-        </Text>
-      </View>
-    </View>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Rodistaa Trade & Transport © 2025
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: RodistaaColors.background.default,
+    width: '100%',
+    minHeight: '100vh',
+    ...(Platform.OS === 'web' ? { display: 'flex' } : {}),
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: RodistaaSpacing.lg, // 16px - follows spacing scale (not 32px)
+    minHeight: '100vh',
+    width: '100%',
+    ...(Platform.OS === 'web' ? { display: 'flex', flexDirection: 'column' } : {}),
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    width: '100%',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: RodistaaSpacing.xxl, // 32px - follows spacing scale (reduced from 64px)
+    width: '100%',
   },
-  logoText: {
-    fontSize: 80,
-    marginBottom: 16,
+  logoEmoji: {
+    fontSize: 64, // Reduced from 80 for better proportion
+    marginBottom: RodistaaSpacing.xl, // 24px - follows spacing scale
   },
   appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#C90D0D',
-    marginBottom: 8,
+    ...MobileTextStyles.h1, // Baloo Bhai, 32px - for main heading
+    color: RodistaaColors.primary.main, // Rodistaa Red #C90D0D
+    marginBottom: RodistaaSpacing.xs, // 4px - follows spacing scale
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: 16,
-    color: '#6B7280',
+    ...MobileTextStyles.h3, // Baloo Bhai, 20px - for subtitle
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.xs, // 4px - follows spacing scale
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  subTagline: {
+    ...MobileTextStyles.bodySmall, // Times New Roman, 12px - for body text
+    color: RodistaaColors.text.secondary,
+    textAlign: 'center',
   },
   formContainer: {
     width: '100%',
     maxWidth: 400,
+    paddingHorizontal: RodistaaSpacing.md, // 12px - follows spacing scale
   },
   label: {
-    fontSize: 14,
+    ...MobileTextStyles.body, // Times New Roman, 14px
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.sm, // 8px
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 16,
+    ...MobileTextStyles.bodySmall, // Times New Roman, 12px
+    color: RodistaaColors.text.secondary,
+    marginBottom: RodistaaSpacing.lg, // 16px
   },
   phoneInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: RodistaaColors.background.paper,
+    borderRadius: RodistaaSpacing.borderRadius.lg, // 8px - follows spacing scale
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    borderColor: RodistaaColors.border.light,
+    marginBottom: RodistaaSpacing.lg, // 16px - follows spacing scale
+    paddingHorizontal: RodistaaSpacing.lg, // 16px - follows spacing scale
+    height: 48, // Minimum touch target (44px+) - follows design system
   },
   prefix: {
-    fontSize: 16,
+    ...MobileTextStyles.body, // Times New Roman
     fontWeight: '600',
-    color: '#374151',
-    marginRight: 8,
+    color: RodistaaColors.text.primary,
+    marginRight: RodistaaSpacing.sm, // 8px
   },
   input: {
     flex: 1,
-    height: 48,
-    fontSize: 16,
-    color: '#111827',
+    ...MobileTextStyles.body, // Times New Roman, 14px
+    color: RodistaaColors.text.primary,
+    paddingVertical: RodistaaSpacing.md, // 12px
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
   otpInput: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: RodistaaColors.background.paper,
+    borderRadius: RodistaaSpacing.borderRadius.lg, // 8px - follows spacing scale
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: RodistaaColors.border.light,
     height: 64,
-    fontSize: 32,
+    ...MobileTextStyles.h2, // Larger font for OTP (24px Baloo Bhai)
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 24,
+    color: RodistaaColors.text.primary,
+    marginBottom: RodistaaSpacing.lg, // 16px - follows spacing scale
     letterSpacing: 8,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
   button: {
-    backgroundColor: '#C90D0D',
-    borderRadius: 8,
-    height: 48,
+    backgroundColor: RodistaaColors.primary.main, // Rodistaa Red #C90D0D
+    borderRadius: RodistaaSpacing.borderRadius.lg, // 8px - follows spacing scale
+    height: 48, // Minimum touch target (44px+) - follows design system
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: RodistaaSpacing.md, // 12px - follows spacing scale
+    marginBottom: RodistaaSpacing.md, // 12px - follows spacing scale
+    paddingHorizontal: RodistaaSpacing.xl, // 24px - follows spacing scale
+    // Shadow follows design system spec: 0 2px 4px rgba(0,0,0,0.08)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...MobileTextStyles.button, // Baloo Bhai for button text
+    color: RodistaaColors.primary.contrast, // White
   },
   backButton: {
     alignItems: 'center',
-    padding: 12,
+    padding: RodistaaSpacing.md, // 12px
+    minHeight: 44, // Touch target
   },
   backButtonText: {
-    color: '#6B7280',
-    fontSize: 14,
+    ...MobileTextStyles.bodySmall, // Times New Roman, 12px
+    color: RodistaaColors.text.secondary,
+  },
+  errorText: {
+    ...MobileTextStyles.bodySmall, // Times New Roman
+    color: RodistaaColors.error.main, // Error red
+    marginBottom: RodistaaSpacing.md, // 12px
   },
   footer: {
-    padding: 24,
+    padding: RodistaaSpacing.xl, // 32px
     alignItems: 'center',
+    marginTop: RodistaaSpacing.xl, // 32px
   },
   footerText: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    ...MobileTextStyles.caption, // Times New Roman, 10px
+    color: RodistaaColors.text.disabled,
   },
 });
 

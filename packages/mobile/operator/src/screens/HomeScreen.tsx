@@ -3,7 +3,7 @@
  * Uses Rodistaa Design System
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RCard } from '../components/RCard';
 import {
   RodistaaColors,
@@ -19,34 +21,125 @@ import {
   RodistaaSpacing,
   RNShadowStyles,
 } from '../theme/colors';
+import { dashboardService, type Alert, type Activity } from '../services/dashboardService';
+import { useNavigation } from '@react-navigation/native';
 
 interface HomeScreenProps {
   navigation?: any;
 }
 
-export default function HomeScreen({ navigation }: HomeScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [dashboardData, setDashboardData] = useState({
-    activeTrucks: 5,
-    activeShipments: 8,
-    activeBids: 12,
-    pendingInspections: 3,
-    winsToday: 2,
-    mtdEarnings: 145000,
-    pendingPayments: 45000,
-    completedShipments: 234,
+export default function HomeScreen({ navigation: navProp }: HomeScreenProps) {
+  // Use navigation from props first, fallback to hook
+  let navigation;
+  try {
+    navigation = navProp || useNavigation();
+  } catch (error) {
+    console.error('Navigation error in HomeScreen:', error);
+    // Fallback: create a mock navigation object
+    navigation = {
+      navigate: (name: string) => console.log('Navigate to:', name),
+    };
+  }
+  const queryClient = useQueryClient();
+
+  // Fetch dashboard data
+  const { data: dashboardData, isLoading: loadingDashboard, refetch: refetchDashboard } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => dashboardService.getDashboard(),
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Fetch alerts
+  const { data: alerts = [], isLoading: loadingAlerts } = useQuery({
+    queryKey: ['alerts'],
+    queryFn: () => dashboardService.getAlerts(),
+    staleTime: 60000, // 1 minute
+  });
+
+  // Fetch recent activity
+  const { data: activities = [], isLoading: loadingActivity } = useQuery({
+    queryKey: ['activity'],
+    queryFn: () => dashboardService.getRecentActivity(),
+    staleTime: 60000, // 1 minute
   });
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      // TODO: Call GET /operator/dashboard API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Mock refresh
-    } catch (error) {
-      console.error('Failed to refresh dashboard:', error);
-    } finally {
-      setRefreshing(false);
+    await Promise.all([
+      refetchDashboard(),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+      queryClient.invalidateQueries({ queryKey: ['activity'] }),
+    ]);
+  };
+
+  const isLoading = loadingDashboard || loadingAlerts || loadingActivity;
+
+  // Always ensure something renders - even if loading or error
+  React.useEffect(() => {
+    console.log('HomeScreen rendered', {
+      dashboardData: !!dashboardData,
+      isLoading,
+      alerts: alerts.length,
+      activities: activities.length,
+    });
+  }, [dashboardData, isLoading, alerts, activities]);
+
+  if (isLoading && !dashboardData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={RodistaaColors.primary.main} />
+        <Text style={{ marginTop: 16, color: RodistaaColors.text.secondary }}>
+          Loading dashboard...
+        </Text>
+      </View>
+    );
+  }
+
+  // Fallback: Always render something
+  if (!dashboardData) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Welcome back, Operator! 👋</Text>
+          <Text style={styles.date}>{new Date().toLocaleDateString()}</Text>
+        </View>
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ color: RodistaaColors.text.secondary }}>
+            Initializing dashboard...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = Date.now();
+    const time = new Date(timestamp).getTime();
+    const diff = now - time;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'shipment': return '📦';
+      case 'bid': return '💰';
+      case 'inspection': return '🔍';
+      case 'payment': return '💵';
+      default: return '📋';
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'shipment': return '#10B981';
+      case 'bid': return '#3B82F6';
+      case 'inspection': return '#F59E0B';
+      case 'payment': return '#8B5CF6';
+      default: return '#6B7280';
     }
   };
 
@@ -67,7 +160,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       style={styles.container}
       refreshControl={
         <RefreshControl
-          refreshing={refreshing}
+          refreshing={isLoading}
           onRefresh={onRefresh}
           tintColor={RodistaaColors.primary.main}
         />
@@ -90,25 +183,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       <View style={styles.statsGrid}>
         <RCard style={[styles.statCard, { backgroundColor: '#DBEAFE' }]}>
           <Text style={styles.statIcon}>🚛</Text>
-          <Text style={styles.statValue}>{dashboardData.activeTrucks}</Text>
+          <Text style={styles.statValue}>{dashboardData?.activeTrucks ?? 0}</Text>
           <Text style={styles.statLabel}>Active Trucks</Text>
         </RCard>
 
         <RCard style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
           <Text style={styles.statIcon}>📦</Text>
-          <Text style={styles.statValue}>{dashboardData.activeShipments}</Text>
+          <Text style={styles.statValue}>{dashboardData?.activeShipments ?? 0}</Text>
           <Text style={styles.statLabel}>Active Shipments</Text>
         </RCard>
 
         <RCard style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
           <Text style={styles.statIcon}>💰</Text>
-          <Text style={styles.statValue}>{dashboardData.activeBids}</Text>
+          <Text style={styles.statValue}>{dashboardData?.activeBids ?? 0}</Text>
           <Text style={styles.statLabel}>Active Bids</Text>
         </RCard>
 
         <RCard style={[styles.statCard, { backgroundColor: '#FED7AA' }]}>
           <Text style={styles.statIcon}>🔍</Text>
-          <Text style={styles.statValue}>{dashboardData.pendingInspections}</Text>
+          <Text style={styles.statValue}>{dashboardData?.pendingInspections ?? 0}</Text>
           <Text style={styles.statLabel}>Pending Inspections</Text>
         </RCard>
       </View>
@@ -119,45 +212,57 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <View style={styles.financialGrid}>
           <View style={styles.financialItem}>
             <Text style={styles.financialLabel}>Wins Today</Text>
-            <Text style={styles.financialValue}>{dashboardData.winsToday}</Text>
+            <Text style={styles.financialValue}>{dashboardData?.winsToday ?? 0}</Text>
           </View>
           <View style={styles.financialItem}>
             <Text style={styles.financialLabel}>MTD Earnings</Text>
             <Text style={styles.financialValue}>
-              ₹{(dashboardData.mtdEarnings / 1000).toFixed(1)}K
+              ₹{((dashboardData?.mtdEarnings ?? 0) / 1000).toFixed(1)}K
             </Text>
           </View>
           <View style={styles.financialItem}>
             <Text style={styles.financialLabel}>Pending Payments</Text>
             <Text style={[styles.financialValue, { color: '#F59E0B' }]}>
-              ₹{(dashboardData.pendingPayments / 1000).toFixed(1)}K
+              ₹{((dashboardData?.pendingPayments ?? 0) / 1000).toFixed(1)}K
             </Text>
           </View>
           <View style={styles.financialItem}>
             <Text style={styles.financialLabel}>Completed</Text>
-            <Text style={styles.financialValue}>{dashboardData.completedShipments}</Text>
+            <Text style={styles.financialValue}>{dashboardData?.completedShipments ?? 0}</Text>
           </View>
         </View>
       </View>
 
       {/* Alerts */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Alerts & Notifications</Text>
-        <RCard style={[styles.alertCard, { borderLeftColor: '#EF4444' }]}>
-          <Text style={styles.alertIcon}>⚠️</Text>
-          <View style={styles.alertContent}>
-            <Text style={styles.alertTitle}>Document Expiring Soon</Text>
-            <Text style={styles.alertText}>RC for DL 01 AB 1234 expires in 15 days</Text>
-          </View>
-        </RCard>
-        <RCard style={[styles.alertCard, { borderLeftColor: '#F59E0B' }]}>
-          <Text style={styles.alertIcon}>🔍</Text>
-          <View style={styles.alertContent}>
-            <Text style={styles.alertTitle}>Inspection Pending</Text>
-            <Text style={styles.alertText}>2 trucks need inspection this week</Text>
-          </View>
-        </RCard>
-      </View>
+      {alerts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Alerts & Notifications</Text>
+          {alerts.map((alert: Alert) => (
+            <RCard
+              key={alert.id}
+              style={[
+                styles.alertCard,
+                {
+                  borderLeftColor:
+                    alert.type === 'warning'
+                      ? '#EF4444'
+                      : alert.type === 'error'
+                      ? '#DC2626'
+                      : '#F59E0B',
+                },
+              ]}
+            >
+              <Text style={styles.alertIcon}>
+                {alert.type === 'warning' ? '⚠️' : alert.type === 'error' ? '❌' : 'ℹ️'}
+              </Text>
+              <View style={styles.alertContent}>
+                <Text style={styles.alertTitle}>{alert.title}</Text>
+                <Text style={styles.alertText}>{alert.message}</Text>
+              </View>
+            </RCard>
+          ))}
+        </View>
+      )}
 
       {/* Quick Actions */}
       <View style={styles.section}>
@@ -165,61 +270,63 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <QuickActionCard
           icon="🚛"
           title="Add New Truck"
-          onPress={() => navigation?.navigate('AddTruck')}
+          onPress={() => {
+            // Navigate to Fleet tab, then can add truck
+            if (navigation) {
+              navigation.navigate('Fleet');
+            }
+          }}
         />
         <QuickActionCard
           icon="📦"
           title="Browse Bookings"
-          onPress={() => navigation?.navigate('Bookings')}
+          onPress={() => {
+            if (navigation) {
+              navigation.navigate('Bookings');
+            }
+          }}
         />
         <QuickActionCard
           icon="🔍"
           title="Daily Inspection"
-          onPress={() => navigation?.navigate('Inspection')}
+          onPress={() => {
+            if (navigation) {
+              navigation.navigate('Fleet');
+            }
+          }}
         />
         <QuickActionCard
           icon="💵"
           title="View Wallet"
-          onPress={() => navigation?.navigate('Wallet')}
+          onPress={() => {
+            if (navigation) {
+              navigation.navigate('Profile');
+            }
+          }}
         />
       </View>
 
       {/* Recent Activity */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <RCard style={styles.activityCard}>
-          <View style={[styles.activityDot, { backgroundColor: '#10B981' }]} />
-          <View style={styles.activityContent}>
-            <Text style={styles.activityTitle}>Shipment SHP-001 Delivered</Text>
-            <Text style={styles.activityDescription}>
-              DL 01 AB 1234 completed delivery to Mumbai
-            </Text>
-            <Text style={styles.activityTime}>2 hours ago</Text>
-          </View>
-        </RCard>
-
-        <RCard style={styles.activityCard}>
-          <View style={[styles.activityDot, { backgroundColor: '#3B82F6' }]} />
-          <View style={styles.activityContent}>
-            <Text style={styles.activityTitle}>Bid Accepted</Text>
-            <Text style={styles.activityDescription}>
-              Your bid of ₹48,000 for BKG-002 was accepted
-            </Text>
-            <Text style={styles.activityTime}>5 hours ago</Text>
-          </View>
-        </RCard>
-
-        <RCard style={styles.activityCard}>
-          <View style={[styles.activityDot, { backgroundColor: '#F59E0B' }]} />
-          <View style={styles.activityContent}>
-            <Text style={styles.activityTitle}>Inspection Completed</Text>
-            <Text style={styles.activityDescription}>
-              Daily inspection for HR 26 BX 5678 marked as passed
-            </Text>
-            <Text style={styles.activityTime}>1 day ago</Text>
-          </View>
-        </RCard>
-      </View>
+      {activities.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          {activities.map((activity: Activity) => (
+            <RCard key={activity.id} style={styles.activityCard}>
+              <View
+                style={[
+                  styles.activityDot,
+                  { backgroundColor: getActivityColor(activity.type) },
+                ]}
+              />
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>{activity.title}</Text>
+                <Text style={styles.activityDescription}>{activity.description}</Text>
+                <Text style={styles.activityTime}>{formatTimeAgo(activity.timestamp)}</Text>
+              </View>
+            </RCard>
+          ))}
+        </View>
+      )}
 
       <View style={{ height: RodistaaSpacing.xl }} />
     </ScrollView>
