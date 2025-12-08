@@ -2,13 +2,17 @@
  * Root Layout for Driver App
  */
 
+import React from 'react';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeFallback } from '../components/SafeFallback';
 
 const queryClient = new QueryClient();
 
-export default function RootLayout() {
-  return (
+let Content: React.ReactElement;
+
+try {
+  Content = (
     <QueryClientProvider client={queryClient}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -17,4 +21,11 @@ export default function RootLayout() {
       </Stack>
     </QueryClientProvider>
   );
+} catch (err) {
+  console.warn('Driver app provider init failed:', err);
+  Content = <SafeFallback error={err as Error} />;
+}
+
+export default function RootLayout() {
+  return Content;
 }
