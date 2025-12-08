@@ -133,7 +133,6 @@ export function OperatorsList({
       title: "User ID / Role",
       dataIndex: "id",
       key: "id",
-      width: 140,
       render: (id: string, record: Operator) => (
         <div
           style={{ cursor: "pointer" }}
@@ -159,7 +158,6 @@ export function OperatorsList({
       title: "Name & Mobile",
       dataIndex: "name",
       key: "name",
-      width: 200,
       sorter: true,
       render: (name: string, record: Operator) => (
         <div>
@@ -174,7 +172,6 @@ export function OperatorsList({
       title: "Franchise",
       dataIndex: "franchise",
       key: "franchise",
-      width: 180,
       render: (franchise: string) => (
         <span style={{ color: textPrimary }}>{franchise}</span>
       ),
@@ -182,7 +179,6 @@ export function OperatorsList({
     {
       title: "City, State",
       key: "location",
-      width: 160,
       render: (_: any, record: Operator) => (
         <span style={{ color: textPrimary }}>
           {record.city}, {record.state}
@@ -192,7 +188,6 @@ export function OperatorsList({
     {
       title: "Trucks",
       key: "trucks",
-      width: 120,
       sorter: true,
       render: (_: any, record: Operator) => (
         <div style={{ fontSize: "13px" }}>
@@ -218,7 +213,6 @@ export function OperatorsList({
       title: "Active Bids",
       dataIndex: "active_bids",
       key: "active_bids",
-      width: 110,
       align: "center" as const,
       sorter: true,
       render: (bids: number) => (
@@ -237,7 +231,6 @@ export function OperatorsList({
       title: "Inspections",
       dataIndex: "pending_inspections",
       key: "pending_inspections",
-      width: 110,
       align: "center" as const,
       render: (count: number) =>
         count > 0 ? (
@@ -259,7 +252,6 @@ export function OperatorsList({
       title: "Ledger Balance",
       dataIndex: "ledger_balance",
       key: "ledger_balance",
-      width: 140,
       align: "right" as const,
       sorter: true,
       render: (balance: number) => (
@@ -286,7 +278,6 @@ export function OperatorsList({
       title: "ACS",
       dataIndex: "acs_flags_count",
       key: "acs_flags_count",
-      width: 80,
       align: "center" as const,
       render: (count: number) =>
         count > 0 ? (
@@ -310,7 +301,6 @@ export function OperatorsList({
       title: "Last Active",
       dataIndex: "last_active",
       key: "last_active",
-      width: 120,
       sorter: true,
       render: (timestamp: string) => (
         <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
@@ -449,7 +439,8 @@ export function OperatorsList({
           showTotal: (total) => `Total ${total} operators`,
         }}
         onChange={handleTableChange}
-        scroll={{ x: 1400 }}
+        scroll={{ y: 600 }}
+        tableLayout="auto"
       />
     </div>
   );

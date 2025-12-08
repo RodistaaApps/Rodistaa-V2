@@ -1,6 +1,6 @@
 /**
  * Bookings List Page
- * 
+ *
  * Admin view of all load postings with bidding status:
  * - Comprehensive filters (status, date, price, franchise)
  * - Bulk actions (export, bulk cancel)
@@ -8,11 +8,21 @@
  * - Force finalize, cancel actions
  */
 
-import { useState, useEffect } from 'react';
-import { 
-  Table, Card, Input, Select, Button, Tag, Space, Badge, Tooltip, 
-  DatePicker, InputNumber, message 
-} from 'antd';
+import { useState, useEffect } from "react";
+import {
+  Table,
+  Card,
+  Input,
+  Select,
+  Button,
+  Tag,
+  Space,
+  Badge,
+  Tooltip,
+  DatePicker,
+  InputNumber,
+  message,
+} from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
@@ -20,12 +30,12 @@ import {
   DollarOutlined,
   DownloadOutlined,
   CloseCircleOutlined,
-} from '@ant-design/icons';
-import { AdminLayout } from '@/components/Layout/AdminLayout';
-import { useTheme } from '@/contexts/ThemeContext';
-import { BookingDetailPanel } from '@/modules/bookings/BookingDetailPanel';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+} from "@ant-design/icons";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { useTheme } from "@/contexts/ThemeContext";
+import { BookingDetailPanel } from "@/modules/bookings/BookingDetailPanel";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
@@ -46,7 +56,7 @@ interface Booking {
   expected_price_min: number;
   expected_price_max: number;
   posted_at: string;
-  status: 'posted' | 'bidding' | 'finalized' | 'cancelled' | 'converted';
+  status: "posted" | "bidding" | "finalized" | "cancelled" | "converted";
   bids_count: number;
   lowest_bid_amount: number | null;
   lowest_bid_operator: string | null;
@@ -61,20 +71,22 @@ const BookingsPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [total, setTotal] = useState(0);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null,
+  );
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 25,
+    limit: 100,
     status: undefined as string | undefined,
-    search: '',
+    search: "",
   });
 
-  const isDark = theme === 'dark';
-  const bgPrimary = isDark ? '#0A0E14' : '#F9FAFB';
-  const bgCard = isDark ? '#151922' : '#FFFFFF';
-  const textPrimary = isDark ? '#FFFFFF' : '#0A0E14';
-  const textSecondary = isDark ? '#B4B9C5' : '#6B7280';
-  const border = isDark ? '#2D3748' : '#E5E7EB';
+  const isDark = theme === "dark";
+  const bgPrimary = isDark ? "#0A0E14" : "#F9FAFB";
+  const bgCard = isDark ? "#151922" : "#FFFFFF";
+  const textPrimary = isDark ? "#FFFFFF" : "#0A0E14";
+  const textSecondary = isDark ? "#B4B9C5" : "#6B7280";
+  const border = isDark ? "#2D3748" : "#E5E7EB";
 
   useEffect(() => {
     fetchBookings();
@@ -84,62 +96,62 @@ const BookingsPage: React.FC = () => {
     setLoading(true);
     try {
       // TODO: Call /admin/bookings API
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const mockBookings: Booking[] = [
         {
-          id: 'BKG-001',
-          shipper_id: 'USR-20241',
-          shipper_name: 'Rohit Sharma',
-          franchise_id: 'FR-001',
-          pickup_city: 'Hyderabad',
-          pickup_state: 'Telangana',
-          drop_city: 'Mumbai',
-          drop_state: 'Maharashtra',
+          id: "BKG-001",
+          shipper_id: "USR-20241",
+          shipper_name: "Rohit Sharma",
+          franchise_id: "FR-001",
+          pickup_city: "Hyderabad",
+          pickup_state: "Telangana",
+          drop_city: "Mumbai",
+          drop_state: "Maharashtra",
           distance_km: 710,
-          material: 'Electronics',
+          material: "Electronics",
           weight_kg: 5000,
           expected_price_min: 45000,
           expected_price_max: 55000,
-          posted_at: '2025-12-05T09:00:00Z',
-          status: 'bidding',
+          posted_at: "2025-12-05T09:00:00Z",
+          status: "bidding",
           bids_count: 4,
           lowest_bid_amount: 48000,
-          lowest_bid_operator: 'ABC Transport',
-          auto_finalize_at: '2025-12-06T09:00:00Z',
+          lowest_bid_operator: "ABC Transport",
+          auto_finalize_at: "2025-12-06T09:00:00Z",
           created_shipment_id: null,
           finalized_at: null,
         },
         {
-          id: 'BKG-002',
-          shipper_id: 'USR-20242',
-          shipper_name: 'Priya Patel',
-          franchise_id: 'FR-002',
-          pickup_city: 'Delhi',
-          pickup_state: 'Delhi',
-          drop_city: 'Bangalore',
-          drop_state: 'Karnataka',
+          id: "BKG-002",
+          shipper_id: "USR-20242",
+          shipper_name: "Priya Patel",
+          franchise_id: "FR-002",
+          pickup_city: "Delhi",
+          pickup_state: "Delhi",
+          drop_city: "Bangalore",
+          drop_state: "Karnataka",
           distance_km: 2150,
-          material: 'Machinery Parts',
+          material: "Machinery Parts",
           weight_kg: 12000,
           expected_price_min: 85000,
           expected_price_max: 95000,
-          posted_at: '2025-12-04T14:30:00Z',
-          status: 'finalized',
+          posted_at: "2025-12-04T14:30:00Z",
+          status: "finalized",
           bids_count: 6,
           lowest_bid_amount: 87500,
-          lowest_bid_operator: 'XYZ Logistics',
+          lowest_bid_operator: "XYZ Logistics",
           auto_finalize_at: null,
-          created_shipment_id: 'SHP-001',
-          finalized_at: '2025-12-04T18:45:00Z',
+          created_shipment_id: "SHP-001",
+          finalized_at: "2025-12-04T18:45:00Z",
         },
       ];
 
       setBookings(mockBookings);
       setTotal(45);
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
-      message.error('Failed to load bookings');
+      console.error("Failed to fetch bookings:", error);
+      message.error("Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -147,25 +159,30 @@ const BookingsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      posted: 'blue',
-      bidding: 'orange',
-      finalized: 'green',
-      cancelled: 'red',
-      converted: 'purple',
+      posted: "blue",
+      bidding: "orange",
+      finalized: "green",
+      cancelled: "red",
+      converted: "purple",
     };
-    return colors[status as keyof typeof colors] || 'default';
+    return colors[status as keyof typeof colors] || "default";
   };
 
   const columns = [
     {
-      title: 'Booking ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 130,
-      fixed: 'left' as const,
+      title: "Booking ID",
+      dataIndex: "id",
+      key: "id",
       render: (id: string) => (
-        <a 
-          style={{ fontFamily: 'monospace', fontWeight: 600, color: '#1890ff' }}
+        <a
+          style={{
+            fontFamily: "monospace",
+            fontWeight: 600,
+            color: "#1890ff",
+            fontSize: "13px",
+            display: "inline-block",
+            whiteSpace: "nowrap",
+          }}
           onClick={() => setSelectedBookingId(id)}
         >
           {id}
@@ -173,52 +190,63 @@ const BookingsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Posted Date',
-      dataIndex: 'posted_at',
-      key: 'posted_at',
-      width: 140,
+      title: "Posted Date",
+      dataIndex: "posted_at",
+      key: "posted_at",
       sorter: true,
       render: (timestamp: string) => (
-        <Tooltip title={dayjs(timestamp).format('DD MMM YYYY, HH:mm')}>
-          <span style={{ color: textSecondary }}>{dayjs(timestamp).fromNow()}</span>
+        <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
+          <span style={{ color: textSecondary, whiteSpace: "nowrap" }}>
+            {dayjs(timestamp).fromNow()}
+          </span>
         </Tooltip>
       ),
     },
     {
-      title: 'Route',
-      key: 'route',
-      width: 250,
+      title: "Route",
+      key: "route",
       render: (_: any, record: Booking) => (
-        <div>
-          <div style={{ fontWeight: 600, color: textPrimary }}>
+        <div style={{ minWidth: "200px" }}>
+          <div
+            style={{
+              fontWeight: 600,
+              color: textPrimary,
+              whiteSpace: "nowrap",
+            }}
+          >
             {record.pickup_city} → {record.drop_city}
           </div>
-          <div style={{ fontSize: '12px', color: textSecondary }}>
-            {record.distance_km} km • {record.pickup_state} → {record.drop_state}
+          <div
+            style={{
+              fontSize: "12px",
+              color: textSecondary,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {record.distance_km} km • {record.pickup_state} →{" "}
+            {record.drop_state}
           </div>
         </div>
       ),
     },
     {
-      title: 'Material & Weight',
-      key: 'load',
-      width: 180,
+      title: "Material & Weight",
+      key: "load",
       render: (_: any, record: Booking) => (
-        <div>
+        <div style={{ minWidth: "130px" }}>
           <div style={{ color: textPrimary }}>{record.material}</div>
-          <div style={{ fontSize: '12px', color: textSecondary }}>
+          <div style={{ fontSize: "12px", color: textSecondary }}>
             {(record.weight_kg / 1000).toFixed(1)} MT
           </div>
         </div>
       ),
     },
     {
-      title: 'Expected Price',
-      key: 'expected_price',
-      width: 140,
-      align: 'right' as const,
+      title: "Expected Price",
+      key: "expected_price",
+      align: "right" as const,
       render: (_: any, record: Booking) => (
-        <div style={{ fontSize: '13px' }}>
+        <div style={{ fontSize: "13px" }}>
           <div style={{ color: textSecondary }}>
             ₹{record.expected_price_min.toLocaleString()} -
           </div>
@@ -229,104 +257,125 @@ const BookingsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Lowest Bid',
-      key: 'lowest_bid',
-      width: 160,
-      align: 'right' as const,
-      render: (_: any, record: Booking) => (
+      title: "Lowest Bid",
+      key: "lowest_bid",
+      align: "right" as const,
+      render: (_: any, record: Booking) =>
         record.lowest_bid_amount ? (
           <div>
-            <div style={{ fontWeight: 600, color: '#10B981', fontSize: '14px' }}>
+            <div
+              style={{ fontWeight: 600, color: "#10B981", fontSize: "14px" }}
+            >
               ₹{record.lowest_bid_amount.toLocaleString()}
             </div>
-            <div style={{ fontSize: '11px', color: textSecondary }}>
+            <div style={{ fontSize: "11px", color: textSecondary }}>
               {record.lowest_bid_operator}
             </div>
           </div>
         ) : (
           <span style={{ color: textSecondary }}>—</span>
-        )
-      ),
+        ),
     },
     {
-      title: 'Bids',
-      dataIndex: 'bids_count',
-      key: 'bids_count',
-      width: 80,
-      align: 'center' as const,
-      render: (count: number) => (
+      title: "Bids",
+      dataIndex: "bids_count",
+      key: "bids_count",
+      align: "center" as const,
+      render: (count: number) =>
         count > 0 ? (
-          <Badge count={count} style={{ backgroundColor: '#3B82F6' }} />
+          <Badge count={count} style={{ backgroundColor: "#3B82F6" }} />
         ) : (
           <span style={{ color: textSecondary }}>0</span>
-        )
-      ),
+        ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {status.toUpperCase()}
-        </Tag>
+        <Tag color={getStatusColor(status)}>{status.toUpperCase()}</Tag>
       ),
     },
     {
-      title: 'Shipper',
-      dataIndex: 'shipper_name',
-      key: 'shipper_name',
-      width: 150,
+      title: "Shipper",
+      dataIndex: "shipper_name",
+      key: "shipper_name",
       render: (name: string, record: Booking) => (
         <div>
           <div style={{ color: textPrimary }}>{name}</div>
-          <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+          <div
+            style={{
+              fontSize: "11px",
+              color: textSecondary,
+              fontFamily: "monospace",
+            }}
+          >
             {record.shipper_id}
           </div>
         </div>
       ),
     },
     {
-      title: 'Shipment',
-      dataIndex: 'created_shipment_id',
-      key: 'created_shipment_id',
-      width: 130,
-      render: (shipmentId: string | null) => (
+      title: "Shipment",
+      dataIndex: "created_shipment_id",
+      key: "created_shipment_id",
+      render: (shipmentId: string | null) =>
         shipmentId ? (
-          <a style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+          <a style={{ fontFamily: "monospace", fontSize: "13px" }}>
             {shipmentId}
           </a>
         ) : (
           <span style={{ color: textSecondary }}>—</span>
-        )
-      ),
+        ),
     },
   ];
 
   return (
     <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-      <div style={{ padding: '24px', background: bgPrimary, minHeight: '100vh' }}>
+      <div
+        style={{ padding: "24px", background: bgPrimary, minHeight: "100vh" }}
+      >
         {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: textPrimary, margin: 0 }}>
-            <FileTextOutlined style={{ marginRight: '12px' }} />
+        <div style={{ marginBottom: "24px" }}>
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: "bold",
+              color: textPrimary,
+              margin: 0,
+            }}
+          >
+            <FileTextOutlined style={{ marginRight: "12px" }} />
             Bookings
           </h1>
-          <div style={{ color: textSecondary, fontSize: '14px', marginTop: '4px' }}>
+          <div
+            style={{ color: textSecondary, fontSize: "14px", marginTop: "4px" }}
+          >
             Load postings, bidding, and finalization management
           </div>
         </div>
 
         {/* Filters */}
-        <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
+        <Card
+          style={{
+            marginBottom: "16px",
+            background: bgCard,
+            border: `1px solid ${border}`,
+          }}
+        >
           <Space wrap>
             <Input
               placeholder="Search booking ID, shipper, material..."
               prefix={<SearchOutlined />}
               style={{ width: 300 }}
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  search: e.target.value,
+                  page: 1,
+                }))
+              }
               allowClear
             />
             <Select
@@ -334,17 +383,26 @@ const BookingsPage: React.FC = () => {
               style={{ width: 140 }}
               allowClear
               value={filters.status}
-              onChange={(value) => setFilters(prev => ({ ...prev, status: value, page: 1 }))}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, status: value, page: 1 }))
+              }
               options={[
-                { label: 'Posted', value: 'posted' },
-                { label: 'Bidding', value: 'bidding' },
-                { label: 'Finalized', value: 'finalized' },
-                { label: 'Cancelled', value: 'cancelled' },
+                { label: "Posted", value: "posted" },
+                { label: "Bidding", value: "bidding" },
+                { label: "Finalized", value: "finalized" },
+                { label: "Cancelled", value: "cancelled" },
               ]}
             />
-            <Button 
+            <Button
               icon={<FilterOutlined />}
-              onClick={() => setFilters({ page: 1, limit: 25, status: undefined, search: '' })}
+              onClick={() =>
+                setFilters({
+                  page: 1,
+                  limit: 25,
+                  status: undefined,
+                  search: "",
+                })
+              }
             >
               Clear Filters
             </Button>
@@ -353,20 +411,37 @@ const BookingsPage: React.FC = () => {
 
         {/* Bulk Actions */}
         {selectedRowKeys.length > 0 && (
-          <Card style={{ marginBottom: '16px', background: bgCard, border: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Badge count={selectedRowKeys.length} style={{ backgroundColor: '#3B82F6' }}>
-                <span style={{ color: textPrimary, fontWeight: 600, paddingRight: '20px' }}>
+          <Card
+            style={{
+              marginBottom: "16px",
+              background: bgCard,
+              border: `1px solid ${border}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Badge
+                count={selectedRowKeys.length}
+                style={{ backgroundColor: "#3B82F6" }}
+              >
+                <span
+                  style={{
+                    color: textPrimary,
+                    fontWeight: 600,
+                    paddingRight: "20px",
+                  }}
+                >
                   Selected
                 </span>
               </Badge>
               <Space>
-                <Button icon={<DownloadOutlined />}>
-                  Export Selected
-                </Button>
-                <Button onClick={() => setSelectedRowKeys([])}>
-                  Clear
-                </Button>
+                <Button icon={<DownloadOutlined />}>Export Selected</Button>
+                <Button onClick={() => setSelectedRowKeys([])}>Clear</Button>
               </Space>
             </div>
           </Card>
@@ -383,22 +458,27 @@ const BookingsPage: React.FC = () => {
               selectedRowKeys,
               onChange: (keys) => setSelectedRowKeys(keys as string[]),
             }}
+            virtual
+            sticky
             pagination={{
               current: filters.page,
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
-              showTotal: (total) => `Total ${total} bookings`,
+              showQuickJumper: true,
+              pageSizeOptions: ["50", "100", "200", "500"],
+              showTotal: (total, range) =>
+                `Showing ${range[0]}-${range[1]} of ${total} bookings`,
             }}
             onChange={(pagination) => {
-              setFilters(prev => ({
+              setFilters((prev) => ({
                 ...prev,
                 page: pagination.current || 1,
-                limit: pagination.pageSize || 25,
+                limit: pagination.pageSize || 100,
               }));
             }}
-            scroll={{ x: 1600 }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
           />
         </Card>
 
