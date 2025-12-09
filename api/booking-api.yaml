@@ -1,0 +1,634 @@
+openapi: 3.0.3
+
+info:
+  title: Rodistaa Booking API
+  version: 1.0.0
+  description: >
+    Rodistaa Booking API — complete booking lifecycle for shippers, assignment flows,
+    POD, cancellations, invoicing, and webhooks. Implements pricing engine (3/ton + 0.30/km with min ₹20)
+    and integrates with Truck Master (compliance/tyre/length) and Franchise dispatch.
+
+servers:
+  - url: https://api.rodistaa.com
+    description: Production
+  - url: https://staging.api.rodistaa.com
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Money:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+          default: INR
+      required: [amount, currency]
+
+    Address:
+      type: object
+      properties:
+        address_line:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+        contact_name:
+          type: string
+        contact_phone:
+          type: string
+      required:
+        - address_line
+        - city
+        - state
+        - pincode
+        - lat
+        - lng
+        - contact_name
+        - contact_phone
+
+    Cargo:
+      type: object
+      properties:
+        weight_ton:
+          type: number
+          format: double
+        weight_kg:
+          type: integer
+        type:
+          type: string
+          enum: [General, Fragile, HighValue, Oversize]
+        dimensions:
+          type: string
+          description: "Optional: LxWxH or deck length e.g., '28ft' "
+        special_handling:
+          type: array
+          items:
+            type: string
+            enum: [Forklift, Crane, TailLift, PermitRequired, FragileHandling]
+      required:
+        - weight_ton
+        - type
+
+    QuoteBreakdown:
+      type: object
+      properties:
+        tonnage_fee:
+          $ref: '#/components/schemas/Money'
+        distance_fee:
+          $ref: '#/components/schemas/Money'
+        min_fee_applied:
+          type: boolean
+        taxes:
+          $ref: '#/components/schemas/Money'
+        insurance_fee:
+          $ref: '#/components/schemas/Money'
+        total:
+          $ref: '#/components/schemas/Money'
+      required: [tonnage_fee, distance_fee, total]
+
+    BookingCreateRequest:
+      type: object
+      properties:
+        shipper_id:
+          type: string
+          format: uuid
+        pickup:
+          $ref: '#/components/schemas/Address'
+        drop:
+          $ref: '#/components/schemas/Address'
+        pickup_window:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        cargo:
+          $ref: '#/components/schemas/Cargo'
+        preferred_body_type:
+          type: string
+          enum: [OPEN, CONTAINER, FLATBED, LOWBED, TRAILER, ANY]
+        pricing_mode:
+          type: string
+          enum: [INSTANT, NEGOTIATE]
+          default: INSTANT
+        payment_terms:
+          type: string
+          enum: [PREPAID, COD]
+          default: PREPAID
+        notes:
+          type: string
+      required:
+        - shipper_id
+        - pickup
+        - drop
+        - cargo
+
+    BookingResponseBase:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        status:
+          type: string
+          enum: [QUOTED, CONFIRMED, ASSIGNED, IN_TRANSIT, DELIVERED, CLOSED, CANCELLED]
+        quote:
+          $ref: '#/components/schemas/QuoteBreakdown'
+        estimated_distance_km:
+          type: number
+          format: double
+        estimated_time_hrs:
+          type: number
+          format: double
+        assigned_truck:
+          type: object
+          properties:
+            truck_id:
+              type: string
+            label:
+              type: string
+            tyre_count:
+              type: integer
+            body_length_ft:
+              type: integer
+            body_type:
+              type: string
+            operator:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+        created_at:
+          type: string
+          format: date-time
+
+    BookingConfirmRequest:
+      type: object
+      properties:
+        accept_quote:
+          type: boolean
+        payment_method_id:
+          type: string
+      required: [accept_quote]
+
+    AssignmentResponse:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+        truck_id:
+          type: string
+        driver:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            contact_masked:
+              type: string
+        eta_minutes:
+          type: integer
+        status:
+          type: string
+      required: [assignment_id, truck_id, driver, eta_minutes, status]
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+  parameters:
+    bookingIdParam:
+      name: bookingId
+      in: path
+      required: true
+      schema:
+        type: string
+
+paths:
+  /api/bookings:
+    post:
+      summary: Create booking (Quote)
+      description: Create a booking request and receive an instant quote. Does NOT confirm booking.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreateRequest'
+      responses:
+        '201':
+          description: Booking created with quote
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BookingResponseBase'
+                example:
+                  booking_id: "B-20251208-0001"
+                  status: "QUOTED"
+                  quote:
+                    tonnage_fee: { amount: 375, currency: INR }
+                    distance_fee: { amount: 450, currency: INR }
+                    min_fee_applied: false
+                    taxes: { amount: 40, currency: INR}
+                    insurance_fee: { amount: 0, currency: INR }
+                    total: { amount: 865, currency: INR }
+                  estimated_distance_km: 150.5
+                  estimated_time_hrs: 4.0
+                  assigned_truck: null
+                  created_at: "2025-12-08T09:00:00+05:30"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bookings/{bookingId}/confirm:
+    post:
+      summary: Confirm booking (accept quote & begin assignment)
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingConfirmRequest'
+      responses:
+        '200':
+          description: Booking confirmed; assignment flow started
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BookingResponseBase'
+                example:
+                  booking_id: "B-20251208-0001"
+                  status: "CONFIRMED"
+                  quote:
+                    tonnage_fee: { amount: 375, currency: INR }
+                    distance_fee: { amount: 450, currency: INR }
+                    total: { amount: 825, currency: INR }
+                  estimated_distance_km: 150.5
+                  estimated_time_hrs: 4.0
+                  assigned_truck: null
+                  created_at: "2025-12-08T09:00:00+05:30"
+        '402':
+          description: Payment required (if prepay and payment failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Booking not found
+
+  /api/bookings/{bookingId}:
+    get:
+      summary: Get booking details
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponseBase'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bookings/{bookingId}/cancel:
+    post:
+      summary: Cancel booking
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cancelled_by:
+                  type: string
+                  enum: [SHIPPER, OPERATOR, ADMIN]
+                reason:
+                  type: string
+                waive_fee:
+                  type: boolean
+      responses:
+        '200':
+          description: Cancellation processed (may include penalty)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking_id:
+                    type: string
+                  status:
+                    type: string
+                  penalty:
+                    $ref: '#/components/schemas/Money'
+        '400':
+          description: Invalid cancellation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bookings/{bookingId}/assign:
+    post:
+      summary: Admin / system route to finalize assignment (used by matching engine)
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                truck_id:
+                  type: string
+                driver_id:
+                  type: string
+                eta_minutes:
+                  type: integer
+                assigned_by:
+                  type: string
+              required: [truck_id, driver_id, eta_minutes]
+      responses:
+        '200':
+          description: Assignment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentResponse'
+        '409':
+          description: Conflict (truck or driver not available)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bookings/{bookingId}/start:
+    post:
+      summary: Mark booking as pickup started (driver check-in)
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                photo_front:
+                  type: string
+                  format: binary
+                photo_side:
+                  type: string
+                  format: binary
+                gps_lat:
+                  type: number
+                gps_lng:
+                  type: number
+      responses:
+        '200':
+          description: Pickup started recorded
+        '400':
+          description: Validation error
+
+  /api/bookings/{bookingId}/complete:
+    post:
+      summary: Mark booking as delivered / complete (POD upload)
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                pod_photo:
+                  type: string
+                  format: binary
+                consignee_name:
+                  type: string
+                consignee_phone:
+                  type: string
+                signature_blob:
+                  type: string
+                  format: binary
+                weighbridge_ticket:
+                  type: string
+                  format: binary
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Booking completed, invoice generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking_id:
+                    type: string
+                  invoice_id:
+                    type: string
+                  amount_settled:
+                    $ref: '#/components/schemas/Money'
+        '400':
+          description: Error or missing POD
+
+  /api/bookings/{bookingId}/dispute:
+    post:
+      summary: Create dispute for booking
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                raised_by:
+                  type: string
+                  enum: [SHIPPER, OPERATOR]
+                reason:
+                  type: string
+                evidence:
+                  type: array
+                  items:
+                    type: string
+                    description: URL to evidence images
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dispute_id:
+                    type: string
+                  status:
+                    type: string
+
+  /api/invoices/{invoiceId}:
+    get:
+      summary: Get invoice by id
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  booking_id:
+                    type: string
+                  amount:
+                    $ref: '#/components/schemas/Money'
+                  issued_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Not found
+
+  /api/bookings/{bookingId}/events:
+    get:
+      summary: Get activity / event timeline for booking
+      parameters:
+        - $ref: '#/components/parameters/bookingIdParam'
+      responses:
+        '200':
+          description: Timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ts:
+                          type: string
+                          format: date-time
+                        event_type:
+                          type: string
+                        payload:
+                          type: object
+
+webhooks:
+  '/webhook/booking/events':
+    post:
+      summary: Webhook receiver: subscription endpoint (for client callback)
+      description: >
+        Rodistaa will POST events to your configured webhook when booking events occur:
+        booking.created, booking.assigned, booking.started, booking.completed, booking.cancelled, booking.exception.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
+                payload:
+                  type: object
+      responses:
+        '200':
+          description: Received
+
+  /webhook/subscribe:
+    post:
+      summary: (Admin) Configure webhook subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+                secret:
+                  type: string
+      responses:
+        '201':
+          description: Webhook created
+        '400':
+          description: Invalid request
+
+tags:
+  - name: Bookings
+    description: Booking lifecycle endpoints
+  - name: Admin
+    description: Admin endpoints (assignment, override)
+  - name: Webhooks
+    description: Webhook subscriptions & receiver

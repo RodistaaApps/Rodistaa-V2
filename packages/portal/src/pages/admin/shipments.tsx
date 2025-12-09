@@ -1,151 +1,153 @@
 /**
- * Shipments Management - Full functionality, theme-aware
+ * Shipments List Page
+ *
+ * Admin view of all active shipments:
+ * - Live tracking status
+ * - POD verification status
+ * - Payment settlement status
+ * - Dispute indicators
+ * - Force close, mark settled actions
  */
 
-import { useState } from "react";
-import { ProtectedRoute } from "../../components/ProtectedRoute";
-import { AdminLayout } from "../../components/Layout/AdminLayout";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useState, useEffect } from "react";
 import {
   Table,
   Card,
+  Input,
+  Select,
   Button,
   Tag,
-  Modal,
-  Timeline,
+  Space,
+  Badge,
+  Tooltip,
   Progress,
-  Row,
-  Col,
-  Statistic,
-  Select,
-  Input,
-  Tabs,
+  message,
 } from "antd";
 import {
-  EyeOutlined,
-  DownloadOutlined,
   SearchOutlined,
+  FilterOutlined,
   TruckOutlined,
-  EnvironmentOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
+  CloseCircleOutlined,
   WarningOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
+import { AdminLayout } from "@/components/Layout/AdminLayout";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ShipmentDetailPanel } from "@/modules/shipments/ShipmentDetailPanel";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
-function ShipmentsManagementPage() {
+dayjs.extend(relativeTime);
+
+interface Shipment {
+  id: string;
+  booking_id: string;
+  operator_id: string;
+  operator_name: string;
+  truck_id: string;
+  driver_id: string;
+  driver_name: string;
+  pickup_city: string;
+  drop_city: string;
+  distance_km: number;
+  start_at: string;
+  estimated_arrival: string;
+  status: string;
+  pod_uploaded: boolean;
+  payment_state: string;
+  freight_amount: number;
+  advance_paid: number;
+  has_dispute: boolean;
+  last_ping_at: string;
+}
+
+const ShipmentsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const [selectedShipment, setSelectedShipment] = useState<any>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(false);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [total, setTotal] = useState(0);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(
+    null,
+  );
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 100,
+    status: undefined as string | undefined,
+    search: "",
+  });
 
   const isDark = theme === "dark";
   const bgPrimary = isDark ? "#0A0E14" : "#F9FAFB";
   const bgCard = isDark ? "#151922" : "#FFFFFF";
-  const bgElevated = isDark ? "#1E2430" : "#F3F4F6";
   const textPrimary = isDark ? "#FFFFFF" : "#0A0E14";
   const textSecondary = isDark ? "#B4B9C5" : "#6B7280";
   const border = isDark ? "#2D3748" : "#E5E7EB";
 
-  const mockShipments = [
-    {
-      id: "SHIP-001",
-      bookingId: "BKG-003",
-      route: "Kurnool → Vijayawada",
-      driver: "Ramesh Kumar",
-      driverPhone: "+919876543213",
-      truck: "KA 01 AB 1234",
-      operatorName: "Rajesh Transport",
-      shipperName: "Krishna Enterprises",
-      status: "IN_TRANSIT",
-      progress: 65,
-      startedAt: "2025-12-04 08:00",
-      expectedDelivery: "2025-12-05 18:00",
-      currentLocation: "Near Guntur",
-      cargoType: "FMCG",
-      weight: "3000 kg",
-      podUploaded: false,
-    },
-    {
-      id: "SHIP-002",
-      bookingId: "BKG-002",
-      route: "Guntur → Nandyal",
-      driver: "Kumar Reddy",
-      driverPhone: "+919876543214",
-      truck: "AP 09 CD 5678",
-      operatorName: "Suresh Logistics",
-      shipperName: "Ramesh Enterprises",
-      status: "AT_PICKUP",
-      progress: 10,
-      startedAt: "2025-12-04 10:30",
-      expectedDelivery: "2025-12-05 20:00",
-      currentLocation: "Guntur Loading Yard",
-      cargoType: "Agricultural",
-      weight: "8000 kg",
-      podUploaded: false,
-    },
-    {
-      id: "SHIP-003",
-      bookingId: "BKG-004",
-      route: "Nandyal → Guntur",
-      driver: "Suresh Kumar",
-      driverPhone: "+919876543215",
-      truck: "TN 12 EF 9012",
-      operatorName: "Krishna Logistics",
-      shipperName: "Suresh Enterprises",
-      status: "DELIVERED",
-      progress: 100,
-      startedAt: "2025-12-03 06:00",
-      expectedDelivery: "2025-12-04 16:00",
-      deliveredAt: "2025-12-04 15:45",
-      currentLocation: "Guntur Delivery Point",
-      cargoType: "Construction Materials",
-      weight: "12000 kg",
-      podUploaded: true,
-    },
-    {
-      id: "SHIP-004",
-      bookingId: "BKG-005",
-      route: "Vijayawada → Kurnool",
-      driver: "Ravi Kumar",
-      driverPhone: "+919876543216",
-      truck: "KA 03 GH 3456",
-      operatorName: "Rajesh Transport",
-      shipperName: "Krishna Enterprises",
-      status: "DELAYED",
-      progress: 45,
-      startedAt: "2025-12-03 14:00",
-      expectedDelivery: "2025-12-04 22:00",
-      currentLocation: "Stuck at Nandyal",
-      cargoType: "Electronics",
-      weight: "5000 kg",
-      podUploaded: false,
-      delayReason: "Vehicle breakdown",
-    },
-  ];
+  useEffect(() => {
+    fetchShipments();
+  }, [filters]);
 
-  const filteredShipments =
-    statusFilter === "all"
-      ? mockShipments
-      : mockShipments.filter((s) => s.status === statusFilter);
+  const fetchShipments = async () => {
+    setLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-  const stats = {
-    total: mockShipments.length,
-    inTransit: mockShipments.filter((s) => s.status === "IN_TRANSIT").length,
-    delivered: mockShipments.filter((s) => s.status === "DELIVERED").length,
-    delayed: mockShipments.filter((s) => s.status === "DELAYED").length,
+      const mockShipments: Shipment[] = [
+        {
+          id: "SHP-001",
+          booking_id: "BKG-002",
+          operator_id: "OP-001",
+          operator_name: "ABC Transport",
+          truck_id: "DL01AB1234",
+          driver_id: "DR-001",
+          driver_name: "Ramesh Kumar",
+          pickup_city: "Delhi",
+          drop_city: "Bangalore",
+          distance_km: 2150,
+          start_at: "2025-12-04T19:00:00Z",
+          estimated_arrival: "2025-12-06T10:00:00Z",
+          status: "in_transit",
+          pod_uploaded: false,
+          payment_state: "advance_paid",
+          freight_amount: 87500,
+          advance_paid: 40000,
+          has_dispute: false,
+          last_ping_at: "2025-12-05T14:30:00Z",
+        },
+      ];
+
+      setShipments(mockShipments);
+      setTotal(28);
+    } catch (error) {
+      console.error("Failed to fetch shipments:", error);
+      message.error("Failed to load shipments");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      ASSIGNED: "blue",
-      AT_PICKUP: "cyan",
-      IN_TRANSIT: "purple",
-      NEAR_DELIVERY: "orange",
-      DELIVERED: "green",
-      DELAYED: "red",
-      CANCELLED: "default",
+    const colors = {
+      assigned: "blue",
+      started: "cyan",
+      in_transit: "orange",
+      delivered: "green",
+      delayed: "red",
+      exception: "red",
+      closed: "default",
     };
-    return colors[status] || "default";
+    return colors[status as keyof typeof colors] || "default";
+  };
+
+  const getPaymentColor = (state: string) => {
+    const colors = {
+      pending: "default",
+      advance_paid: "orange",
+      balance_pending: "orange",
+      settled: "green",
+    };
+    return colors[state as keyof typeof colors] || "default";
   };
 
   const columns = [
@@ -153,42 +155,86 @@ function ShipmentsManagementPage() {
       title: "Shipment ID",
       dataIndex: "id",
       key: "id",
-      render: (id: string, record: any) => (
-        <div>
-          <div style={{ fontWeight: 600, color: textPrimary }}>{id}</div>
-          <div style={{ fontSize: "12px", color: textSecondary }}>
-            {record.bookingId}
-          </div>
-        </div>
+      render: (id: string) => (
+        <a
+          style={{
+            fontFamily: "monospace",
+            fontWeight: 600,
+            color: "#1890ff",
+            fontSize: "13px",
+            display: "inline-block",
+            whiteSpace: "nowrap",
+          }}
+          onClick={() => setSelectedShipmentId(id)}
+        >
+          {id}
+        </a>
       ),
     },
     {
-      title: "Route",
-      dataIndex: "route",
-      key: "route",
-      render: (route: string) => (
-        <span style={{ color: textPrimary }}>{route}</span>
-      ),
-    },
-    {
-      title: "Driver",
-      dataIndex: "driver",
-      key: "driver",
-      render: (driver: string, record: any) => (
-        <div>
-          <div style={{ color: textPrimary, fontWeight: 500 }}>{driver}</div>
-          <div style={{ fontSize: "12px", color: textSecondary }}>
-            {record.truck}
-          </div>
-        </div>
+      title: "Booking",
+      dataIndex: "booking_id",
+      key: "booking_id",
+      render: (bookingId: string) => (
+        <a
+          style={{
+            fontFamily: "monospace",
+            fontSize: "13px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {bookingId}
+        </a>
       ),
     },
     {
       title: "Operator",
-      dataIndex: "operatorName",
-      key: "operatorName",
+      key: "operator",
+      render: (_: any, record: Shipment) => (
+        <div>
+          <div style={{ color: textPrimary }}>{record.operator_name}</div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: textSecondary,
+              fontFamily: "monospace",
+            }}
+          >
+            {record.operator_id}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Truck",
+      dataIndex: "truck_id",
+      key: "truck_id",
+      render: (truckId: string) => (
+        <span style={{ fontFamily: "monospace", color: textPrimary }}>
+          {truckId}
+        </span>
+      ),
+    },
+    {
+      title: "Driver",
+      dataIndex: "driver_name",
+      key: "driver_name",
       render: (name: string) => (
         <span style={{ color: textPrimary }}>{name}</span>
+      ),
+    },
+    {
+      title: "Route",
+      key: "route",
+      render: (_: any, record: Shipment) => (
+        <div>
+          <div style={{ fontWeight: 600, color: textPrimary }}>
+            {record.pickup_city} → {record.drop_city}
+          </div>
+          <div style={{ fontSize: "12px", color: textSecondary }}>
+            {record.distance_km} km
+          </div>
+        </div>
       ),
     },
     {
@@ -196,417 +242,174 @@ function ShipmentsManagementPage() {
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Tag color={getStatusColor(status)}>{status.replace(/_/g, " ")}</Tag>
+        <Tag color={getStatusColor(status)}>
+          {status.replace("_", " ").toUpperCase()}
+        </Tag>
       ),
     },
     {
-      title: "Progress",
-      dataIndex: "progress",
-      key: "progress",
-      render: (progress: number) => (
-        <Progress
-          percent={progress}
-          size="small"
-          strokeColor={
-            progress === 100 ? "#52c41a" : progress > 50 ? "#722ed1" : "#1890ff"
-          }
-        />
+      title: "POD",
+      dataIndex: "pod_uploaded",
+      key: "pod_uploaded",
+      align: "center" as const,
+      render: (uploaded: boolean) =>
+        uploaded ? (
+          <CheckCircleOutlined style={{ color: "#10B981", fontSize: "18px" }} />
+        ) : (
+          <CloseCircleOutlined
+            style={{ color: textSecondary, fontSize: "18px" }}
+          />
+        ),
+    },
+    {
+      title: "Payment",
+      dataIndex: "payment_state",
+      key: "payment_state",
+      render: (state: string, record: Shipment) => (
+        <div>
+          <Tag color={getPaymentColor(state)}>
+            {state.replace("_", " ").toUpperCase()}
+          </Tag>
+          <div
+            style={{ fontSize: "11px", color: textSecondary, marginTop: "4px" }}
+          >
+            ₹{record.advance_paid.toLocaleString()} / ₹
+            {record.freight_amount.toLocaleString()}
+          </div>
+        </div>
       ),
     },
     {
-      title: "Actions",
-      key: "actions",
-      render: (_: any, record: any) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setSelectedShipment(record);
-            setModalVisible(true);
-          }}
-        >
-          Details
-        </Button>
+      title: "Last Ping",
+      dataIndex: "last_ping_at",
+      key: "last_ping_at",
+      render: (timestamp: string) => (
+        <Tooltip title={dayjs(timestamp).format("DD MMM YYYY, HH:mm")}>
+          <span style={{ color: textSecondary }}>
+            {dayjs(timestamp).fromNow()}
+          </span>
+        </Tooltip>
       ),
     },
   ];
 
   return (
-    <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
-      <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-        <div
-          style={{ padding: "24px", background: bgPrimary, minHeight: "100vh" }}
-        >
-          <div
+    <AdminLayout theme={theme} toggleTheme={toggleTheme}>
+      <div
+        style={{ padding: "24px", background: bgPrimary, minHeight: "100vh" }}
+      >
+        <div style={{ marginBottom: "24px" }}>
+          <h1
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "24px",
+              fontSize: "28px",
+              fontWeight: "bold",
+              color: textPrimary,
+              margin: 0,
             }}
           >
-            <h1
-              style={{
-                fontSize: "28px",
-                fontWeight: "bold",
-                color: textPrimary,
-                margin: 0,
-              }}
-            >
-              Shipment Management
-            </h1>
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              style={{ background: "#C90D0D", borderColor: "#C90D0D" }}
-              onClick={() => alert("Export CSV")}
-            >
-              Export CSV
-            </Button>
+            <TruckOutlined style={{ marginRight: "12px" }} />
+            Shipments
+          </h1>
+          <div
+            style={{ color: textSecondary, fontSize: "14px", marginTop: "4px" }}
+          >
+            Active shipments with live tracking and settlement
           </div>
-
-          <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title={
-                    <span style={{ color: isDark ? "#B4B9C5" : "#6B7280" }}>
-                      Total Shipments
-                    </span>
-                  }
-                  value={stats.total}
-                  prefix={
-                    <TruckOutlined
-                      style={{ color: isDark ? "#F59E0B" : "#fa8c16" }}
-                    />
-                  }
-                  valueStyle={{
-                    color: isDark ? "#FFFFFF" : "#0A0E14",
-                    fontWeight: "bold",
-                  }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title={
-                    <span style={{ color: isDark ? "#B4B9C5" : "#6B7280" }}>
-                      In Transit
-                    </span>
-                  }
-                  value={stats.inTransit}
-                  prefix={<EnvironmentOutlined style={{ color: "#8B5CF6" }} />}
-                  valueStyle={{
-                    color: isDark ? "#FFFFFF" : "#0A0E14",
-                    fontWeight: "bold",
-                  }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title={
-                    <span style={{ color: isDark ? "#B4B9C5" : "#6B7280" }}>
-                      Delivered
-                    </span>
-                  }
-                  value={stats.delivered}
-                  prefix={<CheckCircleOutlined style={{ color: "#10B981" }} />}
-                  valueStyle={{
-                    color: isDark ? "#FFFFFF" : "#0A0E14",
-                    fontWeight: "bold",
-                  }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title={
-                    <span style={{ color: isDark ? "#B4B9C5" : "#6B7280" }}>
-                      Delayed
-                    </span>
-                  }
-                  value={stats.delayed}
-                  prefix={<WarningOutlined style={{ color: "#EF4444" }} />}
-                  valueStyle={{
-                    color: isDark ? "#FFFFFF" : "#0A0E14",
-                    fontWeight: "bold",
-                  }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <Card>
-            <div
-              style={{
-                marginBottom: "16px",
-                display: "flex",
-                gap: "12px",
-                flexWrap: "wrap",
-              }}
-            >
-              <Input
-                placeholder="Search shipments..."
-                prefix={<SearchOutlined />}
-                style={{ width: "300px" }}
-              />
-              <Select
-                value={statusFilter}
-                onChange={setStatusFilter}
-                style={{ width: "200px" }}
-                options={[
-                  { label: "All Statuses", value: "all" },
-                  { label: "Assigned", value: "ASSIGNED" },
-                  { label: "At Pickup", value: "AT_PICKUP" },
-                  { label: "In Transit", value: "IN_TRANSIT" },
-                  { label: "Near Delivery", value: "NEAR_DELIVERY" },
-                  { label: "Delivered", value: "DELIVERED" },
-                  { label: "Delayed", value: "DELAYED" },
-                ]}
-              />
-            </div>
-
-            <Table
-              columns={columns}
-              dataSource={filteredShipments}
-              rowKey="id"
-              pagination={{
-                pageSize: 20,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} shipments`,
-              }}
-            />
-          </Card>
-
-          <Modal
-            title={`Shipment Details: ${selectedShipment?.id || ""}`}
-            open={modalVisible}
-            onCancel={() => {
-              setModalVisible(false);
-              setSelectedShipment(null);
-            }}
-            footer={null}
-            width={900}
-          >
-            {selectedShipment && (
-              <div style={{ color: textPrimary }}>
-                <Tabs defaultActiveKey="details">
-                  <Tabs.TabPane tab="Details" key="details">
-                    <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
-                      <Col span={12}>
-                        <div style={{ marginBottom: "16px" }}>
-                          <h3 style={{ marginTop: 0, color: textPrimary }}>
-                            Shipment Info
-                          </h3>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Booking ID:</strong>{" "}
-                            {selectedShipment.bookingId}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Route:</strong> {selectedShipment.route}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Cargo:</strong> {selectedShipment.cargoType}{" "}
-                            ({selectedShipment.weight})
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Status:</strong>{" "}
-                            <Tag
-                              color={getStatusColor(selectedShipment.status)}
-                            >
-                              {selectedShipment.status.replace(/_/g, " ")}
-                            </Tag>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div style={{ marginBottom: "16px" }}>
-                          <h3 style={{ marginTop: 0, color: textPrimary }}>
-                            Parties
-                          </h3>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Shipper:</strong>{" "}
-                            {selectedShipment.shipperName}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Operator:</strong>{" "}
-                            {selectedShipment.operatorName}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Driver:</strong> {selectedShipment.driver}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Phone:</strong>{" "}
-                            {selectedShipment.driverPhone}
-                          </div>
-                          <div style={{ marginBottom: "8px" }}>
-                            <strong>Truck:</strong> {selectedShipment.truck}
-                          </div>
-                        </div>
-                      </Col>
-                    </Row>
-
-                    <div
-                      style={{
-                        marginBottom: "24px",
-                        padding: "16px",
-                        background: bgElevated,
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <h3 style={{ marginTop: 0, color: textPrimary }}>
-                        Tracking
-                      </h3>
-                      <div style={{ marginBottom: "12px" }}>
-                        <strong>Current Location:</strong>{" "}
-                        {selectedShipment.currentLocation}
-                      </div>
-                      <Progress
-                        percent={selectedShipment.progress}
-                        strokeColor={
-                          selectedShipment.status === "DELAYED"
-                            ? "#cf1322"
-                            : "#722ed1"
-                        }
-                      />
-                      {selectedShipment.delayReason && (
-                        <div style={{ marginTop: "12px", color: "#cf1322" }}>
-                          <WarningOutlined /> Delay Reason:{" "}
-                          {selectedShipment.delayReason}
-                        </div>
-                      )}
-                    </div>
-                  </Tabs.TabPane>
-
-                  <Tabs.TabPane tab="Timeline" key="timeline">
-                    <Timeline
-                      items={[
-                        {
-                          color: "green",
-                          children: `Started: ${selectedShipment.startedAt}`,
-                        },
-                        selectedShipment.status !== "ASSIGNED" &&
-                        selectedShipment.status !== "AT_PICKUP"
-                          ? {
-                              color: "blue",
-                              children: `At Pickup: ${selectedShipment.currentLocation}`,
-                            }
-                          : null,
-                        selectedShipment.status === "IN_TRANSIT" ||
-                        selectedShipment.status === "DELIVERED" ||
-                        selectedShipment.status === "DELAYED"
-                          ? {
-                              color:
-                                selectedShipment.status === "DELAYED"
-                                  ? "red"
-                                  : "purple",
-                              children: `In Transit: ${selectedShipment.progress}% complete`,
-                            }
-                          : null,
-                        selectedShipment.status === "DELIVERED"
-                          ? {
-                              color: "green",
-                              children: `Delivered: ${selectedShipment.deliveredAt}`,
-                            }
-                          : {
-                              color: "gray",
-                              children: `Expected Delivery: ${selectedShipment.expectedDelivery}`,
-                            },
-                      ].filter(Boolean)}
-                    />
-                  </Tabs.TabPane>
-
-                  <Tabs.TabPane tab="POD" key="pod">
-                    <div style={{ padding: "16px" }}>
-                      {selectedShipment.podUploaded ? (
-                        <div>
-                          <div
-                            style={{ color: "#52c41a", marginBottom: "16px" }}
-                          >
-                            <CheckCircleOutlined /> POD uploaded successfully
-                          </div>
-                          <div
-                            style={{
-                              padding: "16px",
-                              background: bgElevated,
-                              borderRadius: "8px",
-                            }}
-                          >
-                            <div style={{ marginBottom: "8px" }}>
-                              <strong>Delivery Time:</strong>{" "}
-                              {selectedShipment.deliveredAt}
-                            </div>
-                            <div style={{ marginBottom: "8px" }}>
-                              <strong>Received By:</strong> Warehouse Manager
-                            </div>
-                            <div style={{ marginBottom: "16px" }}>
-                              <strong>Signature:</strong> Yes
-                            </div>
-                            <Button
-                              type="primary"
-                              style={{
-                                background: "#C90D0D",
-                                borderColor: "#C90D0D",
-                              }}
-                            >
-                              View POD Documents
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            textAlign: "center",
-                            padding: "32px",
-                            color: textSecondary,
-                          }}
-                        >
-                          <ClockCircleOutlined
-                            style={{ fontSize: "48px", marginBottom: "16px" }}
-                          />
-                          <div>POD not uploaded yet</div>
-                          <div style={{ fontSize: "12px", marginTop: "8px" }}>
-                            Driver will upload POD upon delivery
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Tabs.TabPane>
-                </Tabs>
-
-                <div
-                  style={{
-                    marginTop: "24px",
-                    display: "flex",
-                    gap: "12px",
-                    justifyContent: "flex-end",
-                    paddingTop: "16px",
-                    borderTop: `1px solid ${border}`,
-                  }}
-                >
-                  <Button onClick={() => alert("View live tracking")}>
-                    Live Tracking
-                  </Button>
-                  <Button onClick={() => alert("Contact driver")}>
-                    Contact Driver
-                  </Button>
-                  {selectedShipment.status !== "DELIVERED" && (
-                    <Button danger onClick={() => alert("Report issue")}>
-                      Report Issue
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </Modal>
         </div>
-      </AdminLayout>
-    </ProtectedRoute>
-  );
-}
 
-export default ShipmentsManagementPage;
+        <Card
+          style={{
+            marginBottom: "16px",
+            background: bgCard,
+            border: `1px solid ${border}`,
+          }}
+        >
+          <Space wrap>
+            <Input
+              placeholder="Search shipment ID, operator, truck..."
+              prefix={<SearchOutlined />}
+              style={{ width: 300 }}
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  search: e.target.value,
+                  page: 1,
+                }))
+              }
+              allowClear
+            />
+            <Select
+              placeholder="Status"
+              style={{ width: 140 }}
+              allowClear
+              value={filters.status}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, status: value, page: 1 }))
+              }
+              options={[
+                { label: "In Transit", value: "in_transit" },
+                { label: "Delivered", value: "delivered" },
+                { label: "Delayed", value: "delayed" },
+                { label: "Exception", value: "exception" },
+              ]}
+            />
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() =>
+                setFilters({
+                  page: 1,
+                  limit: 25,
+                  status: undefined,
+                  search: "",
+                })
+              }
+            >
+              Clear
+            </Button>
+          </Space>
+        </Card>
+
+        <Card style={{ background: bgCard, border: `1px solid ${border}` }}>
+          <Table
+            columns={columns}
+            dataSource={shipments}
+            rowKey="id"
+            loading={loading}
+            virtual
+            sticky
+            pagination={{
+              current: filters.page,
+              pageSize: filters.limit,
+              total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ["50", "100", "200", "500"],
+              showTotal: (total, range) =>
+                `Showing ${range[0]}-${range[1]} of ${total} shipments`,
+            }}
+            onChange={(pagination) => {
+              setFilters((prev) => ({
+                ...prev,
+                page: pagination.current || 1,
+                limit: pagination.pageSize || 100,
+              }));
+            }}
+            scroll={{ y: 600 }}
+            tableLayout="auto"
+          />
+        </Card>
+
+        {/* Shipment Detail Panel */}
+        <ShipmentDetailPanel
+          shipmentId={selectedShipmentId}
+          open={!!selectedShipmentId}
+          onClose={() => setSelectedShipmentId(null)}
+          theme={theme}
+        />
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default ShipmentsPage;

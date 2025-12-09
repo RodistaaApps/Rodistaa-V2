@@ -25,6 +25,12 @@ export * from './components/Input';
 export * from './components/Card';
 export * from './components/LoadingSpinner';
 
+// UI Components
+export * from './components/ui';
+
+// Profile Components
+export * from './components/Profile/ProfileScreenBase';
+
 // Navigation
 export * from './navigation';
 
