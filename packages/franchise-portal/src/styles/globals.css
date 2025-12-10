@@ -1,0 +1,197 @@
+/* Rodistaa Admin Portal - Global Styles with Light/Dark Theme Support */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* Dark Theme (Default) */
+[data-theme="dark"] body,
+[data-theme="dark"] {
+  background: #0A0E14;
+  color: #FFFFFF;
+}
+
+/* Light Theme */
+[data-theme="light"] body,
+[data-theme="light"] {
+  background: #F9FAFB;
+  color: #0A0E14;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Baloo Bhai 2', 'Times New Roman', serif;
+}
+
+/* Dark Theme - Ant Design Overrides */
+[data-theme="dark"] .ant-layout {
+  background: #0A0E14 !important;
+}
+
+[data-theme="dark"] .ant-layout-header {
+  background: #0A0E14 !important;
+  border-bottom: 1px solid #2D3748 !important;
+}
+
+[data-theme="dark"] .ant-layout-sider {
+  background: #0A0E14 !important;
+  border-right: 1px solid #2D3748 !important;
+}
+
+[data-theme="dark"] .ant-card {
+  background: #151922 !important;
+  border: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-card-head {
+  background: #1E2430 !important;
+  border-bottom: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-table {
+  background: #151922 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background: #1E2430 !important;
+  color: #B4B9C5 !important;
+  border-bottom: 1px solid #2D3748 !important;
+}
+
+[data-theme="dark"] .ant-table-tbody > tr {
+  background: #151922 !important;
+}
+
+[data-theme="dark"] .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-table-tbody > tr:hover > td {
+  background: #1E2430 !important;
+}
+
+[data-theme="dark"] .ant-modal-content {
+  background: #151922 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ant-modal-header {
+  background: #1E2430 !important;
+  border-bottom: 1px solid #2D3748 !important;
+}
+
+[data-theme="dark"] .ant-input,
+[data-theme="dark"] .ant-select-selector,
+[data-theme="dark"] .ant-picker {
+  background: #1E2430 !important;
+  border: 1px solid #2D3748 !important;
+  color: #FFFFFF !important;
+}
+
+/* Light Theme - Ant Design Overrides */
+[data-theme="light"] .ant-layout {
+  background: #F9FAFB !important;
+}
+
+[data-theme="light"] .ant-layout-header {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #E5E7EB !important;
+}
+
+[data-theme="light"] .ant-layout-sider {
+  background: #FFFFFF !important;
+  border-right: 1px solid #E5E7EB !important;
+}
+
+[data-theme="light"] .ant-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  color: #0A0E14 !important;
+}
+
+[data-theme="light"] .ant-card-head {
+  background: #F9FAFB !important;
+  border-bottom: 1px solid #E5E7EB !important;
+  color: #0A0E14 !important;
+}
+
+[data-theme="light"] .ant-table {
+  background: #FFFFFF !important;
+  color: #0A0E14 !important;
+}
+
+[data-theme="light"] .ant-table-thead > tr > th {
+  background: #F9FAFB !important;
+  color: #6B7280 !important;
+  border-bottom: 1px solid #E5E7EB !important;
+}
+
+[data-theme="light"] .ant-table-tbody > tr {
+  background: #FFFFFF !important;
+}
+
+[data-theme="light"] .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #E5E7EB !important;
+  color: #0A0E14 !important;
+}
+
+[data-theme="light"] .ant-table-tbody > tr:hover > td {
+  background: #F9FAFB !important;
+}
+
+[data-theme="light"] .ant-modal-content {
+  background: #FFFFFF !important;
+  color: #0A0E14 !important;
+}
+
+[data-theme="light"] .ant-input,
+[data-theme="light"] .ant-select-selector {
+  background: #F9FAFB !important;
+  border: 1px solid #E5E7EB !important;
+  color: #0A0E14 !important;
+}
+
+/* Menu Item Highlight (Red for active - matches reference UI) */
+.ant-menu-item-selected {
+  background: #FEE2E2 !important;
+  color: #C90D0D !important;
+}
+
+[data-theme="dark"] .ant-menu-item-selected {
+  background: #C90D0D20 !important;
+  color: #C90D0D !important;
+}
+
+/* Primary Button */
+.ant-btn-primary {
+  background: #C90D0D !important;
+  border-color: #C90D0D !important;
+  color: #FFFFFF !important;
+}
+
+.ant-btn-primary:hover {
+  background: #A00A0A !important;
+  border-color: #A00A0A !important;
+}
+
+/* Status Pills */
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+}
