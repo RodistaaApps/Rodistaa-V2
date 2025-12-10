@@ -1,0 +1,18 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@rodistaa/mobile-shared": [
+        "../mobile-shared/src"
+      ],
+      "@rodistaa/app-shared": [
+        "../../app-shared/src"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
+}
